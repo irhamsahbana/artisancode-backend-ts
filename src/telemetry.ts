@@ -76,7 +76,11 @@ export const startTelemetry = () => {
     resource,
     traceExporter,
     instrumentations: [
-      getNodeAutoInstrumentations(),
+      getNodeAutoInstrumentations({
+        '@opentelemetry/instrumentation-runtime-node': {
+          enabled: !isBun,
+        },
+      }),
       new WinstonInstrumentation({
         disableLogSending: true,
         logHook: (_span, record) => {
