@@ -1,0 +1,10 @@
+# Files
+.vscode
+.env
+error.log
+
+# Directories
+.dist
+dist
+node_modules
+src/generated

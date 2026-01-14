@@ -1,0 +1,73 @@
+model Product {
+    id            String        @id @default(uuid(7))
+    companyId     String        @map("company_id")
+    branchId      String?       @map("branch_id")
+    ageCategoryId String?       @map("age_category_id")
+    name          String        @default("")
+    description   String        @default("")
+    status        ProductStatus @default(active)
+    createdAt     DateTime      @default(now()) @map("created_at")
+    updatedAt     DateTime      @updatedAt @map("updated_at")
+    deletedAt     DateTime?     @map("deleted_at")
+
+    company     Company   @relation(fields: [companyId], references: [id])
+    branch      Branch?   @relation(fields: [branchId], references: [id])
+    ageCategory Category? @relation(fields: [ageCategoryId], references: [id])
+
+    pricings         ProductPricing[]
+    enrollments      Enrollment[]
+    productSchedules ProductSchedule[]
+    teacherProducts  TeacherProduct[]
+
+    @@map("products")
+    @@index([companyId, deletedAt])
+}
+
+model ProductPricing {
+    id          String    @id @default(uuid(7))
+    productId   String    @map("product_id")
+    name        String    @default("")
+    description String    @default("")
+    isActive    Boolean   @default(true)
+    createdAt   DateTime  @default(now()) @map("created_at")
+    updatedAt   DateTime  @updatedAt @map("updated_at")
+    deletedAt   DateTime? @map("deleted_at")
+
+    product Product @relation(fields: [productId], references: [id])
+
+    enrollments Enrollment[]
+    prices      ProductPrice[]
+
+    @@map("product_pricings")
+    @@index([productId, name, deletedAt])
+}
+
+model ProductPrice {
+    id               String    @id @default(uuid(7))
+    productPricingId String    @map("product_pricing_id")
+    price            Decimal   @default(0)
+    currency         String    @default("IDR")
+    createdAt        DateTime  @default(now()) @map("created_at")
+    startedAt        DateTime  @default(now()) @map("started_at")
+    endedAt          DateTime? @map("ended_at")
+    isActive         Boolean   @default(true)
+
+    productPricing ProductPricing @relation(fields: [productPricingId], references: [id])
+
+    @@map("product_prices")
+    @@index([productPricingId, startedAt, endedAt, isActive])
+}
+
+model ProductSchedule {
+    id        String   @id @default(uuid(7))
+    productId String   @map("product_id")
+    day       String   @default("")
+    startTime String   @default("")
+    endTime   String   @default("")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+    @@map("product_schedules")
+}

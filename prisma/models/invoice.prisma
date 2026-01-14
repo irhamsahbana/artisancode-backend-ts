@@ -1,0 +1,25 @@
+model Invoice {
+    id           String        @id @default(uuid(7))
+    companyId    String        @map("company_id")
+    branchId     String        @map("branch_id")
+    enrollmentId String        @map("enrollment_id")
+    invoiceDate  DateTime      @map("invoice_date")
+    dueDate      DateTime      @map("due_date")
+    amount       Decimal       @default(0) @map("amount")
+    status       InvoiceStatus
+    createdAt    DateTime      @default(now()) @map("created_at")
+    paidAt       DateTime?     @map("paid_at")
+    deletedAt    DateTime?     @map("deleted_at")
+
+    company    Company    @relation(fields: [companyId], references: [id])
+    branch     Branch     @relation(fields: [branchId], references: [id])
+    enrollment Enrollment @relation(fields: [enrollmentId], references: [id])
+
+    payments Payment[]
+
+    @@map("invoices")
+    @@index([companyId, deletedAt])
+    @@index([enrollmentId])
+    @@index([status])
+    @@index([invoiceDate])
+}

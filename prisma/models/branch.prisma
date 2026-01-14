@@ -1,0 +1,31 @@
+model Branch {
+    id          String    @id @default(uuid(7))
+    companyId   String    @map("company_id")
+    name        String    @default("")
+    city        String    @default("")
+    capacity    Int       @default(0)
+    description String    @default("")
+    address     String    @default("")
+    phone       String    @default("")
+    email       String    @default("")
+    headCoach   String    @default("") @map("head_coach")
+    status      Status    @default(active)
+    createdAt   DateTime  @default(now()) @map("created_at")
+    updatedAt   DateTime  @updatedAt @map("updated_at")
+    deletedAt   DateTime? @map("deleted_at")
+
+    company     Company      @relation(fields: [companyId], references: [id])
+
+    activityLogs ActivityLog[]
+    users       User[]
+    products    Product[]
+    teachers    Teacher[]
+    students    Student[]
+    enrollments Enrollment[]
+    invoices    Invoice[]
+    payments    Payment[]
+
+    @@map("branches")
+    @@index([companyId, deletedAt])
+    @@index([status])
+}

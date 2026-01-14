@@ -1,0 +1,23 @@
+import { Router } from 'express'
+
+import { authenticate } from '@/common/middlewares/auth.middleware'
+import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
+
+import TeacherHandler from './teacher.handler'
+import TeacherRepo from './teacher.repo'
+import * as Schema from './teacher.schema'
+import TeacherUsecase from './teacher.usecase'
+
+const repo = new TeacherRepo()
+const usecase = new TeacherUsecase(repo)
+const handler = new TeacherHandler(usecase)
+
+const router = Router()
+
+router.post('/', authenticate, validate(Schema.createTeacherSchema), handler.create)
+router.put('/:id', authenticate, validate(Schema.updateTeacherSchema), handler.update)
+router.delete('/:id', authenticate, handler.delete)
+router.get('/:id', authenticate, handler.findById)
+router.get('/', authenticate, validateQuery(Schema.getTeacherListSchema), handler.findList)
+
+export default router

@@ -1,0 +1,33 @@
+model Student {
+    id                    String    @id @default(uuid(7))
+    companyId             String    @map("company_id")
+    branchId              String    @map("branch_id")
+    ageCategoryId         String?   @map("age_category_id")
+    firstName             String    @default("")
+    lastName              String    @default("")
+    gender                String    @default("")
+    dateOfBirth           DateTime  @map("date_of_birth")
+    birthPlace            String    @default("") @map("birth_place")
+    email                 String    @map("email")
+    address               String    @default("") @map("address")
+    photoUrl              String    @map("photo_url")
+    parentName            String    @default("") @map("parent_name")
+    parentPhone           String    @default("") @map("parent_phone")
+    parentEmail           String    @default("") @map("parent_email")
+    emergencyContactPhone String    @default("") @map("emergency_contact_phone")
+    bloodType             String    @default("") @map("blood_type")
+    medicalNotes          String    @default("") @map("medical_notes")
+    status                Status    @default(active)
+    createdAt             DateTime  @default(now()) @map("created_at")
+    updatedAt             DateTime  @updatedAt @map("updated_at")
+    deletedAt             DateTime? @map("deleted_at")
+
+    company Company @relation(fields: [companyId], references: [id])
+    branch Branch @relation(fields: [branchId], references: [id])
+    ageCategory Category? @relation(fields: [ageCategoryId], references: [id], onDelete: SetNull)
+    enrollments Enrollment[]
+
+    @@map("students")
+    @@index([companyId, deletedAt])
+    @@index([status])
+}

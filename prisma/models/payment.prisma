@@ -1,0 +1,19 @@
+model Payment {
+    id          String    @id @default(uuid(7))
+    companyId   String    @map("company_id")
+    branchId    String    @map("branch_id")
+    invoiceId   String    @map("invoice_id")
+    amount      Decimal   @default(0) @map("amount")
+    method      String    @map("method")
+    paymentDate DateTime  @map("payment_date")
+    createdAt   DateTime  @default(now()) @map("created_at")
+    deletedAt   DateTime? @map("deleted_at")
+
+    company Company @relation(fields: [companyId], references: [id])
+    branch  Branch  @relation(fields: [branchId], references: [id])
+    invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+    @@map("payments")
+    @@index([companyId, deletedAt])
+    @@index([invoiceId])
+}

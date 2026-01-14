@@ -1,0 +1,53 @@
+enum Status {
+  active
+  inactive
+}
+
+enum BillingType {
+  one_time
+  recurring
+}
+
+enum BillingInterval {
+  day
+  week
+  month
+  year
+}
+
+enum EmployeeStatus {
+  active
+  inactive
+  on_leave
+  terminated
+}
+
+enum EnrollmentStatus {
+  active
+  inactive
+}
+
+enum ProductStatus {
+  active
+  inactive
+}
+
+enum PricingType {
+  daily
+  weekly
+  monthly
+  yearly
+  custom
+}
+
+enum PaymentMode {
+  pay_now
+  pay_later
+}
+
+enum InvoiceStatus {
+  draft
+  unpaid
+  paid
+  overdue
+}

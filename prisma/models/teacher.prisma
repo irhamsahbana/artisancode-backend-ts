@@ -1,0 +1,23 @@
+model Teacher {
+  id        String         @id
+  companyId String         @map("company_id")
+  branchId  String?        @map("branch_id")
+  status    EmployeeStatus @default(active)
+  name      String         @default("")
+  email     String         @unique @default("")
+  phone     String         @default("")
+  specialty String         @default("")
+  address   String         @default("")
+  birthDate String         @default("") @map("birth_date")
+  biography String         @default("")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  deletedAt DateTime?      @map("deleted_at")
+
+  company  Company          @relation(fields: [companyId], references: [id])
+  branch   Branch?          @relation(fields: [branchId], references: [id])
+  programs TeacherProduct[]
+
+  @@map("teachers")
+  @@index([companyId, deletedAt])
+}

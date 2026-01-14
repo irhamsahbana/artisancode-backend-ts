@@ -1,0 +1,70 @@
+import * as Entity from '@/entities/program.entity'
+import { IBranchRepo } from '@/modules/branch/branch.contract'
+import { ICategoryRepo } from '@/modules/category/category.contract'
+
+import { IProgramRepo, IProgramUsecase } from './program.contract'
+
+export default class ProgramUsecase implements IProgramUsecase {
+  constructor(
+    private repo: IProgramRepo,
+    private branchRepo: IBranchRepo,
+    private categoryRepo: ICategoryRepo,
+  ) {}
+
+  async create(req: Entity.CreateProgramReq): Promise<Entity.Program> {
+    if (req.branch_id) {
+      const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
+      if (!branch) {
+        throw new Error('Branch not found')
+      }
+    }
+
+    if (req.age_category_id) {
+      const category = await this.categoryRepo.findById(req.age_category_id, req.company_id)
+      if (!category) {
+        throw new Error('Age category not found')
+      }
+    }
+
+    return this.repo.create(req)
+  }
+
+  async update(req: Entity.UpdateProgramReq): Promise<Entity.Program> {
+    const program = await this.repo.findById(req.id, req.company_id)
+    if (!program) {
+      throw new Error('Program not found')
+    }
+
+    if (req.branch_id) {
+      const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
+      if (!branch) {
+        throw new Error('Branch not found')
+      }
+    }
+
+    if (req.age_category_id) {
+      const category = await this.categoryRepo.findById(req.age_category_id, req.company_id)
+      if (!category) {
+        throw new Error('Age category not found')
+      }
+    }
+
+    return this.repo.update(req)
+  }
+
+  async delete(id: string, companyId: string): Promise<void> {
+    const program = await this.repo.findById(id, companyId)
+    if (!program) {
+      throw new Error('Program not found')
+    }
+    return this.repo.delete(id, companyId)
+  }
+
+  async findById(id: string, companyId: string): Promise<Entity.Program | null> {
+    return this.repo.findById(id, companyId)
+  }
+
+  async findList(req: Entity.GetProgramReq): Promise<Entity.ProgramList> {
+    return this.repo.findList(req)
+  }
+}

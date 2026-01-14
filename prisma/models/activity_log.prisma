@@ -1,0 +1,21 @@
+model ActivityLog {
+    id         String    @id @default(uuid(7))
+    companyId  String    @map("company_id")
+    branchId   String?   @map("branch_id")
+    userId     String    @map("user_id")
+    entityName String    @default("") @map("entity_name")
+    entityId   String    @default("") @map("entity_id")
+    activity   String    @default("") @map("activity")
+    before     Json?     @map("before")
+    after      Json?     @map("after")
+    createdAt  DateTime  @default(now()) @map("created_at")
+    deletedAt  DateTime? @map("deleted_at")
+
+    company Company @relation(fields: [companyId], references: [id])
+    branch  Branch? @relation(fields: [branchId], references: [id])
+    user    User    @relation(fields: [userId], references: [id])
+
+    @@map("activity_logs")
+    @@index([companyId, deletedAt])
+    @@index([userId])
+}

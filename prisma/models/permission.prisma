@@ -1,0 +1,13 @@
+model Permission {
+    id           String   @id @default(uuid(7))
+    name         String   @default("") @unique
+    description  String   @default("")
+    createdAt    DateTime @default(now()) @map("created_at")
+    updatedAt    DateTime @updatedAt @map("updated_at")
+    deletedAt    DateTime? @map("deleted_at")
+
+    roles        RolePermission[]
+
+    @@map("permissions")
+    @@index([deletedAt])
+}
