@@ -12,7 +12,8 @@ import { env } from '@/config/env'
 
 let sdk: NodeSDK | null = null
 
-const isBun = typeof (process as unknown as { versions?: { bun?: string } }).versions?.bun === 'string'
+const isBun =
+  typeof (process as unknown as { versions?: { bun?: string } }).versions?.bun === 'string'
 
 const getDiagLogLevel = (value: string | undefined) => {
   if (!value) return undefined
@@ -82,7 +83,6 @@ export const startTelemetry = () => {
           const activeSpan = trace.getSpan(context.active())
           const spanContext = activeSpan?.spanContext()
           if (!spanContext) return
-
           ;(record as unknown as Record<string, unknown>).trace_id = spanContext.traceId
           ;(record as unknown as Record<string, unknown>).span_id = spanContext.spanId
         },
