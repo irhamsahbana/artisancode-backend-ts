@@ -1,4 +1,4 @@
-import { Prisma, Status, BillingType } from '@prisma/client'
+import { EnrollmentStatus, Prisma } from '@prisma/client'
 
 import prisma from '@/common/prisma'
 import * as Entity from '@/entities/enrollment.entity'
@@ -6,29 +6,15 @@ import * as Entity from '@/entities/enrollment.entity'
 import { IEnrollmentRepo } from './enrollment.contract'
 
 export default class EnrollmentRepo implements IEnrollmentRepo {
-  private toEntity(
-    data: Prisma.EnrollmentGetPayload<{
-      include: {
-        student: true
-        program: {
-          include: {
-            branch: true
-          }
-        }
-      }
-    }>,
-  ): Entity.Enrollment {
+  private toEntity(data: EnrollmentWithRelations): Entity.Enrollment {
     return {
       id: data.id,
       company_id: data.companyId,
       branch_id: data.branchId,
       student_id: data.studentId,
-      program_id: data.programId,
-      enrollment_date: data.enrollmentDate,
+      program_id: data.productId,
+      pricing_id: data.productPricingId,
       status: data.status,
-      billing_type: data.billingType,
-      billed_at: data.billedAt,
-      next_payment_date: data.nextPaymentDate,
       created_at: data.createdAt,
       updated_at: data.updatedAt,
       deleted_at: data.deletedAt,
@@ -58,40 +44,38 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
             deleted_at: data.student.deletedAt,
           }
         : undefined,
-      program: data.program
+      program: data.product
         ? {
-            id: data.program.id,
-            company_id: data.program.companyId,
-            branch_id: data.program.branchId,
-            age_category_id: data.program.ageCategoryId,
-            name: data.program.name,
-            description: data.program.description,
-            capacity: data.program.capacity,
-            duration: data.program.duration,
-            start_date: data.program.startDate,
-            end_date: data.program.endDate,
-            status: data.program.status,
-            created_at: data.program.createdAt,
-            updated_at: data.program.updatedAt,
-            deleted_at: data.program.deletedAt,
-            branch: data.program.branch
-              ? {
-                  id: data.program.branch.id,
-                  company_id: data.program.branch.companyId,
-                  name: data.program.branch.name,
-                  city: data.program.branch.city,
-                  capacity: data.program.branch.capacity,
-                  description: data.program.branch.description,
-                  address: data.program.branch.address,
-                  phone: data.program.branch.phone,
-                  email: data.program.branch.email,
-                  head_coach: data.program.branch.headCoach,
-                  status: data.program.branch.status,
-                  created_at: data.program.branch.createdAt,
-                  updated_at: data.program.branch.updatedAt,
-                  deleted_at: data.program.branch.deletedAt,
-                }
-              : undefined,
+            id: data.product.id,
+            company_id: data.product.companyId,
+            branch_id: data.product.branchId,
+            age_category_id: data.product.ageCategoryId,
+            name: data.product.name,
+            description: data.product.description,
+            status: data.product.status,
+            created_at: data.product.createdAt,
+            updated_at: data.product.updatedAt,
+            deleted_at: data.product.deletedAt,
+          }
+        : undefined,
+      pricing: data.productPricing
+        ? {
+            id: data.productPricing.id,
+            program_id: data.productPricing.productId,
+            name: data.productPricing.name,
+            description: data.productPricing.description,
+            is_active: data.productPricing.isActive,
+            created_at: data.productPricing.createdAt,
+            updated_at: data.productPricing.updatedAt,
+            prices: data.productPricing.prices.map((p) => ({
+              id: p.id,
+              pricing_id: p.productPricingId,
+              currency: p.currency,
+              price: p.price.toNumber(),
+              started_at: p.startedAt,
+              ended_at: p.endedAt,
+              is_active: p.isActive,
+            })),
           }
         : undefined,
     }
@@ -103,21 +87,11 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
         companyId: req.company_id,
         branchId: req.branch_id,
         studentId: req.student_id,
-        programId: req.program_id,
-        enrollmentDate: req.enrollment_date || new Date(),
-        status: (req.status as Status) || 'active',
-        billingType: (req.billing_type as BillingType) || 'one_time',
-        billedAt: req.billed_at || 0,
-        nextPaymentDate: req.next_payment_date,
+        productId: req.program_id,
+        productPricingId: req.pricing_id,
+        status: (req.status as EnrollmentStatus) || 'active',
       },
-      include: {
-        student: true,
-        program: {
-          include: {
-            branch: true,
-          },
-        },
-      },
+      include: enrollmentIncludes,
     })
     return this.toEntity(data)
   }
@@ -132,21 +106,11 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
       data: {
         branchId: req.branch_id,
         studentId: req.student_id,
-        programId: req.program_id,
-        enrollmentDate: req.enrollment_date,
-        status: req.status as Status,
-        billingType: req.billing_type as BillingType,
-        billedAt: req.billed_at,
-        nextPaymentDate: req.next_payment_date,
+        productId: req.program_id,
+        productPricingId: req.pricing_id,
+        status: req.status as EnrollmentStatus,
       },
-      include: {
-        student: true,
-        program: {
-          include: {
-            branch: true,
-          },
-        },
-      },
+      include: enrollmentIncludes,
     })
     return this.toEntity(data)
   }
@@ -171,26 +135,14 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
         companyId,
         deletedAt: null,
       },
-      include: {
-        student: true,
-        program: {
-          include: {
-            branch: true,
-            // teachers: true, // Note: Program to Teachers relation needs to be defined if required, currently not in schema directly?
-            // Actually schema says Program has teacherPrograms TeacherProgram[], not teachers directly.
-            // But user provided reference code has teachers: true.
-            // If the schema `Program` has `teacherPrograms`, we need to see how to include them.
-            // For now I'll stick to what is safely available: branch.
-          },
-        },
-      },
+      include: enrollmentIncludes,
     })
     if (!data) return null
     return this.toEntity(data)
   }
 
   async findList(req: Entity.GetEnrollmentReq): Promise<Entity.EnrollmentList> {
-    const { pagination = {}, company_id, branch_id, student_id, program_id } = req
+    const { pagination = {}, company_id, branch_id, student_id, program_id, pricing_id } = req
     const { page = 1, per_page = 10 } = pagination
     const skip = (page - 1) * per_page
     const take = per_page
@@ -209,7 +161,11 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
     }
 
     if (program_id) {
-      where.programId = program_id
+      where.productId = program_id
+    }
+
+    if (pricing_id) {
+      where.productPricingId = pricing_id
     }
 
     const [items, total] = await Promise.all([
@@ -218,14 +174,7 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
-        include: {
-          student: true,
-          program: {
-            include: {
-              branch: true,
-            },
-          },
-        },
+        include: enrollmentIncludes,
       }),
       prisma.enrollment.count({ where }),
     ])
@@ -241,3 +190,17 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
     }
   }
 }
+
+type EnrollmentWithRelations = Prisma.EnrollmentGetPayload<{
+  include: typeof enrollmentIncludes
+}>
+
+const enrollmentIncludes = {
+  student: true,
+  product: true,
+  productPricing: {
+    include: {
+      prices: true,
+    },
+  },
+} satisfies Prisma.EnrollmentInclude

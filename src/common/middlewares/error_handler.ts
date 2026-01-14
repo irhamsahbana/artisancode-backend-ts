@@ -1,3 +1,4 @@
+import { context, SpanStatusCode, trace } from '@opentelemetry/api'
 import { Request, Response, NextFunction } from 'express'
 
 import { responseError } from '@/common/rest_response'
@@ -9,6 +10,10 @@ const errorHandler = (err: Error, req: Request, res: Response, next: NextFunctio
   if (res.headersSent) {
     return next(err)
   }
+
+  const span = trace.getSpan(context.active())
+  span?.recordException(err)
+  span?.setStatus({ code: SpanStatusCode.ERROR, message: err.message })
 
   // For non-production environments, send detailed error
   if (env.APP_ENV !== 'production') {

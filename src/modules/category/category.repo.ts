@@ -9,7 +9,7 @@ export default class CategoryRepo implements ICategoryRepo {
   private toEntity(data: Category): Entity.Category {
     return {
       id: data.id,
-      company_id: data.companyId,
+      company_id: data.companyId || '',
       parent_id: data.parentId,
       group: data.group,
       name: data.name,
