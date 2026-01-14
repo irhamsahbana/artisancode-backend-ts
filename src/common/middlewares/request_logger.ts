@@ -9,7 +9,7 @@ const requestLogger = (req: Request, res: Response, next: NextFunction) => {
     const endTime = new Date()
     const duration = endTime.getTime() - startTime.getTime()
     logger.info(
-      `access log ${req.method} | ${req.originalUrl} | ${duration}ms | status code ${res.statusCode}`,
+      `${req.method} | ${req.originalUrl} | ${duration}ms | status code ${res.statusCode}`,
     )
   })
   next()
