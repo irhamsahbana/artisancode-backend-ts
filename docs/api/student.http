@@ -1,0 +1,38 @@
+@baseUrl = http://localhost:3000/api
+@authToken = <paste_token_here>
+
+### Create Student
+POST {{baseUrl}}/students
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "branch_id": "replace-with-uuid",
+  "first_name": "Alice",
+  "last_name": "Wonderland",
+  "gender": "Female",
+  "date_of_birth": "2010-01-01",
+  "email": "alice@example.com",
+  "status": "active"
+}
+
+### Get Student List
+GET {{baseUrl}}/students?page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+### Get Student by ID
+GET {{baseUrl}}/students/replace-with-uuid
+Authorization: Bearer {{authToken}}
+
+### Update Student
+PUT {{baseUrl}}/students/replace-with-uuid
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "first_name": "Alice Updated"
+}
+
+### Delete Student
+DELETE {{baseUrl}}/students/replace-with-uuid
+Authorization: Bearer {{authToken}}

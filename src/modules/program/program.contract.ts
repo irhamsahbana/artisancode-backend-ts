@@ -6,6 +6,8 @@ export interface IProgramRepo {
   delete(id: string, companyId: string): Promise<void>
   findById(id: string, companyId: string): Promise<Entity.Program | null>
   findList(req: Entity.GetProgramReq): Promise<Entity.ProgramList>
+  addSchedule(req: Entity.AddScheduleReq): Promise<Entity.ProgramSchedule>
+  addPricing(req: Entity.AddPricingReq): Promise<Entity.ProgramPricing>
 }
 
 export interface IProgramUsecase {
@@ -14,4 +16,6 @@ export interface IProgramUsecase {
   delete(id: string, companyId: string): Promise<void>
   findById(id: string, companyId: string): Promise<Entity.Program | null>
   findList(req: Entity.GetProgramReq): Promise<Entity.ProgramList>
+  addSchedule(req: Entity.AddScheduleReq): Promise<Entity.ProgramSchedule>
+  addPricing(req: Entity.AddPricingReq): Promise<Entity.ProgramPricing>
 }

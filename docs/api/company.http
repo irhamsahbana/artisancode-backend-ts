@@ -1,0 +1,34 @@
+@baseUrl = http://localhost:3000/api
+@authToken = <paste_token_here>
+
+### Create Company
+POST {{baseUrl}}/companies
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "My Music School",
+  "status": "active"
+}
+
+### Get Company List
+GET {{baseUrl}}/companies?page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+### Get Company by ID
+GET {{baseUrl}}/companies/replace-with-uuid
+Authorization: Bearer {{authToken}}
+
+### Update Company
+PUT {{baseUrl}}/companies/replace-with-uuid
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "My Music School Updated",
+  "status": "active"
+}
+
+### Delete Company
+DELETE {{baseUrl}}/companies/replace-with-uuid
+Authorization: Bearer {{authToken}}

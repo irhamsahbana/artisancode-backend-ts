@@ -59,13 +59,13 @@ model ProductPrice {
 }
 
 model ProductSchedule {
-    id        String   @id @default(uuid(7))
-    productId String   @map("product_id")
-    day       String   @default("")
-    startTime String   @default("")
-    endTime   String   @default("")
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    id        String    @id @default(uuid(7))
+    productId String    @map("product_id")
+    day       String    @default("") // Recurrence: "monday", etc.
+    startTime String    @default("") // Recurrence: "09:00"
+    endTime   String    @default("") // Recurrence: "10:00"
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @updatedAt @map("updated_at")
 
     product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 

@@ -67,4 +67,20 @@ export default class ProgramUsecase implements IProgramUsecase {
   async findList(req: Entity.GetProgramReq): Promise<Entity.ProgramList> {
     return this.repo.findList(req)
   }
+
+  async addSchedule(req: Entity.AddScheduleReq): Promise<Entity.ProgramSchedule> {
+    const program = await this.repo.findById(req.program_id, req.company_id)
+    if (!program) {
+      throw new Error('Program not found')
+    }
+    return this.repo.addSchedule(req)
+  }
+
+  async addPricing(req: Entity.AddPricingReq): Promise<Entity.ProgramPricing> {
+    const program = await this.repo.findById(req.program_id, req.company_id)
+    if (!program) {
+      throw new Error('Program not found')
+    }
+    return this.repo.addPricing(req)
+  }
 }

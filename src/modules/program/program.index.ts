@@ -24,4 +24,8 @@ router.delete('/:id', authenticate, handler.delete)
 router.get('/:id', authenticate, handler.findById)
 router.get('/', authenticate, validateQuery(Schema.getProgramListSchema), handler.findList)
 
+// New endpoints
+router.post('/:id/schedules', authenticate, validate(Schema.addScheduleSchema), handler.addSchedule)
+router.post('/:id/pricings', authenticate, validate(Schema.addPricingSchema), handler.addPricing)
+
 export default router

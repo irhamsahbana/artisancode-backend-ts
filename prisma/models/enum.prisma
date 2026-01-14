@@ -30,6 +30,7 @@ enum EnrollmentStatus {
 enum ProductStatus {
   active
   inactive
+  archived
 }
 
 enum PricingType {

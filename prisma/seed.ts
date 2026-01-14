@@ -26,10 +26,13 @@ async function main() {
   console.log('Cleaning up existing data...')
   // Delete in order of dependency (child -> parent)
   await prisma.enrollment.deleteMany()
-  await prisma.programSchedule.deleteMany()
+  await prisma.productPrice.deleteMany()
+  await prisma.productPricing.deleteMany()
+  await prisma.productSchedule.deleteMany()
+  await prisma.teacherProduct.deleteMany()
   await prisma.rolePermission.deleteMany()
   await prisma.student.deleteMany()
-  await prisma.program.deleteMany()
+  await prisma.product.deleteMany()
   await prisma.category.deleteMany()
   await prisma.user.deleteMany()
   await prisma.branch.deleteMany()
@@ -177,6 +180,49 @@ async function main() {
     }
   })
   console.log('Students created')
+
+  // 7. Create Products
+  console.log('Creating Products...')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const product = await prisma.product.create({
+    data: {
+      name: 'Piano Lesson',
+      description: 'Basic Piano Lesson for Kids',
+      companyId: company.id,
+      branchId: branch.id,
+      ageCategoryId: category.id,
+      status: 'active',
+      pricings: {
+        create: {
+          name: 'Monthly Fee',
+          description: 'Monthly tuition fee',
+          isActive: true,
+          prices: {
+            create: {
+              price: 500000,
+              currency: 'IDR',
+              isActive: true,
+            },
+          },
+        },
+      },
+      productSchedules: {
+        create: [
+          {
+            day: 'monday',
+            startTime: '14:00',
+            endTime: '15:00',
+          },
+          {
+            day: 'thursday',
+            startTime: '16:00',
+            endTime: '17:00',
+          },
+        ],
+      },
+    },
+  })
+  console.log('Products created')
   
   console.log('\n=================================')
   console.log('Seeding completed!')

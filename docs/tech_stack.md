@@ -1,6 +1,6 @@
 # Tech Stack
 
-- **Runtime**: Node.js 24.x
+- **Runtime**: Node.js 24.x / Bun (for development/execution)
 - **Package Manager**: pnpm
 - **Language**: TypeScript
 - **Framework**: Express.js 5.x

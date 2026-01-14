@@ -1,0 +1,6 @@
+@baseUrl = http://localhost:3000/api
+@authToken = <paste_token_here>
+
+### Get Template Example
+GET {{baseUrl}}/templates
+Authorization: Bearer {{authToken}}

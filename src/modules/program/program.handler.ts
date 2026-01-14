@@ -71,4 +71,28 @@ export default class ProgramHandler {
     const data = await this.usecase.findList(payload)
     res.status(200).json(responseSuccess(data))
   }
+
+  addSchedule = async (req: Request, res: Response) => {
+    const { id } = req.params
+    const user = (req as AuthenticatedRequest).user
+    const payload = req.body as Entity.AddScheduleReq
+
+    payload.program_id = id
+    payload.company_id = user?.company_id || ''
+
+    const data = await this.usecase.addSchedule(payload)
+    res.status(201).json(responseSuccess(data, 'Schedule added successfully'))
+  }
+
+  addPricing = async (req: Request, res: Response) => {
+    const { id } = req.params
+    const user = (req as AuthenticatedRequest).user
+    const payload = req.body as Entity.AddPricingReq
+
+    payload.program_id = id
+    payload.company_id = user?.company_id || ''
+
+    const data = await this.usecase.addPricing(payload)
+    res.status(201).json(responseSuccess(data, 'Pricing added successfully'))
+  }
 }

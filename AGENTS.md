@@ -5,6 +5,10 @@
 - Ask for permission before modifying or creating any files.
 - When making changes to a file, explain why the change is being made.
 - When generating code, add comments in English.
+- **Shell & Package Manager**:
+    - Use `fish` (preferred) or `bash` for shell commands.
+    - Use `pnpm` for package management (installing dependencies).
+    - **Running the App**: Prefer `pnpm run dev:bun` or `pnpm run start:bun` (using Bun runtime).
 - **Documentation Maintenance**:
     - The AI agent is authorized to update `AGENTS.md` and `docs/` files to keep them accurate.
     - **Protocol**:

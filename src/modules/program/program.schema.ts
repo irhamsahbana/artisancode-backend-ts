@@ -2,14 +2,30 @@ import Joi from 'joi'
 
 const programScheduleSchema = Joi.object({
   day: Joi.string()
-    .required()
+    .optional()
+    .allow('')
     .valid('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'),
   start_time: Joi.string()
-    .required()
+    .optional()
+    .allow('')
     .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/), // HH:mm
   end_time: Joi.string()
-    .required()
+    .optional()
+    .allow('')
     .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/), // HH:mm
+})
+
+const programPriceSchema = Joi.object({
+  currency: Joi.string().required().length(3), // ISO 4217
+  price: Joi.number().required().min(0), // Minor units
+  started_at: Joi.date().optional(),
+  ended_at: Joi.date().optional(),
+})
+
+const programPricingSchema = Joi.object({
+  name: Joi.string().required(),
+  description: Joi.string().optional().allow(''),
+  prices: Joi.array().items(programPriceSchema).required().min(1),
 })
 
 export const createProgramSchema = Joi.object({
@@ -19,6 +35,7 @@ export const createProgramSchema = Joi.object({
   description: Joi.string().optional().allow('').max(500),
   status: Joi.string().optional().valid('active', 'inactive'),
   schedules: Joi.array().items(programScheduleSchema).optional(),
+  pricings: Joi.array().items(programPricingSchema).optional(),
   teachers: Joi.array().items(Joi.string().uuid()).optional(),
 })
 
@@ -28,9 +45,11 @@ export const updateProgramSchema = Joi.object({
   name: Joi.string().optional().min(2).max(100),
   description: Joi.string().optional().allow('').max(500),
   status: Joi.string().optional().valid('active', 'inactive'),
-  schedules: Joi.array().items(programScheduleSchema).optional(),
-  teachers: Joi.array().items(Joi.string().uuid()).optional(),
 })
+
+export const addScheduleSchema = programScheduleSchema
+
+export const addPricingSchema = programPricingSchema
 
 export const getProgramListSchema = Joi.object({
   page: Joi.number().integer().min(1).optional(),

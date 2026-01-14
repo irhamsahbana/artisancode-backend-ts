@@ -1,0 +1,42 @@
+@baseUrl = http://localhost:3000/api
+@authToken = <paste_token_here>
+
+### Create Role
+POST {{baseUrl}}/role-and-permissions/roles
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Admin",
+  "description": "Administrator role with full access",
+  "permission_ids": [
+    "replace-with-uuid-1",
+    "replace-with-uuid-2"
+  ]
+}
+
+### Get Role List
+GET {{baseUrl}}/role-and-permissions/roles?page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+### Get Role by ID
+GET {{baseUrl}}/role-and-permissions/roles/replace-with-uuid
+Authorization: Bearer {{authToken}}
+
+### Update Role
+PUT {{baseUrl}}/role-and-permissions/roles/replace-with-uuid
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Admin Updated",
+  "description": "Updated description"
+}
+
+### Delete Role
+DELETE {{baseUrl}}/role-and-permissions/roles/replace-with-uuid
+Authorization: Bearer {{authToken}}
+
+### Get Permission List
+GET {{baseUrl}}/role-and-permissions/permissions?page=1&limit=10
+Authorization: Bearer {{authToken}}

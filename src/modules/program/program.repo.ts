@@ -1,12 +1,19 @@
-import { Prisma, Program } from '@prisma/client'
+import { Prisma, Product, ProductSchedule, ProductPricing, ProductPrice } from '@prisma/client'
 
 import prisma from '@/common/prisma'
 import * as Entity from '@/entities/program.entity'
 
 import { IProgramRepo } from './program.contract'
 
+type ProductWithRelations = Product & {
+  productSchedules: ProductSchedule[]
+  pricings: (ProductPricing & {
+    prices: ProductPrice[]
+  })[]
+}
+
 export default class ProgramRepo implements IProgramRepo {
-  private toEntity(data: Program): Entity.Program {
+  private toEntity(data: ProductWithRelations): Entity.Program {
     return {
       id: data.id,
       company_id: data.companyId,
@@ -14,37 +21,85 @@ export default class ProgramRepo implements IProgramRepo {
       age_category_id: data.ageCategoryId,
       name: data.name,
       description: data.description,
-      capacity: data.capacity,
-      duration: data.duration,
-      start_date: data.startDate,
-      end_date: data.endDate,
       status: data.status,
       created_at: data.createdAt,
       updated_at: data.updatedAt,
       deleted_at: data.deletedAt,
+      schedules: data.productSchedules?.map((s) => ({
+        id: s.id,
+        program_id: s.productId,
+        day: s.day,
+        start_time: s.startTime,
+        end_time: s.endTime,
+        created_at: s.createdAt,
+        updated_at: s.updatedAt,
+      })),
+      pricings: data.pricings?.map((p) => ({
+        id: p.id,
+        program_id: p.productId,
+        name: p.name,
+        description: p.description,
+        is_active: p.isActive,
+        created_at: p.createdAt,
+        updated_at: p.updatedAt,
+        prices: p.prices?.map((price) => ({
+          id: price.id,
+          pricing_id: price.productPricingId,
+          currency: price.currency,
+          price: price.price.toNumber(),
+          started_at: price.startedAt,
+          ended_at: price.endedAt,
+          is_active: price.isActive,
+        })),
+      })),
     }
   }
 
   async create(req: Entity.CreateProgramReq): Promise<Entity.Program> {
-    const data = await prisma.program.create({
+    const data = await prisma.product.create({
       data: {
         companyId: req.company_id,
         branchId: req.branch_id,
         ageCategoryId: req.age_category_id,
         name: req.name,
         description: req.description || '',
-        capacity: req.capacity || 100,
-        duration: req.duration || '',
-        startDate: req.start_date || new Date(),
-        endDate: req.end_date,
         status: req.status || 'active',
+        productSchedules: {
+          create: req.schedules?.map((s) => ({
+            day: s.day || '',
+            startTime: s.start_time || '',
+            endTime: s.end_time || '',
+          })),
+        },
+        pricings: {
+          create: req.pricings?.map((p) => ({
+            name: p.name,
+            description: p.description || '',
+            prices: {
+              create: p.prices.map((price) => ({
+                currency: price.currency,
+                price: price.price,
+                startedAt: price.started_at || new Date(),
+                endedAt: price.ended_at,
+              })),
+            },
+          })),
+        },
+      },
+      include: {
+        productSchedules: true,
+        pricings: {
+          include: {
+            prices: true,
+          },
+        },
       },
     })
     return this.toEntity(data)
   }
 
   async update(req: Entity.UpdateProgramReq): Promise<Entity.Program> {
-    const data = await prisma.program.update({
+    const data = await prisma.product.update({
       where: {
         id: req.id,
         companyId: req.company_id,
@@ -55,18 +110,22 @@ export default class ProgramRepo implements IProgramRepo {
         ageCategoryId: req.age_category_id,
         name: req.name,
         description: req.description,
-        capacity: req.capacity,
-        duration: req.duration,
-        startDate: req.start_date,
-        endDate: req.end_date,
         status: req.status,
+      },
+      include: {
+        productSchedules: true,
+        pricings: {
+          include: {
+            prices: true,
+          },
+        },
       },
     })
     return this.toEntity(data)
   }
 
   async delete(id: string, companyId: string): Promise<void> {
-    await prisma.program.update({
+    await prisma.product.update({
       where: {
         id,
         companyId,
@@ -79,11 +138,19 @@ export default class ProgramRepo implements IProgramRepo {
   }
 
   async findById(id: string, companyId: string): Promise<Entity.Program | null> {
-    const data = await prisma.program.findFirst({
+    const data = await prisma.product.findFirst({
       where: {
         id,
         companyId,
         deletedAt: null,
+      },
+      include: {
+        productSchedules: true,
+        pricings: {
+          include: {
+            prices: true,
+          },
+        },
       },
     })
     if (!data) return null
@@ -96,7 +163,7 @@ export default class ProgramRepo implements IProgramRepo {
     const skip = (page - 1) * per_page
     const take = per_page
 
-    const where: Prisma.ProgramWhereInput = {
+    const where: Prisma.ProductWhereInput = {
       companyId: company_id,
       deletedAt: null,
     }
@@ -110,13 +177,21 @@ export default class ProgramRepo implements IProgramRepo {
     }
 
     const [items, total] = await Promise.all([
-      prisma.program.findMany({
+      prisma.product.findMany({
         where,
         skip,
         take,
         orderBy: { createdAt: 'desc' },
+        include: {
+          productSchedules: true,
+          pricings: {
+            include: {
+              prices: true,
+            },
+          },
+        },
       }),
-      prisma.program.count({ where }),
+      prisma.product.count({ where }),
     ])
 
     return {
@@ -127,6 +202,65 @@ export default class ProgramRepo implements IProgramRepo {
         per_page,
         last_page: Math.ceil(total / per_page),
       },
+    }
+  }
+
+  async addSchedule(req: Entity.AddScheduleReq): Promise<Entity.ProgramSchedule> {
+    const data = await prisma.productSchedule.create({
+      data: {
+        productId: req.program_id,
+        day: req.day || '',
+        startTime: req.start_time || '',
+        endTime: req.end_time || '',
+      },
+    })
+    return {
+      id: data.id,
+      program_id: data.productId,
+      day: data.day,
+      start_time: data.startTime,
+      end_time: data.endTime,
+      created_at: data.createdAt,
+      updated_at: data.updatedAt,
+    }
+  }
+
+  async addPricing(req: Entity.AddPricingReq): Promise<Entity.ProgramPricing> {
+    const data = await prisma.productPricing.create({
+      data: {
+        productId: req.program_id,
+        name: req.name,
+        description: req.description || '',
+        prices: {
+          create: req.prices.map((p) => ({
+            currency: p.currency,
+            price: p.price,
+            startedAt: p.started_at || new Date(),
+            endedAt: p.ended_at,
+          })),
+        },
+      },
+      include: {
+        prices: true,
+      },
+    })
+    return {
+      id: data.id,
+      program_id: data.productId,
+      name: data.name,
+      description: data.description,
+      is_active: data.isActive,
+      created_at: data.createdAt,
+      updated_at: data.updatedAt,
+      prices: data.prices.map((p) => ({
+        id: p.id,
+        pricing_id: p.productPricingId,
+        currency: p.currency,
+        price: p.price.toNumber(),
+        started_at: p.startedAt,
+        ended_at: p.endedAt,
+        is_active: p.isActive,
+      })),
     }
   }
 }
