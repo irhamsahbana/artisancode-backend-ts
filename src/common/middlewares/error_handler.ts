@@ -5,7 +5,6 @@ import { env } from '@/config/env'
 import logger from '@/config/logger'
 
 const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-
   // If the response has already been sent, delegate to the default Express error handler.
   if (res.headersSent) {
     return next(err)
