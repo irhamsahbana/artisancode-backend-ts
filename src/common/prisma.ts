@@ -1,4 +1,3 @@
-
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
 import { Pool } from 'pg'
@@ -30,10 +29,7 @@ export const prisma =
   global.prisma ??
   new PrismaClient({
     adapter,
-    log:
-      env.APP_ENV === 'development'
-        ? ['query', 'error', 'warn']
-        : ['error'],
+    log: env.APP_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   })
 
 if (env.APP_ENV !== 'production') {

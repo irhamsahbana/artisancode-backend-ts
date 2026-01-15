@@ -19,7 +19,7 @@ export const env = {
   APP_VERSION: process.env.APP_VERSION || '1.0.0',
   APP_LOG_LEVEL: process.env.APP_LOG_LEVEL || 'info',
   DATABASE_URL: process.env.DATABASE_URL,
-    DATABASE: {
+  DATABASE: {
     URL: process.env.DATABASE_URL,
     POOL: {
       MAX: parseNumber(process.env.DB_POOL_MAX, 20),
@@ -29,10 +29,7 @@ export const env = {
     },
     SSL: {
       ENABLED: parseBoolean(process.env.DB_SSL_ENABLED, true),
-      REJECT_UNAUTHORIZED: parseBoolean(
-        process.env.DB_SSL_REJECT_UNAUTHORIZED,
-        false,
-      ),
+      REJECT_UNAUTHORIZED: parseBoolean(process.env.DB_SSL_REJECT_UNAUTHORIZED, false),
     },
   },
   JWT: {
