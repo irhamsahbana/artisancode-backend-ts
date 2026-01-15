@@ -1,3 +1,4 @@
+import { AppError } from '@/common/app_error'
 import * as Entity from '@/entities/category.entity'
 
 import { ICategoryRepo, ICategoryUsecase } from './category.contract'
@@ -9,7 +10,7 @@ export default class CategoryUsecase implements ICategoryUsecase {
     if (req.parent_id) {
       const parent = await this.repo.findById(req.parent_id, req.company_id)
       if (!parent) {
-        throw new Error('Parent category not found')
+        throw new AppError(404, 'Parent category not found')
       }
     }
     return this.repo.create(req)
@@ -18,16 +19,16 @@ export default class CategoryUsecase implements ICategoryUsecase {
   async update(req: Entity.UpdateCategoryReq): Promise<Entity.Category> {
     const category = await this.repo.findById(req.id, req.company_id)
     if (!category) {
-      throw new Error('Category not found')
+      throw new AppError(404, 'Category not found')
     }
 
     if (req.parent_id) {
       if (req.parent_id === req.id) {
-        throw new Error('Category cannot be its own parent')
+        throw new AppError(400, 'Category cannot be its own parent')
       }
       const parent = await this.repo.findById(req.parent_id, req.company_id)
       if (!parent) {
-        throw new Error('Parent category not found')
+        throw new AppError(404, 'Parent category not found')
       }
     }
 
@@ -37,7 +38,7 @@ export default class CategoryUsecase implements ICategoryUsecase {
   async delete(id: string, companyId: string): Promise<void> {
     const category = await this.repo.findById(id, companyId)
     if (!category) {
-      throw new Error('Category not found')
+      throw new AppError(404, 'Category not found')
     }
     return this.repo.delete(id, companyId)
   }

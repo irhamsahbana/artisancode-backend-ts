@@ -1,3 +1,4 @@
+import { AppError } from '@/common/app_error'
 import * as Entity from '@/entities/role.entity'
 
 import { IRoleAndPermissionRepo, IRoleAndPermissionUsecase } from './role_and_permission.contract'
@@ -21,7 +22,7 @@ export default class RoleAndPermissionUsecase implements IRoleAndPermissionUseca
   async updateRole(req: Entity.UpdateRoleReq): Promise<Entity.Role> {
     const existing = await this.repo.findRoleById(req.id, req.company_id)
     if (!existing) {
-      throw new Error('Role not found')
+      throw new AppError(404, 'Role not found')
     }
     return this.repo.updateRole(req)
   }
@@ -29,7 +30,7 @@ export default class RoleAndPermissionUsecase implements IRoleAndPermissionUseca
   async deleteRole(id: string, companyId?: string): Promise<void> {
     const existing = await this.repo.findRoleById(id, companyId)
     if (!existing) {
-      throw new Error('Role not found')
+      throw new AppError(404, 'Role not found')
     }
     await this.repo.deleteRole(id, companyId)
   }

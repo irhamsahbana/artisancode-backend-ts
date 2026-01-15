@@ -1,3 +1,4 @@
+import { AppError } from '@/common/app_error'
 import * as Entity from '@/entities/branch.entity'
 
 import { IBranchRepo, IBranchUsecase } from './branch.contract'
@@ -13,7 +14,7 @@ export default class BranchUsecase implements IBranchUsecase {
     // Check existence and ownership
     const branch = await this.repo.findById(req.id, req.company_id)
     if (!branch) {
-      throw new Error('Branch not found')
+      throw new AppError(404, 'Branch not found')
     }
     return this.repo.update(req)
   }
@@ -21,7 +22,7 @@ export default class BranchUsecase implements IBranchUsecase {
   async delete(id: string, companyId: string): Promise<void> {
     const branch = await this.repo.findById(id, companyId)
     if (!branch) {
-      throw new Error('Branch not found')
+      throw new AppError(404, 'Branch not found')
     }
     return this.repo.delete(id, companyId)
   }

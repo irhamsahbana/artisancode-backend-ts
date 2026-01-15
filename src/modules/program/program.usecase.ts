@@ -1,3 +1,4 @@
+import { AppError } from '@/common/app_error'
 import * as Entity from '@/entities/program.entity'
 import { IBranchRepo } from '@/modules/branch/branch.contract'
 import { ICategoryRepo } from '@/modules/category/category.contract'
@@ -15,14 +16,14 @@ export default class ProgramUsecase implements IProgramUsecase {
     if (req.branch_id) {
       const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
       if (!branch) {
-        throw new Error('Branch not found')
+        throw new AppError(404, 'Branch not found')
       }
     }
 
     if (req.age_category_id) {
       const category = await this.categoryRepo.findById(req.age_category_id, req.company_id)
       if (!category) {
-        throw new Error('Age category not found')
+        throw new AppError(404, 'Age category not found')
       }
     }
 
@@ -32,20 +33,20 @@ export default class ProgramUsecase implements IProgramUsecase {
   async update(req: Entity.UpdateProgramReq): Promise<Entity.Program> {
     const program = await this.repo.findById(req.id, req.company_id)
     if (!program) {
-      throw new Error('Program not found')
+      throw new AppError(404, 'Program not found')
     }
 
     if (req.branch_id) {
       const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
       if (!branch) {
-        throw new Error('Branch not found')
+        throw new AppError(404, 'Branch not found')
       }
     }
 
     if (req.age_category_id) {
       const category = await this.categoryRepo.findById(req.age_category_id, req.company_id)
       if (!category) {
-        throw new Error('Age category not found')
+        throw new AppError(404, 'Age category not found')
       }
     }
 
@@ -55,7 +56,7 @@ export default class ProgramUsecase implements IProgramUsecase {
   async delete(id: string, companyId: string): Promise<void> {
     const program = await this.repo.findById(id, companyId)
     if (!program) {
-      throw new Error('Program not found')
+      throw new AppError(404, 'Program not found')
     }
     return this.repo.delete(id, companyId)
   }
@@ -71,7 +72,7 @@ export default class ProgramUsecase implements IProgramUsecase {
   async addSchedule(req: Entity.AddScheduleReq): Promise<Entity.ProgramSchedule> {
     const program = await this.repo.findById(req.program_id, req.company_id)
     if (!program) {
-      throw new Error('Program not found')
+      throw new AppError(404, 'Program not found')
     }
     return this.repo.addSchedule(req)
   }
@@ -79,7 +80,7 @@ export default class ProgramUsecase implements IProgramUsecase {
   async addPricing(req: Entity.AddPricingReq): Promise<Entity.ProgramPricing> {
     const program = await this.repo.findById(req.program_id, req.company_id)
     if (!program) {
-      throw new Error('Program not found')
+      throw new AppError(404, 'Program not found')
     }
     return this.repo.addPricing(req)
   }

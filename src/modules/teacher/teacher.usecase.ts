@@ -1,3 +1,4 @@
+import { AppError } from '@/common/app_error'
 import * as Entity from '@/entities/teacher.entity'
 
 import { ITeacherRepo, ITeacherUsecase } from './teacher.contract'
@@ -8,7 +9,7 @@ export default class TeacherUsecase implements ITeacherUsecase {
   async create(req: Entity.CreateTeacherReq): Promise<Entity.Teacher> {
     const existing = await this.repo.findByEmail(req.email)
     if (existing) {
-      throw new Error('Teacher with this email already exists')
+      throw new AppError(409, 'Teacher with this email already exists')
     }
     return this.repo.create(req)
   }
@@ -16,13 +17,13 @@ export default class TeacherUsecase implements ITeacherUsecase {
   async update(req: Entity.UpdateTeacherReq): Promise<Entity.Teacher> {
     const teacher = await this.repo.findById(req.id, req.company_id)
     if (!teacher) {
-      throw new Error('Teacher not found')
+      throw new AppError(404, 'Teacher not found')
     }
 
     if (req.email && req.email !== teacher.email) {
       const existing = await this.repo.findByEmail(req.email)
       if (existing) {
-        throw new Error('Teacher with this email already exists')
+        throw new AppError(409, 'Teacher with this email already exists')
       }
     }
 
@@ -32,7 +33,7 @@ export default class TeacherUsecase implements ITeacherUsecase {
   async delete(id: string, companyId: string): Promise<void> {
     const teacher = await this.repo.findById(id, companyId)
     if (!teacher) {
-      throw new Error('Teacher not found')
+      throw new AppError(404, 'Teacher not found')
     }
     return this.repo.delete(id, companyId)
   }

@@ -1,3 +1,4 @@
+import { AppError } from '@/common/app_error'
 import * as Entity from '@/entities/enrollment.entity'
 import { IBranchRepo } from '@/modules/branch/branch.contract'
 import { IProgramRepo } from '@/modules/program/program.contract'
@@ -16,17 +17,17 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
   async create(req: Entity.CreateEnrollmentReq): Promise<Entity.Enrollment> {
     const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
     if (!branch) {
-      throw new Error('Branch not found')
+      throw new AppError(404, 'Branch not found')
     }
 
     const student = await this.studentRepo.findById(req.student_id, req.company_id)
     if (!student) {
-      throw new Error('Student not found')
+      throw new AppError(404, 'Student not found')
     }
 
     const program = await this.programRepo.findById(req.program_id, req.company_id)
     if (!program) {
-      throw new Error('Program not found')
+      throw new AppError(404, 'Program not found')
     }
 
     return this.repo.create(req)
@@ -35,27 +36,27 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
   async update(req: Entity.UpdateEnrollmentReq): Promise<Entity.Enrollment> {
     const enrollment = await this.repo.findById(req.id, req.company_id)
     if (!enrollment) {
-      throw new Error('Enrollment not found')
+      throw new AppError(404, 'Enrollment not found')
     }
 
     if (req.branch_id) {
       const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
       if (!branch) {
-        throw new Error('Branch not found')
+        throw new AppError(404, 'Branch not found')
       }
     }
 
     if (req.student_id) {
       const student = await this.studentRepo.findById(req.student_id, req.company_id)
       if (!student) {
-        throw new Error('Student not found')
+        throw new AppError(404, 'Student not found')
       }
     }
 
     if (req.program_id) {
       const program = await this.programRepo.findById(req.program_id, req.company_id)
       if (!program) {
-        throw new Error('Program not found')
+        throw new AppError(404, 'Program not found')
       }
     }
 
@@ -65,7 +66,7 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
   async delete(id: string, companyId: string): Promise<void> {
     const enrollment = await this.repo.findById(id, companyId)
     if (!enrollment) {
-      throw new Error('Enrollment not found')
+      throw new AppError(404, 'Enrollment not found')
     }
     return this.repo.delete(id, companyId)
   }

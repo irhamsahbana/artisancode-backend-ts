@@ -31,7 +31,7 @@ export default class UserUsecase implements IUserUsecase {
     if (!isValid) return null
 
     if (user.status !== 'active') {
-      throw new Error('User account is not active')
+      throw new AppError(403, 'User account is not active')
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

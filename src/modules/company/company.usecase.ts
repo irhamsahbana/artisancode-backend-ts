@@ -1,3 +1,4 @@
+import { AppError } from '@/common/app_error'
 import * as Entity from '@/entities/company.entity'
 
 import { ICompanyRepo, ICompanyUsecase } from './company.contract'
@@ -20,7 +21,7 @@ export default class CompanyUsecase implements ICompanyUsecase {
   async update(req: Entity.UpdateCompanyReq): Promise<Entity.Company> {
     const existing = await this.repo.findById(req)
     if (!existing) {
-      throw new Error('Company not found')
+      throw new AppError(404, 'Company not found')
     }
     return await this.repo.update(req)
   }
@@ -28,7 +29,7 @@ export default class CompanyUsecase implements ICompanyUsecase {
   async delete(req: Entity.GetCompanyReq): Promise<void> {
     const existing = await this.repo.findById(req)
     if (!existing) {
-      throw new Error('Company not found')
+      throw new AppError(404, 'Company not found')
     }
     await this.repo.delete(req)
   }

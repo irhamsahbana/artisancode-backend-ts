@@ -1,3 +1,4 @@
+import { AppError } from '@/common/app_error'
 import * as Entity from '@/entities/student.entity'
 import { IBranchRepo } from '@/modules/branch/branch.contract'
 
@@ -12,7 +13,7 @@ export default class StudentUsecase implements IStudentUsecase {
   async create(req: Entity.CreateStudentReq): Promise<Entity.Student> {
     const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
     if (!branch) {
-      throw new Error('Branch not found')
+      throw new AppError(404, 'Branch not found')
     }
 
     return this.repo.create(req)
@@ -21,13 +22,13 @@ export default class StudentUsecase implements IStudentUsecase {
   async update(req: Entity.UpdateStudentReq): Promise<Entity.Student> {
     const student = await this.repo.findById(req.id, req.company_id)
     if (!student) {
-      throw new Error('Student not found')
+      throw new AppError(404, 'Student not found')
     }
 
     if (req.branch_id) {
       const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
       if (!branch) {
-        throw new Error('Branch not found')
+        throw new AppError(404, 'Branch not found')
       }
     }
 
@@ -37,7 +38,7 @@ export default class StudentUsecase implements IStudentUsecase {
   async delete(id: string, companyId: string): Promise<void> {
     const student = await this.repo.findById(id, companyId)
     if (!student) {
-      throw new Error('Student not found')
+      throw new AppError(404, 'Student not found')
     }
     return this.repo.delete(id, companyId)
   }
