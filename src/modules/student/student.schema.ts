@@ -7,7 +7,7 @@ export const createStudentSchema = Joi.object({
   gender: Joi.string().required().valid('Male', 'Female'),
   date_of_birth: Joi.date().required(),
   birth_place: Joi.string().optional().allow('').max(100),
-  email: Joi.string().email().required(),
+  email: Joi.string().email().optional().allow(''),
   address: Joi.string().optional().allow('').max(500),
   photo_url: Joi.string().optional().allow(''),
   parent_name: Joi.string().optional().allow('').max(100),

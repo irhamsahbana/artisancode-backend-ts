@@ -7,7 +7,7 @@ model Student {
     gender                String    @default("")
     dateOfBirth           DateTime  @map("date_of_birth")
     birthPlace            String    @default("") @map("birth_place")
-    email                 String    @map("email")
+    email                 String    @default("") @map("email")
     address               String    @default("") @map("address")
     photoUrl              String    @map("photo_url")
     parentName            String    @default("") @map("parent_name")
