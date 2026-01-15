@@ -25,6 +25,7 @@ The technical details and guidelines for this project have been moved to the `do
 - [Prisma Model Structure](docs/prisma_model_structure.md)
 - [Development Workflow](docs/development_workflow.md)
 - [Commit Guidelines](docs/commit_guidelines.md)
+- [Database Seeding](docs/seeding.md)
 
 ## Quick Summary
 - **Architecture**: Modular Clean Architecture (`src/modules/[module_name]`)
