@@ -82,7 +82,8 @@ export const startTelemetry = () => {
         },
       }),
       new WinstonInstrumentation({
-        disableLogSending: true,
+        disableLogSending: false,
+
         logHook: (_span, record) => {
           const activeSpan = trace.getSpan(context.active())
           const spanContext = activeSpan?.spanContext()
