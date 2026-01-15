@@ -50,12 +50,12 @@ export default class StudentHandler {
   }
 
   findList = async (req: Request, res: Response) => {
-    const { page, limit, q, branch_id, age_category_id } = req.query as unknown as {
+    const { page, limit, q, branch_id, age } = req.query as unknown as {
       page: number
       limit: number
       q: string
       branch_id: string
-      age_category_id: string
+      age: number
     }
     const user = (req as AuthenticatedRequest).user
 
@@ -63,7 +63,7 @@ export default class StudentHandler {
       company_id: user?.company_id || '',
       q,
       branch_id,
-      age_category_id,
+      age,
       pagination: {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,

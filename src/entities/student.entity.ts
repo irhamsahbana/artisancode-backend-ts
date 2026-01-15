@@ -4,7 +4,6 @@ export interface Student {
   id: string
   company_id: string
   branch_id: string
-  age_category_id: string | null
   first_name: string
   last_name: string
   gender: string
@@ -28,7 +27,6 @@ export interface Student {
 export interface CreateStudentReq {
   company_id: string
   branch_id: string
-  age_category_id?: string
   first_name: string
   last_name: string
   gender: string
@@ -50,7 +48,6 @@ export interface UpdateStudentReq {
   id: string
   company_id: string
   branch_id?: string
-  age_category_id?: string
   first_name?: string
   last_name?: string
   gender?: string
@@ -72,7 +69,7 @@ export interface GetStudentReq {
   id?: string
   company_id: string
   branch_id?: string
-  age_category_id?: string
+  age?: number
   q?: string
   pagination?: PaginationQuery
 }

@@ -1,6 +1,5 @@
 import * as Entity from '@/entities/student.entity'
 import { IBranchRepo } from '@/modules/branch/branch.contract'
-import { ICategoryRepo } from '@/modules/category/category.contract'
 
 import { IStudentRepo, IStudentUsecase } from './student.contract'
 
@@ -8,20 +7,12 @@ export default class StudentUsecase implements IStudentUsecase {
   constructor(
     private repo: IStudentRepo,
     private branchRepo: IBranchRepo,
-    private categoryRepo: ICategoryRepo,
   ) {}
 
   async create(req: Entity.CreateStudentReq): Promise<Entity.Student> {
     const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
     if (!branch) {
       throw new Error('Branch not found')
-    }
-
-    if (req.age_category_id) {
-      const category = await this.categoryRepo.findById(req.age_category_id, req.company_id)
-      if (!category) {
-        throw new Error('Age category not found')
-      }
     }
 
     return this.repo.create(req)
@@ -37,13 +28,6 @@ export default class StudentUsecase implements IStudentUsecase {
       const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
       if (!branch) {
         throw new Error('Branch not found')
-      }
-    }
-
-    if (req.age_category_id) {
-      const category = await this.categoryRepo.findById(req.age_category_id, req.company_id)
-      if (!category) {
-        throw new Error('Age category not found')
       }
     }
 

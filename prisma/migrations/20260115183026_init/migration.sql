@@ -14,7 +14,7 @@ CREATE TYPE "EmployeeStatus" AS ENUM ('active', 'inactive', 'on_leave', 'termina
 CREATE TYPE "EnrollmentStatus" AS ENUM ('active', 'inactive');
 
 -- CreateEnum
-CREATE TYPE "ProductStatus" AS ENUM ('active', 'inactive');
+CREATE TYPE "ProductStatus" AS ENUM ('active', 'inactive', 'archived');
 
 -- CreateEnum
 CREATE TYPE "PricingType" AS ENUM ('daily', 'weekly', 'monthly', 'yearly', 'custom');
@@ -209,7 +209,7 @@ CREATE TABLE "product_schedules" (
 -- CreateTable
 CREATE TABLE "roles" (
     "id" TEXT NOT NULL,
-    "company_id" TEXT NOT NULL,
+    "company_id" TEXT,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL DEFAULT '',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -232,7 +232,6 @@ CREATE TABLE "students" (
     "id" TEXT NOT NULL,
     "company_id" TEXT NOT NULL,
     "branch_id" TEXT NOT NULL,
-    "age_category_id" TEXT,
     "firstName" TEXT NOT NULL DEFAULT '',
     "lastName" TEXT NOT NULL DEFAULT '',
     "gender" TEXT NOT NULL DEFAULT '',
@@ -363,10 +362,10 @@ CREATE INDEX "product_pricings_product_id_name_deleted_at_idx" ON "product_prici
 CREATE INDEX "product_prices_product_pricing_id_started_at_ended_at_isAct_idx" ON "product_prices"("product_pricing_id", "started_at", "ended_at", "isActive");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "roles_name_key" ON "roles"("name");
+CREATE INDEX "roles_company_id_deleted_at_idx" ON "roles"("company_id", "deleted_at");
 
 -- CreateIndex
-CREATE INDEX "roles_company_id_deleted_at_idx" ON "roles"("company_id", "deleted_at");
+CREATE UNIQUE INDEX "roles_company_id_name_key" ON "roles"("company_id", "name");
 
 -- CreateIndex
 CREATE INDEX "students_company_id_deleted_at_idx" ON "students"("company_id", "deleted_at");
@@ -456,7 +455,7 @@ ALTER TABLE "product_prices" ADD CONSTRAINT "product_prices_product_pricing_id_f
 ALTER TABLE "product_schedules" ADD CONSTRAINT "product_schedules_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "roles" ADD CONSTRAINT "roles_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "roles" ADD CONSTRAINT "roles_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -469,9 +468,6 @@ ALTER TABLE "students" ADD CONSTRAINT "students_company_id_fkey" FOREIGN KEY ("c
 
 -- AddForeignKey
 ALTER TABLE "students" ADD CONSTRAINT "students_branch_id_fkey" FOREIGN KEY ("branch_id") REFERENCES "branches"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "students" ADD CONSTRAINT "students_age_category_id_fkey" FOREIGN KEY ("age_category_id") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "teachers" ADD CONSTRAINT "teachers_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

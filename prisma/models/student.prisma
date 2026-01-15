@@ -2,7 +2,6 @@ model Student {
     id                    String    @id @default(uuid(7))
     companyId             String    @map("company_id")
     branchId              String    @map("branch_id")
-    ageCategoryId         String?   @map("age_category_id")
     firstName             String    @default("")
     lastName              String    @default("")
     gender                String    @default("")
@@ -24,7 +23,7 @@ model Student {
 
     company Company @relation(fields: [companyId], references: [id])
     branch Branch @relation(fields: [branchId], references: [id])
-    ageCategory Category? @relation(fields: [ageCategoryId], references: [id], onDelete: SetNull)
+
     enrollments Enrollment[]
 
     @@map("students")

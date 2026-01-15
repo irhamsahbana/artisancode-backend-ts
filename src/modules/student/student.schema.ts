@@ -2,7 +2,6 @@ import Joi from 'joi'
 
 export const createStudentSchema = Joi.object({
   branch_id: Joi.string().uuid().required(),
-  age_category_id: Joi.string().uuid().optional().allow(null),
   first_name: Joi.string().required().min(2).max(100),
   last_name: Joi.string().required().min(2).max(100),
   gender: Joi.string().required().valid('Male', 'Female'),
@@ -22,7 +21,6 @@ export const createStudentSchema = Joi.object({
 
 export const updateStudentSchema = Joi.object({
   branch_id: Joi.string().uuid().optional(),
-  age_category_id: Joi.string().uuid().optional().allow(null),
   first_name: Joi.string().optional().min(2).max(100),
   last_name: Joi.string().optional().min(2).max(100),
   gender: Joi.string().optional().valid('Male', 'Female'),
@@ -45,5 +43,5 @@ export const getStudentListSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).optional(),
   q: Joi.string().allow('').optional(),
   branch_id: Joi.string().uuid().optional(),
-  age_category_id: Joi.string().uuid().optional(),
+  age: Joi.number().integer().min(0).optional(),
 })

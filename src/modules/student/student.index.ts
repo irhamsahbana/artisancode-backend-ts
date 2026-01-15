@@ -3,7 +3,6 @@ import { Router } from 'express'
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 import BranchRepo from '@/modules/branch/branch.repo'
-import CategoryRepo from '@/modules/category/category.repo'
 
 import StudentHandler from './student.handler'
 import StudentRepo from './student.repo'
@@ -12,8 +11,7 @@ import StudentUsecase from './student.usecase'
 
 const repo = new StudentRepo()
 const branchRepo = new BranchRepo()
-const categoryRepo = new CategoryRepo()
-const usecase = new StudentUsecase(repo, branchRepo, categoryRepo)
+const usecase = new StudentUsecase(repo, branchRepo)
 const handler = new StudentHandler(usecase)
 
 const router = Router()

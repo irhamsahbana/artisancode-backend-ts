@@ -11,8 +11,8 @@ model Category {
 
     company  Company?   @relation(fields: [companyId], references: [id])
     parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+
     children Category[] @relation("CategoryHierarchy")
-    students Student[]
     products Product[]
 
     @@map("categories")

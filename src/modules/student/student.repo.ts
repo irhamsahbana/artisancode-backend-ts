@@ -11,7 +11,6 @@ export default class StudentRepo implements IStudentRepo {
       id: data.id,
       company_id: data.companyId,
       branch_id: data.branchId,
-      age_category_id: data.ageCategoryId,
       first_name: data.firstName,
       last_name: data.lastName,
       gender: data.gender,
@@ -38,7 +37,6 @@ export default class StudentRepo implements IStudentRepo {
       data: {
         companyId: req.company_id,
         branchId: req.branch_id,
-        ageCategoryId: req.age_category_id,
         firstName: req.first_name,
         lastName: req.last_name,
         gender: req.gender,
@@ -68,7 +66,6 @@ export default class StudentRepo implements IStudentRepo {
       },
       data: {
         branchId: req.branch_id,
-        ageCategoryId: req.age_category_id,
         firstName: req.first_name,
         lastName: req.last_name,
         gender: req.gender,
@@ -126,7 +123,7 @@ export default class StudentRepo implements IStudentRepo {
   }
 
   async findList(req: Entity.GetStudentReq): Promise<Entity.StudentList> {
-    const { pagination = {}, q, company_id, branch_id, age_category_id } = req
+    const { pagination = {}, q, company_id, branch_id, age } = req
     const { page = 1, per_page = 10 } = pagination
     const skip = (page - 1) * per_page
     const take = per_page
@@ -148,8 +145,15 @@ export default class StudentRepo implements IStudentRepo {
       where.branchId = branch_id
     }
 
-    if (age_category_id) {
-      where.ageCategoryId = age_category_id
+    if (age !== undefined) {
+      const today = new Date()
+      const maxDate = new Date(today.getFullYear() - age, today.getMonth(), today.getDate())
+      const minDate = new Date(today.getFullYear() - age - 1, today.getMonth(), today.getDate())
+
+      where.dateOfBirth = {
+        gt: minDate,
+        lte: maxDate,
+      }
     }
 
     const [items, total] = await Promise.all([
