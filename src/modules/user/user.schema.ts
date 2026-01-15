@@ -11,6 +11,15 @@ export const createUserSchema = Joi.object({
   status: Joi.string().valid('active', 'inactive').optional(),
 })
 
+export const registerSchema = Joi.object({
+  company_name: Joi.string().required().min(3).max(100),
+  name: Joi.string().required().min(3).max(100),
+  username: Joi.string().required().min(3).max(50),
+  email: Joi.string().email().required(),
+  password: Joi.string().required().min(6).max(100),
+  phone: Joi.string().required().max(20),
+})
+
 export const loginSchema = Joi.object({
   username: Joi.string().required(),
   password: Joi.string().required(),

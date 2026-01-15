@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 
+import { AppError } from '@/common/app_error'
 import { responseError } from '@/common/rest_response'
 import { env } from '@/config/env'
 import logger from '@/config/logger'
@@ -10,7 +11,13 @@ const errorHandler = (err: Error, req: Request, res: Response, next: NextFunctio
     return next(err)
   }
 
-  // For non-production environments, send detailed error
+  // Handle AppError (Business Logic Errors)
+  if (err instanceof AppError) {
+    const errorResponse = responseError(err.message, err.errors)
+    return res.status(err.statusCode).json(errorResponse)
+  }
+
+  // For non-production environments, send detailed error for unexpected errors
   if (env.APP_ENV !== 'production') {
     const errorResponse = responseError(err.message, err.stack)
     logger.error(errorResponse)
@@ -18,6 +25,7 @@ const errorHandler = (err: Error, req: Request, res: Response, next: NextFunctio
   }
 
   // For production, send a generic error message
+  logger.error(err)
   return res
     .status(500)
     .json(responseError('Internal Server Error', 'An unexpected error occurred.'))

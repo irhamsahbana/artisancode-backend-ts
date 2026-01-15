@@ -28,6 +28,90 @@ export default class UserRepo implements IUserRepo {
     return this.toEntity(data)
   }
 
+  async checkExistingUser(username: string, email: string): Promise<boolean> {
+    const count = await prisma.user.count({
+      where: {
+        OR: [{ username }, { email }],
+      },
+    })
+    return count > 0
+  }
+
+  async register(req: Entity.RegisterReq): Promise<Entity.RegisterRes> {
+    return await prisma.$transaction(async (tx) => {
+      // 1. Create Company
+      const company = await tx.company.create({
+        data: {
+          name: req.company_name,
+          status: 'active',
+        },
+      })
+
+      // 2. Create Roles
+      const ownerRole = await tx.role.create({
+        data: {
+          companyId: company.id,
+          name: 'Owner',
+          description: 'Company Owner',
+        },
+      })
+
+      const superadminRole = await tx.role.create({
+        data: {
+          companyId: company.id,
+          name: 'Superadmin',
+          description: 'Company Superadmin',
+        },
+      })
+
+      // 3. Assign Permissions
+      const permissions = await tx.permission.findMany()
+      const permissionIds = permissions.map((p) => p.id)
+
+      if (permissionIds.length > 0) {
+        await tx.rolePermission.createMany({
+          data: permissionIds.map((pid) => ({
+            roleId: ownerRole.id,
+            permissionId: pid,
+          })),
+        })
+
+        await tx.rolePermission.createMany({
+          data: permissionIds.map((pid) => ({
+            roleId: superadminRole.id,
+            permissionId: pid,
+          })),
+        })
+      }
+
+      // 4. Create User
+      const user = await tx.user.create({
+        data: {
+          companyId: company.id,
+          roleId: ownerRole.id,
+          name: req.name,
+          username: req.username,
+          email: req.email,
+          password: req.password,
+          phone: req.phone,
+          status: 'active',
+        },
+      })
+
+      return {
+        company: {
+          id: company.id,
+          name: company.name,
+        },
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        },
+      }
+    })
+  }
+
   async findList(req: Entity.GetUserReq): Promise<Entity.UserList> {
     const { pagination = {}, ...rest } = req
     const { page = 1, per_page = 10 } = pagination

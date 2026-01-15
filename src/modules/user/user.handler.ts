@@ -22,6 +22,12 @@ export default class UserHandler {
     res.status(201).json(responseSuccess(data, 'User created successfully'))
   }
 
+  register = async (req: Request, res: Response) => {
+    const payload = req.body as Entity.RegisterReq
+    const data = await this.usecase.register(payload)
+    res.status(201).json(responseSuccess(data, 'Company registered successfully'))
+  }
+
   login = async (req: Request, res: Response) => {
     const payload = req.body as Entity.LoginReq
     const data = await this.usecase.login(payload)

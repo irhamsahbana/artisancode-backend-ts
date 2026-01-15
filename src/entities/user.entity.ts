@@ -52,3 +52,24 @@ export interface UserList {
 export interface LoginRes extends User {
   token: string
 }
+
+export interface RegisterReq {
+  company_name: string
+  name: string
+  username: string
+  email: string
+  password: string
+  phone: string
+}
+
+export interface RegisterRes {
+  company: {
+    id: string
+    name: string
+  }
+  user: {
+    id: string
+    username: string
+    email: string
+  }
+}
