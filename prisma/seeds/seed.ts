@@ -7,8 +7,9 @@ import { seedBranches } from './branches'
 import { seedCategories } from './categories'
 import { clean } from './clean'
 import { seedCompanies } from './companies'
+import { seedPermissions } from './permissions'
 import { seedProducts } from './products'
-import { seedRoles } from './roles'
+import { seedCompanyRoles, seedMasterRoles } from './roles'
 import { seedStudents } from './students'
 import { seedUsers } from './users'
 
@@ -31,19 +32,26 @@ async function main() {
   // Clean up
   await clean(prisma)
 
-  // 1. Create Company
+  // 0. Create Permissions
+  await seedPermissions(prisma)
+
+  // 1. Create Master Roles
+  await seedMasterRoles(prisma)
+
+  // 2. Create Company
   const company = await seedCompanies(prisma)
 
-  // 2. Create Roles
-  const { adminRole, userRole } = await seedRoles(prisma, company.id)
+  // 3. Create Roles
+  const { ownerRole, superAdminRole, adminRole } = await seedCompanyRoles(prisma, company.id)
 
-  // 3. Create Branch
+  // 4. Create Branch
   const branch = await seedBranches(prisma, company.id)
 
   // 4. Create Users
   await seedUsers(prisma, company.id, {
+    ownerRoleId: ownerRole.id,
+    superAdminRoleId: superAdminRole.id,
     adminRoleId: adminRole.id,
-    userRoleId: userRole.id,
   })
 
   // 5. Create Categories
@@ -59,8 +67,9 @@ async function main() {
   console.log('Seeding completed!')
   console.log('=================================')
   console.log('Credentials:')
-  console.log('Admin: admin / password123')
-  console.log('User: user / password123')
+  console.log('Owner: owner / password123')
+  console.log('Super Admin: superadmin / password123')
+  console.log('Branch Admin: admin / password123')
   console.log('=================================\n')
 }
 

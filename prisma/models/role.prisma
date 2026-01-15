@@ -1,16 +1,18 @@
 model Role {
     id           String   @id @default(uuid(7))
-    companyId    String   @map("company_id")
-    name         String   @unique
+    companyId    String?   @map("company_id")
+    name         String
     description  String   @default("")
     createdAt    DateTime @default(now()) @map("created_at")
     updatedAt    DateTime @updatedAt @map("updated_at")
     deletedAt    DateTime? @map("deleted_at")
 
+    company     Company? @relation(fields: [companyId], references: [id])
+
     user        User[]
     permissions RolePermission[]
-    company     Company @relation(fields: [companyId], references: [id])
 
     @@map("roles")
     @@index([companyId, deletedAt])
+    @@unique([companyId, name])
 }
