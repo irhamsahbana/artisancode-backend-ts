@@ -29,11 +29,6 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
       throw new Error('Program not found')
     }
 
-    const pricingExists = program.pricings?.some((p) => p.id === req.pricing_id)
-    if (!pricingExists) {
-      throw new Error('Pricing not found')
-    }
-
     return this.repo.create(req)
   }
 
@@ -61,18 +56,6 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
       const program = await this.programRepo.findById(req.program_id, req.company_id)
       if (!program) {
         throw new Error('Program not found')
-      }
-    }
-
-    if (req.pricing_id) {
-      const programId = req.program_id || enrollment.program_id
-      const program = await this.programRepo.findById(programId, req.company_id)
-      if (!program) {
-        throw new Error('Program not found')
-      }
-      const pricingExists = program.pricings?.some((p) => p.id === req.pricing_id)
-      if (!pricingExists) {
-        throw new Error('Pricing not found')
       }
     }
 
