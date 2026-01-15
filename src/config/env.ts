@@ -1,11 +1,13 @@
 import 'dotenv/config'
 
-const parseBoolean = (value: string | undefined, defaultValue: boolean): boolean => {
-  if (value === undefined) return defaultValue
-  const normalized = value.trim().toLowerCase()
-  if (normalized === 'true') return true
-  if (normalized === 'false') return false
-  return defaultValue
+const parseBoolean = (value: string | undefined, def: boolean): boolean => {
+  if (value === undefined) return def
+  return value.toLowerCase() === 'true'
+}
+
+const parseNumber = (value: string | undefined, def: number): number => {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : def
 }
 
 export const env = {
@@ -17,6 +19,22 @@ export const env = {
   APP_VERSION: process.env.APP_VERSION || '1.0.0',
   APP_LOG_LEVEL: process.env.APP_LOG_LEVEL || 'info',
   DATABASE_URL: process.env.DATABASE_URL,
+    DATABASE: {
+    URL: process.env.DATABASE_URL,
+    POOL: {
+      MAX: parseNumber(process.env.DB_POOL_MAX, 20),
+      MIN: parseNumber(process.env.DB_POOL_MIN, 5),
+      IDLE_TIMEOUT_MS: parseNumber(process.env.DB_POOL_IDLE_TIMEOUT_MS, 60000),
+      CONNECTION_TIMEOUT_MS: parseNumber(process.env.DB_POOL_CONN_TIMEOUT_MS, 2000),
+    },
+    SSL: {
+      ENABLED: parseBoolean(process.env.DB_SSL_ENABLED, true),
+      REJECT_UNAUTHORIZED: parseBoolean(
+        process.env.DB_SSL_REJECT_UNAUTHORIZED,
+        false,
+      ),
+    },
+  },
   JWT: {
     SECRET: process.env.JWT_SECRET || 'secret',
     EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1d',
