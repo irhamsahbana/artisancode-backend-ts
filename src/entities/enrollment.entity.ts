@@ -1,6 +1,6 @@
 import { Branch } from './branch.entity'
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
-import { Program } from './program.entity'
+import { Program, ProgramPricing } from './program.entity'
 import { Student } from './student.entity'
 import { Teacher } from './teacher.entity'
 
@@ -10,11 +10,12 @@ export interface Enrollment {
   branch_id: string
   student_id: string
   program_id: string
-  enrollment_date: Date
+  pricing_id: string
+  enrollment_date?: Date
   status: string
-  billing_type: string
-  billed_at: number
-  next_payment_date: Date | null
+  billing_type?: string
+  billed_at?: number
+  next_payment_date?: Date | null
   created_at: Date
   updated_at: Date
   deleted_at: Date | null
@@ -23,6 +24,7 @@ export interface Enrollment {
     branch?: Branch
     teachers?: Teacher[]
   }
+  pricing?: ProgramPricing
 }
 
 export interface CreateEnrollmentReq {
@@ -30,6 +32,7 @@ export interface CreateEnrollmentReq {
   branch_id: string
   student_id: string
   program_id: string
+  pricing_id: string
   enrollment_date?: Date
   status?: string
   billing_type?: string
@@ -43,6 +46,7 @@ export interface UpdateEnrollmentReq {
   branch_id?: string
   student_id?: string
   program_id?: string
+  pricing_id?: string
   enrollment_date?: Date
   status?: string
   billing_type?: string
@@ -56,6 +60,7 @@ export interface GetEnrollmentReq {
   branch_id?: string
   student_id?: string
   program_id?: string
+  pricing_id?: string
   pagination?: PaginationQuery
 }
 

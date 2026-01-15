@@ -17,7 +17,7 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
     }))
     return {
       id: data.id,
-      companyId: data.companyId,
+      companyId: data.companyId ?? undefined,
       name: data.name,
       description: data.description,
       createdAt: data.createdAt,

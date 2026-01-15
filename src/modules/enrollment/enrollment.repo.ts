@@ -23,7 +23,6 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
             id: data.student.id,
             company_id: data.student.companyId,
             branch_id: data.student.branchId,
-            age_category_id: data.student.ageCategoryId,
             first_name: data.student.firstName,
             last_name: data.student.lastName,
             gender: data.student.gender,
