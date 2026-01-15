@@ -1,36 +1,26 @@
 import http from 'http'
 
-import { trace } from '@opentelemetry/api'
-
 import prisma from '@/common/prisma'
 import logger from '@/config/logger'
-import { shutdownTelemetry } from '@/telemetry'
 
 const shutdown = (server: http.Server) => {
-  const tracer = trace.getTracer('shutdown')
+  logger.info('Received kill signal, shutting down gracefully ...')
 
-  tracer.startActiveSpan('graceful_shutdown', async (span) => {
-    logger.info('Received kill signal, shutting down gracefully ...')
-
-    server.close(async () => {
-      logger.info('HTTP server closed')
-      // Here you will close other connections such as Database
-      logger.info('Disconnecting from Prisma ...')
-      await prisma.$disconnect()
-      logger.info('Prisma disconnected')
-      span.end()
-      await shutdownTelemetry()
-      process.exit(0)
-    })
-
-    logger.info('Waiting for connections to close ...')
-
-    setTimeout(() => {
-      logger.error('Could not close connections in time, forcefully shutting down')
-      span.end()
-      process.exit(1)
-    }, 30 * 1000)
+  server.close(async () => {
+    logger.info('HTTP server closed')
+    // Here you will close other connections such as Database
+    logger.info('Disconnecting from Prisma ...')
+    await prisma.$disconnect()
+    logger.info('Prisma disconnected')
+    process.exit(0)
   })
+
+  logger.info('Waiting for connections to close ...')
+
+  setTimeout(() => {
+    logger.error('Could not close connections in time, forcefully shutting down')
+    process.exit(1)
+  }, 30 * 1000)
 }
 
 export default shutdown
