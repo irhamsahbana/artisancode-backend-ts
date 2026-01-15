@@ -27,8 +27,4 @@ The technical details and guidelines for this project have been moved to the `do
 - [Commit Guidelines](docs/commit_guidelines.md)
 
 ## Quick Summary
-
-- **Runtime**: Node.js 24.x, TypeScript
-- **Framework**: Express.js 5.x
-- **Database**: PostgreSQL 18.x with Prisma 7.x
 - **Architecture**: Modular Clean Architecture (`src/modules/[module_name]`)
