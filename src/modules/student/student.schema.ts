@@ -14,7 +14,7 @@ export const createStudentSchema = Joi.object({
   parent_phone: Joi.string().optional().allow('').max(20),
   parent_email: Joi.string().optional().allow('').email(),
   emergency_contact_phone: Joi.string().optional().allow('').max(20),
-  blood_type: Joi.string().optional().allow('').max(3),
+  blood_type: Joi.string().optional().allow(''),
   medical_notes: Joi.string().optional().allow('').max(500),
   status: Joi.string().optional().valid('active', 'inactive'),
 })
@@ -33,7 +33,7 @@ export const updateStudentSchema = Joi.object({
   parent_phone: Joi.string().optional().allow('').max(20),
   parent_email: Joi.string().optional().allow('').email(),
   emergency_contact_phone: Joi.string().optional().allow('').max(20),
-  blood_type: Joi.string().optional().allow('').max(3),
+  blood_type: Joi.string().optional().allow(''),
   medical_notes: Joi.string().optional().allow('').max(500),
   status: Joi.string().optional().valid('active', 'inactive'),
 })
