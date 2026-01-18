@@ -16,7 +16,7 @@ export const createStudentSchema = Joi.object({
   emergency_contact_phone: Joi.string().optional().allow('').max(20),
   blood_type: Joi.string().optional().allow(''),
   medical_notes: Joi.string().optional().allow('').max(500),
-  status: Joi.string().optional().valid('active', 'inactive'),
+  status: Joi.string().optional().valid('active', 'inactive', 'graduated', 'suspended', 'dropped', 'pending'),
 })
 
 export const updateStudentSchema = Joi.object({
@@ -35,7 +35,7 @@ export const updateStudentSchema = Joi.object({
   emergency_contact_phone: Joi.string().optional().allow('').max(20),
   blood_type: Joi.string().optional().allow(''),
   medical_notes: Joi.string().optional().allow('').max(500),
-  status: Joi.string().optional().valid('active', 'inactive'),
+  status: Joi.string().optional().valid('active', 'inactive', 'graduated', 'suspended', 'dropped', 'pending'),
 })
 
 export const getStudentListSchema = Joi.object({

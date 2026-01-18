@@ -33,6 +33,15 @@ enum ProductStatus {
   archived
 }
 
+enum StudentStatus {
+  active
+  inactive
+  graduated
+  suspended
+  dropped
+  pending
+}
+
 enum PricingType {
   daily
   weekly
