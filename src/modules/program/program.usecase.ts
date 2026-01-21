@@ -160,13 +160,48 @@ export default class ProgramUsecase implements IProgramUsecase {
       throw new AppError(404, 'Pricing package not found')
     }
 
-    // Validate if currency already exists in this pricing package
-    // Simplified rule: One active price per currency per package
-    const existingCurrency = pricing.prices.find(
-      (p) => p.currency === req.currency && p.is_active && (!p.ended_at || p.ended_at > new Date()),
+    const newStart = req.started_at ? new Date(req.started_at) : new Date()
+    const newEnd = req.ended_at ? new Date(req.ended_at) : null
+
+    // 1. Auto-Cutoff Logic:
+    // Find active price for same currency that has NO end date (open-ended)
+    // and close it at the new start date.
+    const openEndedPrice = pricing.prices.find(
+      (p) =>
+        p.currency === req.currency &&
+        p.is_active &&
+        p.ended_at === null &&
+        new Date(p.started_at) < newStart,
     )
-    if (existingCurrency) {
-      throw new AppError(409, `Price for currency ${req.currency} already exists in this package`)
+
+    if (openEndedPrice) {
+      // Close the previous price
+      await this.repo.updatePrice({
+        program_id: req.program_id,
+        pricing_id: req.pricing_id,
+        price_id: openEndedPrice.id,
+        company_id: req.company_id,
+        ended_at: newStart,
+      })
+      // Update local object for overlap check below
+      openEndedPrice.ended_at = newStart
+    }
+
+    // 2. Validate Overlap with ALL other prices (including the just-closed one)
+    const otherPrices = pricing.prices.filter(
+      (p) => p.currency === req.currency && p.is_active,
+    )
+
+    for (const other of otherPrices) {
+      this.checkOverlap(
+        { start: newStart, end: newEnd },
+        {
+          start: new Date(other.started_at),
+          end: other.ended_at ? new Date(other.ended_at) : null,
+          id: other.id,
+        },
+        req.currency,
+      )
     }
 
     return this.repo.addPrice(req)
@@ -217,33 +252,46 @@ export default class ProgramUsecase implements IProgramUsecase {
     )
 
     for (const other of otherPrices) {
-      const otherStart = new Date(other.started_at)
-      const otherEnd = other.ended_at ? new Date(other.ended_at) : null
-
-      // Overlap Logic:
-      // Two ranges [StartA, EndA] and [StartB, EndB] overlap if:
-      // (StartA < EndB) AND (EndA > StartB)
-      // Handling nulls (infinity):
-      // - If EndA is null, it overlaps if EndB > StartA (or EndB is null)
-      // - If EndB is null, it overlaps if EndA > StartB (or EndA is null)
-
-      const startA = effectiveStartedAt
-      const endA = effectiveEndedAt
-      const startB = otherStart
-      const endB = otherEnd
-
-      const isStartABeforeEndB = endB === null || startA < endB
-      const isEndAAfterStartB = endA === null || endA > startB
-
-      if (isStartABeforeEndB && isEndAAfterStartB) {
-        throw new AppError(
-          409,
-          `Date overlap detected with another price (ID: ${other.id}) for currency ${price.currency}.`,
-        )
-      }
+      this.checkOverlap(
+        { start: effectiveStartedAt, end: effectiveEndedAt },
+        {
+          start: new Date(other.started_at),
+          end: other.ended_at ? new Date(other.ended_at) : null,
+          id: other.id,
+        },
+        price.currency,
+      )
     }
 
     return this.repo.updatePrice(req)
+  }
+
+  private checkOverlap(
+    current: { start: Date; end: Date | null },
+    existing: { start: Date; end: Date | null; id: string },
+    currency: string,
+  ) {
+    const startA = current.start
+    const endA = current.end
+    const startB = existing.start
+    const endB = existing.end
+
+    // Overlap Logic:
+    // Two ranges [StartA, EndA] and [StartB, EndB] overlap if:
+    // (StartA < EndB) AND (EndA > StartB)
+    // Handling nulls (infinity):
+    // - If EndA is null, it overlaps if EndB > StartA (or EndB is null)
+    // - If EndB is null, it overlaps if EndA > StartB (or EndA is null)
+
+    const isStartABeforeEndB = endB === null || startA < endB
+    const isEndAAfterStartB = endA === null || endA > startB
+
+    if (isStartABeforeEndB && isEndAAfterStartB) {
+      throw new AppError(
+        409,
+        `Date overlap detected with another price (ID: ${existing.id}) for currency ${currency}.`,
+      )
+    }
   }
 
   async deleteSchedule(programId: string, scheduleId: string, companyId: string): Promise<void> {
