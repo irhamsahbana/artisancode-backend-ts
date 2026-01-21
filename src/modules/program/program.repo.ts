@@ -18,7 +18,6 @@ export default class ProgramRepo implements IProgramRepo {
       id: data.id,
       company_id: data.companyId,
       branch_id: data.branchId,
-      age_category_id: data.ageCategoryId,
       name: data.name,
       description: data.description,
       status: data.status,
@@ -50,6 +49,7 @@ export default class ProgramRepo implements IProgramRepo {
           started_at: price.startedAt,
           ended_at: price.endedAt,
           is_active: price.isActive,
+          created_at: price.createdAt,
         })),
       })),
     }
@@ -60,7 +60,6 @@ export default class ProgramRepo implements IProgramRepo {
       data: {
         companyId: req.company_id,
         branchId: req.branch_id,
-        ageCategoryId: req.age_category_id,
         name: req.name,
         description: req.description || '',
         status: req.status || 'active',
@@ -89,6 +88,7 @@ export default class ProgramRepo implements IProgramRepo {
       include: {
         productSchedules: true,
         pricings: {
+          where: { deletedAt: null },
           include: {
             prices: true,
           },
@@ -107,7 +107,6 @@ export default class ProgramRepo implements IProgramRepo {
       },
       data: {
         branchId: req.branch_id,
-        ageCategoryId: req.age_category_id,
         name: req.name,
         description: req.description,
         status: req.status,
@@ -115,6 +114,7 @@ export default class ProgramRepo implements IProgramRepo {
       include: {
         productSchedules: true,
         pricings: {
+          where: { deletedAt: null },
           include: {
             prices: true,
           },
@@ -147,6 +147,34 @@ export default class ProgramRepo implements IProgramRepo {
       include: {
         productSchedules: true,
         pricings: {
+          where: { deletedAt: null },
+          include: {
+            prices: true,
+          },
+        },
+      },
+    })
+    if (!data) return null
+    return this.toEntity(data)
+  }
+
+  async findByName(name: string, companyId: string, branchId?: string | null): Promise<Entity.Program | null> {
+    const where: Prisma.ProductWhereInput = {
+      companyId,
+      name: { equals: name, mode: 'insensitive' },
+      deletedAt: null,
+    }
+
+    if (branchId !== undefined) {
+      where.branchId = branchId
+    }
+
+    const data = await prisma.product.findFirst({
+      where,
+      include: {
+        productSchedules: true,
+        pricings: {
+          where: { deletedAt: null },
           include: {
             prices: true,
           },
@@ -173,7 +201,7 @@ export default class ProgramRepo implements IProgramRepo {
     }
 
     if (branch_id) {
-      where.branchId = branch_id
+      where.OR = [{ branchId: branch_id }, { branchId: null }]
     }
 
     const [items, total] = await Promise.all([
@@ -185,6 +213,7 @@ export default class ProgramRepo implements IProgramRepo {
         include: {
           productSchedules: true,
           pricings: {
+            where: { deletedAt: null },
             include: {
               prices: true,
             },
@@ -260,7 +289,92 @@ export default class ProgramRepo implements IProgramRepo {
         started_at: p.startedAt,
         ended_at: p.endedAt,
         is_active: p.isActive,
+        created_at: p.createdAt,
       })),
     }
+  }
+
+  async addPrice(req: Entity.AddPriceReq): Promise<Entity.ProgramPrice> {
+    const data = await prisma.productPrice.create({
+      data: {
+        productPricingId: req.pricing_id,
+        currency: req.currency,
+        price: req.price,
+        startedAt: req.started_at || new Date(),
+        endedAt: req.ended_at,
+        isActive: true,
+      },
+    })
+    return {
+      id: data.id,
+      pricing_id: data.productPricingId,
+      currency: data.currency,
+      price: data.price.toNumber(),
+      started_at: data.startedAt,
+      ended_at: data.endedAt,
+      is_active: data.isActive,
+      created_at: data.createdAt,
+    }
+  }
+
+  async updatePrice(req: Entity.UpdatePriceReq): Promise<Entity.ProgramPrice> {
+    const data = await prisma.productPrice.update({
+      where: {
+        id: req.price_id,
+        productPricing: {
+          id: req.pricing_id,
+          productId: req.program_id,
+          product: {
+            companyId: req.company_id,
+          },
+        },
+      },
+      data: {
+        price: req.price,
+        startedAt: req.started_at,
+        endedAt: req.ended_at,
+      },
+    })
+    return {
+      id: data.id,
+      pricing_id: data.productPricingId,
+      currency: data.currency,
+      price: data.price.toNumber(),
+      started_at: data.startedAt,
+      ended_at: data.endedAt,
+      is_active: data.isActive,
+      created_at: data.createdAt,
+    }
+  }
+
+  async deleteSchedule(programId: string, scheduleId: string, companyId: string): Promise<void> {
+    // Using deleteMany to ensure ownership via product.companyId
+    // deleteMany returns { count: n }, doesn't throw if not found
+    await prisma.productSchedule.deleteMany({
+      where: {
+        id: scheduleId,
+        productId: programId,
+        product: {
+          companyId: companyId,
+        },
+      },
+    })
+  }
+
+  async deletePricing(programId: string, pricingId: string, companyId: string): Promise<void> {
+    // Using updateMany for soft delete with ownership check
+    await prisma.productPricing.updateMany({
+      where: {
+        id: pricingId,
+        productId: programId,
+        product: {
+          companyId: companyId,
+        },
+        deletedAt: null,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    })
   }
 }

@@ -30,7 +30,6 @@ const programPricingSchema = Joi.object({
 
 export const createProgramSchema = Joi.object({
   branch_id: Joi.string().uuid().optional().allow(null),
-  age_category_id: Joi.string().uuid().optional().allow(null),
   name: Joi.string().required().min(2).max(100),
   description: Joi.string().optional().allow('').max(500),
   status: Joi.string().optional().valid('active', 'inactive'),
@@ -41,7 +40,6 @@ export const createProgramSchema = Joi.object({
 
 export const updateProgramSchema = Joi.object({
   branch_id: Joi.string().uuid().optional().allow(null),
-  age_category_id: Joi.string().uuid().optional().allow(null),
   name: Joi.string().optional().min(2).max(100),
   description: Joi.string().optional().allow('').max(500),
   status: Joi.string().optional().valid('active', 'inactive'),
@@ -50,6 +48,14 @@ export const updateProgramSchema = Joi.object({
 export const addScheduleSchema = programScheduleSchema
 
 export const addPricingSchema = programPricingSchema
+
+export const addPriceSchema = programPriceSchema
+
+export const updatePriceSchema = Joi.object({
+  price: Joi.number().optional().min(0), // Minor units
+  started_at: Joi.date().optional(),
+  ended_at: Joi.date().optional().allow(null),
+})
 
 export const getProgramListSchema = Joi.object({
   page: Joi.number().integer().min(1).optional(),

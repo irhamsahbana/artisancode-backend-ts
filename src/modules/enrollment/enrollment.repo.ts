@@ -48,7 +48,6 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
             id: data.product.id,
             company_id: data.product.companyId,
             branch_id: data.product.branchId,
-            age_category_id: data.product.ageCategoryId,
             name: data.product.name,
             description: data.product.description,
             status: data.product.status,
@@ -74,6 +73,7 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
               started_at: p.startedAt,
               ended_at: p.endedAt,
               is_active: p.isActive,
+              created_at: p.createdAt,
             })),
           }
         : undefined,
@@ -187,6 +187,28 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
         last_page: Math.ceil(total / per_page),
       },
     }
+  }
+
+  async countActiveByProgram(programId: string, companyId: string): Promise<number> {
+    return prisma.enrollment.count({
+      where: {
+        productId: programId,
+        companyId,
+        status: 'active',
+        deletedAt: null,
+      },
+    })
+  }
+
+  async countActiveByPricing(pricingId: string, companyId: string): Promise<number> {
+    return prisma.enrollment.count({
+      where: {
+        productPricingId: pricingId,
+        companyId,
+        status: 'active',
+        deletedAt: null,
+      },
+    })
   }
 }
 

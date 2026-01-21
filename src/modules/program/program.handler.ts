@@ -95,4 +95,47 @@ export default class ProgramHandler {
     const data = await this.usecase.addPricing(payload)
     res.status(201).json(responseSuccess(data, 'Pricing added successfully'))
   }
+
+  addPrice = async (req: Request, res: Response) => {
+    const { id, pricingId } = req.params
+    const user = (req as AuthenticatedRequest).user
+    const payload = req.body as Entity.AddPriceReq
+
+    payload.program_id = id
+    payload.pricing_id = pricingId
+    payload.company_id = user?.company_id || ''
+
+    const data = await this.usecase.addPrice(payload)
+    res.status(201).json(responseSuccess(data, 'Price added successfully'))
+  }
+
+  updatePrice = async (req: Request, res: Response) => {
+    const { id, pricingId, priceId } = req.params
+    const user = (req as AuthenticatedRequest).user
+    const payload = req.body as Entity.UpdatePriceReq
+
+    payload.program_id = id
+    payload.pricing_id = pricingId
+    payload.price_id = priceId
+    payload.company_id = user?.company_id || ''
+
+    const data = await this.usecase.updatePrice(payload)
+    res.status(200).json(responseSuccess(data, 'Price updated successfully'))
+  }
+
+  deleteSchedule = async (req: Request, res: Response) => {
+    const { id, scheduleId } = req.params
+    const user = (req as AuthenticatedRequest).user
+
+    await this.usecase.deleteSchedule(id, scheduleId, user?.company_id || '')
+    res.status(200).json(responseSuccess(null, 'Schedule deleted successfully'))
+  }
+
+  deletePricing = async (req: Request, res: Response) => {
+    const { id, pricingId } = req.params
+    const user = (req as AuthenticatedRequest).user
+
+    await this.usecase.deletePricing(id, pricingId, user?.company_id || '')
+    res.status(200).json(responseSuccess(null, 'Pricing deleted successfully'))
+  }
 }

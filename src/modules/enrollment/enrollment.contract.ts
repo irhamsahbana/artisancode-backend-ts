@@ -6,6 +6,8 @@ export interface IEnrollmentRepo {
   delete(id: string, companyId: string): Promise<void>
   findById(id: string, companyId: string): Promise<Entity.Enrollment | null>
   findList(req: Entity.GetEnrollmentReq): Promise<Entity.EnrollmentList>
+  countActiveByProgram(programId: string, companyId: string): Promise<number>
+  countActiveByPricing(pricingId: string, companyId: string): Promise<number>
 }
 
 export interface IEnrollmentUsecase {

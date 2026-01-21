@@ -55,13 +55,13 @@ async function main() {
   })
 
   // 5. Create Categories
-  const category = await seedCategories(prisma, company.id)
+  await seedCategories(prisma, company.id)
 
   // 6. Create Students
   await seedStudents(prisma, company.id, branch.id)
 
   // 7. Create Products
-  await seedProducts(prisma, company.id, branch.id, category.id)
+  await seedProducts(prisma, company.id, branch.id)
 
   console.log('\n=================================')
   console.log('Seeding completed!')

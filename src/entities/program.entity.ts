@@ -20,6 +20,7 @@ export interface ProgramPrice {
   started_at: Date
   ended_at: Date | null
   is_active: boolean
+  created_at: Date
 }
 
 export interface ProgramPricing {
@@ -37,7 +38,6 @@ export interface Program {
   id: string
   company_id: string
   branch_id: string | null
-  age_category_id: string | null
   name: string
   description: string
   status: ProgramStatus
@@ -51,7 +51,6 @@ export interface Program {
 export interface CreateProgramReq {
   company_id: string
   branch_id?: string
-  age_category_id?: string
   name: string
   description?: string
   status?: ProgramStatus
@@ -76,10 +75,19 @@ export interface UpdateProgramReq {
   id: string
   company_id: string
   branch_id?: string
-  age_category_id?: string
   name?: string
   description?: string
   status?: ProgramStatus
+}
+
+export interface UpdatePriceReq {
+  program_id: string
+  pricing_id: string
+  price_id: string
+  company_id: string
+  price?: number
+  started_at?: Date
+  ended_at?: Date | null
 }
 
 export interface AddScheduleReq {
@@ -101,6 +109,16 @@ export interface AddPricingReq {
     started_at?: Date
     ended_at?: Date
   }[]
+}
+
+export interface AddPriceReq {
+  program_id: string
+  pricing_id: string
+  company_id: string
+  currency: string
+  price: number
+  started_at?: Date
+  ended_at?: Date
 }
 
 export interface GetProgramReq {

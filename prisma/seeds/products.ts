@@ -3,8 +3,7 @@ import { PrismaClient } from '@prisma/client'
 export async function seedProducts(
   prisma: PrismaClient, 
   companyId: string, 
-  branchId: string, 
-  categoryId: string
+  branchId: string
 ) {
   console.log('Creating Products...')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -14,7 +13,6 @@ export async function seedProducts(
       description: 'Basic Piano Lesson for Kids',
       companyId: companyId,
       branchId: branchId,
-      ageCategoryId: categoryId,
       status: 'active',
       pricings: {
         create: {

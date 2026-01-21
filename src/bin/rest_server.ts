@@ -2,6 +2,7 @@ import http from 'http'
 
 import express, { Express } from 'express'
 
+import { AppError } from '@/common/app_error'
 import cors from '@/common/middlewares/cors'
 import errorHandler from '@/common/middlewares/error_handler'
 import requestLogger from '@/common/middlewares/request_logger'
@@ -19,6 +20,11 @@ class RESTServer {
     app.use(requestLogger)
 
     app.use('/api', restRouter)
+
+    // 404 Handler
+    app.use((req, res, next) => {
+      next(new AppError(404, `Route not found: ${req.method} ${req.originalUrl}`))
+    })
 
     app.use(errorHandler)
 
