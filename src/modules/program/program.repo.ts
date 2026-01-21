@@ -103,6 +103,11 @@ export default class ProgramRepo implements IProgramRepo {
             },
           })),
         },
+        teacherProducts: {
+          create: req.teachers?.map((teacherId) => ({
+            teacherId: teacherId,
+          })),
+        },
       },
       include: {
         productSchedules: true,
