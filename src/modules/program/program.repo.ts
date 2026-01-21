@@ -20,6 +20,7 @@ export default class ProgramRepo implements IProgramRepo {
       branch_id: data.branchId,
       name: data.name,
       description: data.description,
+      capacity: data.capacity,
       status: data.status,
       created_at: data.createdAt,
       updated_at: data.updatedAt,
@@ -62,6 +63,7 @@ export default class ProgramRepo implements IProgramRepo {
         branchId: req.branch_id,
         name: req.name,
         description: req.description || '',
+        capacity: req.capacity || 0,
         status: req.status || 'active',
         productSchedules: {
           create: req.schedules?.map((s) => ({
@@ -99,17 +101,19 @@ export default class ProgramRepo implements IProgramRepo {
   }
 
   async update(req: Entity.UpdateProgramReq): Promise<Entity.Program> {
+    const { id, company_id, ...rest } = req
     const data = await prisma.product.update({
       where: {
-        id: req.id,
-        companyId: req.company_id,
+        id: id,
+        companyId: company_id,
         deletedAt: null,
       },
       data: {
-        branchId: req.branch_id,
-        name: req.name,
-        description: req.description,
-        status: req.status,
+        branchId: rest.branch_id,
+        name: rest.name,
+        description: rest.description,
+        capacity: rest.capacity,
+        status: rest.status,
       },
       include: {
         productSchedules: true,

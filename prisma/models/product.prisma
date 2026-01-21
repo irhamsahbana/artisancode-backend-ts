@@ -4,6 +4,7 @@ model Product {
     branchId      String?       @map("branch_id")
     name          String        @default("")
     description   String        @default("")
+    capacity      Int?          @default(0)
     status        ProductStatus @default(active)
     createdAt     DateTime      @default(now()) @map("created_at")
     updatedAt     DateTime      @updatedAt @map("updated_at")

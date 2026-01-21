@@ -40,6 +40,7 @@ export interface Program {
   branch_id: string | null
   name: string
   description: string
+  capacity: number | null
   status: ProgramStatus
   schedules?: ProgramSchedule[]
   pricings?: ProgramPricing[]
@@ -53,6 +54,7 @@ export interface CreateProgramReq {
   branch_id?: string
   name: string
   description?: string
+  capacity?: number | null
   status?: ProgramStatus
   schedules?: {
     day?: string
@@ -77,6 +79,7 @@ export interface UpdateProgramReq {
   branch_id?: string
   name?: string
   description?: string
+  capacity?: number | null
   status?: ProgramStatus
 }
 
@@ -86,6 +89,7 @@ export interface UpdateProgramAllReq {
   branch_id?: string | null
   name?: string
   description?: string
+  capacity?: number | null
   status?: ProgramStatus
   schedules?: {
     id?: string | null
