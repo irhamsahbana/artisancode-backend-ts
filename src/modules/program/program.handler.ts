@@ -30,6 +30,18 @@ export default class ProgramHandler {
     res.status(200).json(responseSuccess(data, 'Program updated successfully'))
   }
 
+  updateAll = async (req: Request, res: Response) => {
+    const { id } = req.params
+    const user = (req as AuthenticatedRequest).user
+    const payload = req.body as Entity.UpdateProgramAllReq
+
+    payload.id = id
+    payload.company_id = user?.company_id || ''
+
+    const data = await this.usecase.updateAll(payload)
+    res.status(200).json(responseSuccess(data, 'Program updated successfully'))
+  }
+
   delete = async (req: Request, res: Response) => {
     const { id } = req.params
     const user = (req as AuthenticatedRequest).user

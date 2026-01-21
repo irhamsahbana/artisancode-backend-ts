@@ -80,6 +80,31 @@ export interface UpdateProgramReq {
   status?: ProgramStatus
 }
 
+export interface UpdateProgramAllReq {
+  id: string
+  company_id: string
+  branch_id?: string | null
+  name?: string
+  description?: string
+  status?: ProgramStatus
+  schedules?: {
+    id?: string | null
+    day?: string
+    start_time?: string
+    end_time?: string
+  }[]
+  pricings?: {
+    name: string
+    description?: string
+    prices: {
+      currency: string
+      price: number
+      started_at?: Date
+      ended_at?: Date
+    }[]
+  }[]
+}
+
 export interface UpdatePriceReq {
   program_id: string
   pricing_id: string

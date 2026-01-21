@@ -13,9 +13,9 @@ export interface Enrollment {
   pricing_id: string
   enrollment_date?: Date
   status: string
-  billing_type?: string
-  billed_at?: number
-  next_payment_date?: Date | null
+  billing_cycle?: string
+  next_billing_date?: Date | null
+  auto_renew?: boolean
   created_at: Date
   updated_at: Date
   deleted_at: Date | null
@@ -35,9 +35,9 @@ export interface CreateEnrollmentReq {
   pricing_id: string
   enrollment_date?: Date
   status?: string
-  billing_type?: string
-  billed_at?: number
-  next_payment_date?: Date
+  billing_cycle?: string
+  next_billing_date?: Date
+  auto_renew?: boolean
 }
 
 export interface UpdateEnrollmentReq {
@@ -49,9 +49,9 @@ export interface UpdateEnrollmentReq {
   pricing_id?: string
   enrollment_date?: Date
   status?: string
-  billing_type?: string
-  billed_at?: number
-  next_payment_date?: Date
+  billing_cycle?: string
+  next_billing_date?: Date
+  auto_renew?: boolean
 }
 
 export interface GetEnrollmentReq {

@@ -1,6 +1,7 @@
 import Joi from 'joi'
 
 const programScheduleSchema = Joi.object({
+  id: Joi.string().uuid().optional().allow(null),
   day: Joi.string()
     .optional()
     .allow('')
@@ -43,6 +44,15 @@ export const updateProgramSchema = Joi.object({
   name: Joi.string().optional().min(2).max(100),
   description: Joi.string().optional().allow('').max(500),
   status: Joi.string().optional().valid('active', 'inactive'),
+})
+
+export const updateProgramAllSchema = Joi.object({
+  branch_id: Joi.string().uuid().optional().allow(null),
+  name: Joi.string().optional().min(2).max(100),
+  description: Joi.string().optional().allow('').max(500),
+  status: Joi.string().optional().valid('active', 'inactive'),
+  schedules: Joi.array().items(programScheduleSchema).optional(),
+  pricings: Joi.array().items(programPricingSchema).optional(),
 })
 
 export const addScheduleSchema = programScheduleSchema

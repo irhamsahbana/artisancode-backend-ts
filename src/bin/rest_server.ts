@@ -8,6 +8,7 @@ import errorHandler from '@/common/middlewares/error_handler'
 import requestLogger from '@/common/middlewares/request_logger'
 import { env } from '@/config/env'
 import logger from '@/config/logger'
+import { startJobs } from '@/jobs'
 import restRouter from '@/routes/rest'
 
 class RESTServer {
@@ -34,6 +35,7 @@ class RESTServer {
   public listen() {
     this.server.listen(env.REST.PORT, () => {
       logger.info(`Server running on port ${env.REST.PORT}`)
+      startJobs()
     })
   }
 }

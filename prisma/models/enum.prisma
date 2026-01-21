@@ -60,4 +60,15 @@ enum InvoiceStatus {
   unpaid
   paid
   overdue
+  pending
+  expired
+  failed
+  cancelled
+}
+
+enum BillingCycle {
+  monthly
+  quarterly
+  annually
+  one_time
 }

@@ -20,6 +20,7 @@ const router = Router()
 
 router.post('/', authenticate, validate(Schema.createProgramSchema), handler.create)
 router.put('/:id', authenticate, validate(Schema.updateProgramSchema), handler.update)
+router.put('/:id/all', authenticate, validate(Schema.updateProgramAllSchema), handler.updateAll)
 router.delete('/:id', authenticate, handler.delete)
 router.get('/:id', authenticate, handler.findById)
 router.get('/', authenticate, validateQuery(Schema.getProgramListSchema), handler.findList)

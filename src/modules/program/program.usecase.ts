@@ -81,6 +81,50 @@ export default class ProgramUsecase implements IProgramUsecase {
     return this.repo.update(req)
   }
 
+  async updateAll(req: Entity.UpdateProgramAllReq): Promise<Entity.Program> {
+    const program = await this.repo.findById(req.id, req.company_id)
+    if (!program) {
+      throw new AppError(404, 'Program not found')
+    }
+
+    if (req.branch_id !== undefined && req.branch_id !== null) {
+      const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
+      if (!branch) {
+        throw new AppError(404, 'Branch not found')
+      }
+    }
+
+    if (req.name && req.name !== program.name) {
+      const existingProgram = await this.repo.findByName(
+        req.name,
+        req.company_id,
+        req.branch_id !== undefined ? req.branch_id : program.branch_id,
+      )
+      if (existingProgram && existingProgram.id !== req.id) {
+        throw new AppError(409, 'Program with this name already exists')
+      }
+    }
+
+    if (req.pricings) {
+      for (const pricing of req.pricings) {
+        this.validatePricingOverlap(
+          [],
+          pricing.prices.map((p) => ({
+            ...p,
+            id: '',
+            pricing_id: '',
+            is_active: true,
+            started_at: p.started_at || new Date(),
+            ended_at: p.ended_at || null,
+            created_at: new Date(),
+          })),
+        )
+      }
+    }
+
+    return this.repo.updateAll(req)
+  }
+
   async delete(id: string, companyId: string): Promise<void> {
     const program = await this.repo.findById(id, companyId)
     if (!program) {

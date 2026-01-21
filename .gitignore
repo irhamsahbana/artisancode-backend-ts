@@ -5,6 +5,8 @@ error.log
 
 # Directories
 .dist
+curl
 dist
 node_modules
+prd
 src/generated

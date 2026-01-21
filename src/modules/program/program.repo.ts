@@ -124,6 +124,85 @@ export default class ProgramRepo implements IProgramRepo {
     return this.toEntity(data)
   }
 
+  async updateAll(req: Entity.UpdateProgramAllReq): Promise<Entity.Program> {
+    const { id, company_id, branch_id, schedules, pricings, ...rest } = req
+
+    let scheduleOps: Prisma.ProductUpdateInput['productSchedules'] = undefined
+    if (schedules) {
+      const idsToKeep = schedules
+        .filter((s) => s.id)
+        .map((s) => s.id as string)
+
+      const newSchedules = schedules.filter((s) => !s.id)
+      const updateSchedules = schedules.filter((s) => s.id)
+
+      scheduleOps = {
+        deleteMany: {
+          id: { notIn: idsToKeep },
+        },
+        create: newSchedules.map((s) => ({
+          day: s.day || '',
+          startTime: s.start_time || '',
+          endTime: s.end_time || '',
+        })),
+        update: updateSchedules.map((s) => ({
+          where: { id: s.id as string },
+          data: {
+            day: s.day,
+            startTime: s.start_time,
+            endTime: s.end_time,
+          },
+        })),
+      }
+    }
+
+    let pricingOps: Prisma.ProductUpdateInput['pricings'] = undefined
+    if (pricings) {
+      pricingOps = {
+        updateMany: {
+          where: { deletedAt: null },
+          data: { deletedAt: new Date() },
+        },
+        create: pricings.map((p) => ({
+          name: p.name,
+          description: p.description || '',
+          prices: {
+            create: p.prices.map((price) => ({
+              currency: price.currency,
+              price: price.price,
+              startedAt: price.started_at || new Date(),
+              endedAt: price.ended_at,
+            })),
+          },
+        })),
+      }
+    }
+
+    const data = await prisma.product.update({
+      where: {
+        id: id,
+        companyId: company_id,
+        deletedAt: null,
+      },
+      data: {
+        ...rest,
+        branchId: branch_id,
+        productSchedules: scheduleOps,
+        pricings: pricingOps,
+      },
+      include: {
+        productSchedules: true,
+        pricings: {
+          where: { deletedAt: null },
+          include: {
+            prices: true,
+          },
+        },
+      },
+    })
+    return this.toEntity(data)
+  }
+
   async delete(id: string, companyId: string): Promise<void> {
     await prisma.product.update({
       where: {
