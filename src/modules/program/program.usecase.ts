@@ -188,9 +188,7 @@ export default class ProgramUsecase implements IProgramUsecase {
     }
 
     // 2. Validate Overlap with ALL other prices (including the just-closed one)
-    const otherPrices = pricing.prices.filter(
-      (p) => p.currency === req.currency && p.is_active,
-    )
+    const otherPrices = pricing.prices.filter((p) => p.currency === req.currency && p.is_active)
 
     for (const other of otherPrices) {
       this.checkOverlap(
