@@ -50,6 +50,7 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
             branch_id: data.product.branchId,
             name: data.product.name,
             description: data.product.description,
+            capacity: data.product.capacity,
             status: data.product.status,
             created_at: data.product.createdAt,
             updated_at: data.product.updatedAt,
