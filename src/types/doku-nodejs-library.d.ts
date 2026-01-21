@@ -1,1 +1,1 @@
-declare module 'doku-nodejs-library';
+declare module 'doku-nodejs-library'
