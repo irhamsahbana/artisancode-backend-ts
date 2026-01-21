@@ -1,4 +1,12 @@
-import { Prisma, Product, ProductSchedule, ProductPricing, ProductPrice, TeacherProduct, Teacher } from '@prisma/client'
+import {
+  Prisma,
+  Product,
+  ProductSchedule,
+  ProductPricing,
+  ProductPrice,
+  TeacherProduct,
+  Teacher,
+} from '@prisma/client'
 
 import prisma from '@/common/prisma'
 import * as Entity from '@/entities/program.entity'
