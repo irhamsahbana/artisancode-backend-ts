@@ -34,6 +34,13 @@ export interface ProgramPricing {
   updated_at: Date
 }
 
+export interface ProgramTeacher {
+  id: string
+  name: string
+  email: string
+  specialty: string
+}
+
 export interface Program {
   id: string
   company_id: string
@@ -44,6 +51,7 @@ export interface Program {
   status: ProgramStatus
   schedules?: ProgramSchedule[]
   pricings?: ProgramPricing[]
+  teachers?: ProgramTeacher[]
   created_at: Date
   updated_at: Date
   deleted_at: Date | null
@@ -71,6 +79,7 @@ export interface CreateProgramReq {
       ended_at?: Date
     }[]
   }[]
+  teachers?: string[]
 }
 
 export interface UpdateProgramReq {
@@ -98,6 +107,7 @@ export interface UpdateProgramAllReq {
     end_time?: string
   }[]
   pricings?: {
+    id?: string | null
     name: string
     description?: string
     prices: {
@@ -107,6 +117,7 @@ export interface UpdateProgramAllReq {
       ended_at?: Date
     }[]
   }[]
+  teachers?: string[]
 }
 
 export interface UpdatePriceReq {

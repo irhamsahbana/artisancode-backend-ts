@@ -1,4 +1,4 @@
-import { Prisma, Product, ProductSchedule, ProductPricing, ProductPrice } from '@prisma/client'
+import { Prisma, Product, ProductSchedule, ProductPricing, ProductPrice, TeacherProduct, Teacher } from '@prisma/client'
 
 import prisma from '@/common/prisma'
 import * as Entity from '@/entities/program.entity'
@@ -9,6 +9,9 @@ type ProductWithRelations = Product & {
   productSchedules: ProductSchedule[]
   pricings: (ProductPricing & {
     prices: ProductPrice[]
+  })[]
+  teacherProducts: (TeacherProduct & {
+    teacher: Teacher
   })[]
 }
 
@@ -53,6 +56,12 @@ export default class ProgramRepo implements IProgramRepo {
           created_at: price.createdAt,
         })),
       })),
+      teachers: data.teacherProducts?.map((tp) => ({
+        id: tp.teacher.id,
+        name: tp.teacher.name,
+        email: tp.teacher.email,
+        specialty: tp.teacher.specialty,
+      })),
     }
   }
 
@@ -95,6 +104,11 @@ export default class ProgramRepo implements IProgramRepo {
             prices: true,
           },
         },
+        teacherProducts: {
+          include: {
+            teacher: true,
+          },
+        },
       },
     })
     return this.toEntity(data)
@@ -123,13 +137,18 @@ export default class ProgramRepo implements IProgramRepo {
             prices: true,
           },
         },
+        teacherProducts: {
+          include: {
+            teacher: true,
+          },
+        },
       },
     })
     return this.toEntity(data)
   }
 
   async updateAll(req: Entity.UpdateProgramAllReq): Promise<Entity.Program> {
-    const { id, company_id, branch_id, schedules, pricings, ...rest } = req
+    const { id, company_id, branch_id, schedules, pricings, teachers, ...rest } = req
 
     let scheduleOps: Prisma.ProductUpdateInput['productSchedules'] = undefined
     if (schedules) {
@@ -180,6 +199,16 @@ export default class ProgramRepo implements IProgramRepo {
       }
     }
 
+    let teacherOps: Prisma.ProductUpdateInput['teacherProducts'] = undefined
+    if (teachers) {
+      teacherOps = {
+        deleteMany: {},
+        create: teachers.map((tId) => ({
+          teacherId: tId,
+        })),
+      }
+    }
+
     const data = await prisma.product.update({
       where: {
         id: id,
@@ -191,6 +220,7 @@ export default class ProgramRepo implements IProgramRepo {
         branchId: branch_id,
         productSchedules: scheduleOps,
         pricings: pricingOps,
+        teacherProducts: teacherOps,
       },
       include: {
         productSchedules: true,
@@ -198,6 +228,11 @@ export default class ProgramRepo implements IProgramRepo {
           where: { deletedAt: null },
           include: {
             prices: true,
+          },
+        },
+        teacherProducts: {
+          include: {
+            teacher: true,
           },
         },
       },
@@ -233,6 +268,11 @@ export default class ProgramRepo implements IProgramRepo {
             prices: true,
           },
         },
+        teacherProducts: {
+          include: {
+            teacher: true,
+          },
+        },
       },
     })
     if (!data) return null
@@ -262,6 +302,11 @@ export default class ProgramRepo implements IProgramRepo {
           where: { deletedAt: null },
           include: {
             prices: true,
+          },
+        },
+        teacherProducts: {
+          include: {
+            teacher: true,
           },
         },
       },
@@ -301,6 +346,11 @@ export default class ProgramRepo implements IProgramRepo {
             where: { deletedAt: null },
             include: {
               prices: true,
+            },
+          },
+          teacherProducts: {
+            include: {
+              teacher: true,
             },
           },
         },

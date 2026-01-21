@@ -56,6 +56,7 @@ export const updateProgramAllSchema = Joi.object({
   status: Joi.string().optional().valid('active', 'inactive'),
   schedules: Joi.array().items(programScheduleSchema).optional(),
   pricings: Joi.array().items(programPricingSchema).optional(),
+  teachers: Joi.array().items(Joi.string().uuid()).optional(),
 })
 
 export const addScheduleSchema = programScheduleSchema
