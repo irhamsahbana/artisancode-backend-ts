@@ -129,9 +129,7 @@ export default class ProgramRepo implements IProgramRepo {
 
     let scheduleOps: Prisma.ProductUpdateInput['productSchedules'] = undefined
     if (schedules) {
-      const idsToKeep = schedules
-        .filter((s) => s.id)
-        .map((s) => s.id as string)
+      const idsToKeep = schedules.filter((s) => s.id).map((s) => s.id as string)
 
       const newSchedules = schedules.filter((s) => !s.id)
       const updateSchedules = schedules.filter((s) => s.id)

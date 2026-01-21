@@ -32,9 +32,9 @@ export const startInvoiceGeneratorJob = () => {
         include: {
           student: true,
           productPricing: {
-             include: {
-                 prices: true
-             }
+            include: {
+              prices: true,
+            },
           },
         },
       })
@@ -43,62 +43,62 @@ export const startInvoiceGeneratorJob = () => {
 
       for (const enrollment of enrollments) {
         try {
-            // Find active price
-            const activePrice = enrollment.productPricing.prices.find(p => p.isActive)
-            if (!activePrice) {
-                logger.warn(`No active price found for enrollment ${enrollment.id}`)
-                continue
-            }
+          // Find active price
+          const activePrice = enrollment.productPricing.prices.find((p) => p.isActive)
+          if (!activePrice) {
+            logger.warn(`No active price found for enrollment ${enrollment.id}`)
+            continue
+          }
 
-            if (!enrollment.nextBillingDate) {
-                logger.warn(`Enrollment ${enrollment.id} has no nextBillingDate, skipping.`)
-                continue
-            }
+          if (!enrollment.nextBillingDate) {
+            logger.warn(`Enrollment ${enrollment.id} has no nextBillingDate, skipping.`)
+            continue
+          }
 
-            const amount = activePrice.price.toNumber()
-            const invoiceNumber = `INV/${new Date().getFullYear()}/${Date.now().toString().slice(-6)}` // Better logic needed
+          const amount = activePrice.price.toNumber()
+          const invoiceNumber = `INV/${new Date().getFullYear()}/${Date.now().toString().slice(-6)}` // Better logic needed
 
-            // Create Invoice
-            const invoice = await prisma.invoice.create({
-                data: {
-                    companyId: enrollment.companyId,
-                    branchId: enrollment.branchId,
-                    enrollmentId: enrollment.id,
-                    invoiceNumber,
-                    amount,
-                    dueDate: enrollment.nextBillingDate, // Due on the billing date
-                    issuedDate: new Date(),
-                    invoiceDate: new Date(),
-                    status: 'pending',
-                    currency: activePrice.currency
-                }
-            })
+          // Create Invoice
+          const invoice = await prisma.invoice.create({
+            data: {
+              companyId: enrollment.companyId,
+              branchId: enrollment.branchId,
+              enrollmentId: enrollment.id,
+              invoiceNumber,
+              amount,
+              dueDate: enrollment.nextBillingDate, // Due on the billing date
+              issuedDate: new Date(),
+              invoiceDate: new Date(),
+              status: 'pending',
+              currency: activePrice.currency,
+            },
+          })
 
-            // Generate DOKU Link
-            const paymentLink = await dokuProvider.generatePaymentLink({
-                invoice_number: invoiceNumber,
-                amount,
-                customer_email: enrollment.student.email,
-                customer_name: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
-            })
+          // Generate DOKU Link
+          const paymentLink = await dokuProvider.generatePaymentLink({
+            invoice_number: invoiceNumber,
+            amount,
+            customer_email: enrollment.student.email,
+            customer_name: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+          })
 
-            // Update Invoice
-            await prisma.invoice.update({
-                where: { id: invoice.id },
-                data: {
-                    dokuInvoiceId: paymentLink.invoice_id,
-                    paymentUrl: paymentLink.payment_url
-                }
-            })
+          // Update Invoice
+          await prisma.invoice.update({
+            where: { id: invoice.id },
+            data: {
+              dokuInvoiceId: paymentLink.invoice_id,
+              paymentUrl: paymentLink.payment_url,
+            },
+          })
 
-            // Send Email (Mock)
-            logger.info(`Invoice generated and sent to ${enrollment.student.email} for amount ${amount}`)
-
+          // Send Email (Mock)
+          logger.info(
+            `Invoice generated and sent to ${enrollment.student.email} for amount ${amount}`,
+          )
         } catch (err) {
-            logger.error(`Failed to process enrollment ${enrollment.id}:`, err)
+          logger.error(`Failed to process enrollment ${enrollment.id}:`, err)
         }
       }
-
     } catch (error) {
       logger.error('Error in Invoice Generator Job:', error)
     }

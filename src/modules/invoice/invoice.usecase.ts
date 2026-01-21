@@ -9,7 +9,6 @@ import {
 import { DokuProvider } from '../../providers/doku'
 
 export class InvoiceUsecase implements IInvoiceUsecase {
-
   constructor(
     private repo: IInvoiceRepo,
     private dokuProvider: DokuProvider,

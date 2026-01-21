@@ -36,10 +36,11 @@ export const startPaymentReminderJob = () => {
       logger.info(`Found ${invoices.length} pending invoices for reminder.`)
 
       for (const invoice of invoices) {
-         // Send Email (Mock)
-         logger.info(`Sending reminder to ${invoice.enrollment.student.email} for invoice ${invoice.invoiceNumber}`)
+        // Send Email (Mock)
+        logger.info(
+          `Sending reminder to ${invoice.enrollment.student.email} for invoice ${invoice.invoiceNumber}`,
+        )
       }
-
     } catch (error) {
       logger.error('Error in Payment Reminder Job:', error)
     }

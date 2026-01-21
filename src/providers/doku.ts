@@ -4,7 +4,6 @@ import logger from '@/config/logger'
 
 import { env } from '../config/env'
 
-
 export interface DokuPaymentLinkReq {
   invoice_number: string
   amount: number
@@ -83,9 +82,9 @@ export class DokuProvider {
       // Note: The library signature might vary, assuming generatePaymentLink or similar
       // For now, using a generic request wrapper if specific method unknown or specific endpoint
       // The library usually has .generatePaymentLink()
-      
+
       const response = await this.client.generatePaymentLink(payload)
-      
+
       return {
         invoice_id: response.order.invoice_number,
         payment_url: response.payment.url,
