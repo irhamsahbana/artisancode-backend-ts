@@ -21,26 +21,33 @@ export default class ProgramUsecase implements IProgramUsecase {
     }
 
     // Check duplicated name
-    const existingProgram = await this.repo.findByName(req.name, req.company_id, req.branch_id || null)
+    const existingProgram = await this.repo.findByName(
+      req.name,
+      req.company_id,
+      req.branch_id || null,
+    )
     if (existingProgram) {
       throw new AppError(409, 'Program with this name already exists')
     }
 
     // Validate pricing overlap if pricings are provided
     if (req.pricings) {
-        // Since we are creating a new program, there are no "existing" pricings in DB yet.
-        // We only need to check overlap WITHIN the request payload itself.
-        for (const pricing of req.pricings) {
-             this.validatePricingOverlap([], pricing.prices.map(p => ({
-                 ...p,
-                 id: '',
-                 pricing_id: '',
-                 is_active: true,
-                 started_at: p.started_at || new Date(),
-                 ended_at: p.ended_at || null,
-                 created_at: new Date(),
-             })))
-        }
+      // Since we are creating a new program, there are no "existing" pricings in DB yet.
+      // We only need to check overlap WITHIN the request payload itself.
+      for (const pricing of req.pricings) {
+        this.validatePricingOverlap(
+          [],
+          pricing.prices.map((p) => ({
+            ...p,
+            id: '',
+            pricing_id: '',
+            is_active: true,
+            started_at: p.started_at || new Date(),
+            ended_at: p.ended_at || null,
+            created_at: new Date(),
+          })),
+        )
+      }
     }
 
     return this.repo.create(req)
@@ -54,7 +61,11 @@ export default class ProgramUsecase implements IProgramUsecase {
 
     if (req.name && req.name !== program.name) {
       // Check duplicated name
-      const existingProgram = await this.repo.findByName(req.name, req.company_id, req.branch_id || program.branch_id)
+      const existingProgram = await this.repo.findByName(
+        req.name,
+        req.company_id,
+        req.branch_id || program.branch_id,
+      )
       if (existingProgram && existingProgram.id !== req.id) {
         throw new AppError(409, 'Program with this name already exists')
       }
@@ -79,7 +90,10 @@ export default class ProgramUsecase implements IProgramUsecase {
     // Check active enrollments
     const activeEnrollments = await this.enrollmentRepo.countActiveByProgram(id, companyId)
     if (activeEnrollments > 0) {
-      throw new AppError(409, `Cannot delete program. There are ${activeEnrollments} active enrollments.`)
+      throw new AppError(
+        409,
+        `Cannot delete program. There are ${activeEnrollments} active enrollments.`,
+      )
     }
 
     return this.repo.delete(id, companyId)
@@ -109,7 +123,7 @@ export default class ProgramUsecase implements IProgramUsecase {
 
     // Check duplicated pricing name
     const existingPricingName = program.pricings?.find(
-      (p) => p.name.toLowerCase() === req.name.toLowerCase()
+      (p) => p.name.toLowerCase() === req.name.toLowerCase(),
     )
     if (existingPricingName) {
       throw new AppError(409, 'Pricing package with this name already exists')
@@ -149,7 +163,7 @@ export default class ProgramUsecase implements IProgramUsecase {
     // Validate if currency already exists in this pricing package
     // Simplified rule: One active price per currency per package
     const existingCurrency = pricing.prices.find(
-      (p) => p.currency === req.currency && p.is_active && (!p.ended_at || p.ended_at > new Date())
+      (p) => p.currency === req.currency && p.is_active && (!p.ended_at || p.ended_at > new Date()),
     )
     if (existingCurrency) {
       throw new AppError(409, `Price for currency ${req.currency} already exists in this package`)
@@ -175,7 +189,9 @@ export default class ProgramUsecase implements IProgramUsecase {
     }
 
     // 1. Determine the effective start and end dates
-    const effectiveStartedAt = req.started_at ? new Date(req.started_at) : new Date(price.started_at)
+    const effectiveStartedAt = req.started_at
+      ? new Date(req.started_at)
+      : new Date(price.started_at)
     // For ended_at:
     // If req.ended_at is explicitly null => it becomes null (infinite)
     // If req.ended_at is undefined => use existing price.ended_at
@@ -260,50 +276,57 @@ export default class ProgramUsecase implements IProgramUsecase {
     if (activeEnrollments > 0) {
       throw new AppError(
         409,
-        `Cannot delete pricing package. There are ${activeEnrollments} active enrollments using it.`
+        `Cannot delete pricing package. There are ${activeEnrollments} active enrollments using it.`,
       )
     }
 
     return this.repo.deletePricing(programId, pricingId, companyId)
   }
 
-  private validatePricingOverlap(existingPricings: Entity.ProgramPricing[], newPrices: Entity.ProgramPrice[]) {
+  private validatePricingOverlap(
+    existingPricings: Entity.ProgramPricing[],
+    newPrices: Entity.ProgramPrice[],
+  ) {
     // Collect all active prices including new ones
     // Check if any currency has overlapping active dates
     // Simplified: Check if there is already an active price for the same currency with no end date
     // or if the dates overlap.
-    
+
     // For now, let's implement a simpler rule:
     // A currency cannot have multiple prices active at the same time (is_active=true)
     // and overlapping dates.
-    
+
     // Note: The new prices are part of a NEW pricing package.
     // However, existing logic seems to structure pricing as packages containing prices.
-    
+
     // If the requirement is "Active Pricing Overlap", we need to check against ALL active prices of the program.
-    
+
     // Strategy:
     // 1. Flatten all existing prices
     // 2. For each new price, check against flattened list
-    
-    const allExistingPrices = existingPricings.flatMap(p => p.prices || []).filter(p => p.is_active)
-    
+
+    const allExistingPrices = existingPricings
+      .flatMap((p) => p.prices || [])
+      .filter((p) => p.is_active)
+
     for (const newPrice of newPrices) {
-        const newStart = newPrice.started_at ? new Date(newPrice.started_at).getTime() : new Date().getTime()
-        const newEnd = newPrice.ended_at ? new Date(newPrice.ended_at).getTime() : Infinity
-        
-        const overlap = allExistingPrices.find(existing => {
-            if (existing.currency !== newPrice.currency) return false
-            
-            const existStart = existing.started_at ? new Date(existing.started_at).getTime() : 0
-            const existEnd = existing.ended_at ? new Date(existing.ended_at).getTime() : Infinity
-            
-            return Math.max(newStart, existStart) < Math.min(newEnd, existEnd)
-        })
-        
-        if (overlap) {
-            throw new AppError(409, `Price overlap detected for currency ${newPrice.currency}.`)
-        }
+      const newStart = newPrice.started_at
+        ? new Date(newPrice.started_at).getTime()
+        : new Date().getTime()
+      const newEnd = newPrice.ended_at ? new Date(newPrice.ended_at).getTime() : Infinity
+
+      const overlap = allExistingPrices.find((existing) => {
+        if (existing.currency !== newPrice.currency) return false
+
+        const existStart = existing.started_at ? new Date(existing.started_at).getTime() : 0
+        const existEnd = existing.ended_at ? new Date(existing.ended_at).getTime() : Infinity
+
+        return Math.max(newStart, existStart) < Math.min(newEnd, existEnd)
+      })
+
+      if (overlap) {
+        throw new AppError(409, `Price overlap detected for currency ${newPrice.currency}.`)
+      }
     }
   }
 }

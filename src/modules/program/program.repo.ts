@@ -158,7 +158,11 @@ export default class ProgramRepo implements IProgramRepo {
     return this.toEntity(data)
   }
 
-  async findByName(name: string, companyId: string, branchId?: string | null): Promise<Entity.Program | null> {
+  async findByName(
+    name: string,
+    companyId: string,
+    branchId?: string | null,
+  ): Promise<Entity.Program | null> {
     const where: Prisma.ProductWhereInput = {
       companyId,
       name: { equals: name, mode: 'insensitive' },

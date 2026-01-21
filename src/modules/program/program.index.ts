@@ -27,8 +27,18 @@ router.get('/', authenticate, validateQuery(Schema.getProgramListSchema), handle
 // New endpoints
 router.post('/:id/schedules', authenticate, validate(Schema.addScheduleSchema), handler.addSchedule)
 router.post('/:id/pricings', authenticate, validate(Schema.addPricingSchema), handler.addPricing)
-router.post('/:id/pricings/:pricingId/prices', authenticate, validate(Schema.addPriceSchema), handler.addPrice)
-router.put('/:id/pricings/:pricingId/prices/:priceId', authenticate, validate(Schema.updatePriceSchema), handler.updatePrice)
+router.post(
+  '/:id/pricings/:pricingId/prices',
+  authenticate,
+  validate(Schema.addPriceSchema),
+  handler.addPrice,
+)
+router.put(
+  '/:id/pricings/:pricingId/prices/:priceId',
+  authenticate,
+  validate(Schema.updatePriceSchema),
+  handler.updatePrice,
+)
 router.delete('/:id/schedules/:scheduleId', authenticate, handler.deleteSchedule)
 router.delete('/:id/pricings/:pricingId', authenticate, handler.deletePricing)
 
