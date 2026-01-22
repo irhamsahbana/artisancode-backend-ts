@@ -104,7 +104,7 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
       req.program_id,
       req.company_id,
     )
-    
+
     if (existingActiveEnrollment) {
       throw new AppError(400, 'Student is already active in this program')
     }
@@ -123,7 +123,8 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
 
     for (const enrollment of existingEnrollments) {
       const existingProgram = enrollment.program
-      if (!existingProgram || !existingProgram.schedules || existingProgram.schedules.length === 0) continue
+      if (!existingProgram || !existingProgram.schedules || existingProgram.schedules.length === 0)
+        continue
 
       for (const newSchedule of newProgram.schedules) {
         for (const existingSchedule of existingProgram.schedules) {
@@ -135,7 +136,7 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
             ) {
               throw new AppError(
                 409,
-                `Schedule conflict with existing program: ${existingProgram.name} on ${newSchedule.day} (${existingSchedule.start_time} - ${existingSchedule.end_time})`
+                `Schedule conflict with existing program: ${existingProgram.name} on ${newSchedule.day} (${existingSchedule.start_time} - ${existingSchedule.end_time})`,
               )
             }
           }

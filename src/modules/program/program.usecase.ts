@@ -209,9 +209,7 @@ export default class ProgramUsecase implements IProgramUsecase {
     // and close it at the new start date.
     const openEndedPrice = pricing.prices.find(
       (p) =>
-        p.currency === req.currency &&
-        p.ended_at === null &&
-        new Date(p.started_at) < newStart,
+        p.currency === req.currency && p.ended_at === null && new Date(p.started_at) < newStart,
     )
 
     if (openEndedPrice) {
@@ -391,8 +389,7 @@ export default class ProgramUsecase implements IProgramUsecase {
     // 1. Flatten all existing prices
     // 2. For each new price, check against flattened list
 
-    const allExistingPrices = existingPricings
-      .flatMap((p) => p.prices || [])
+    const allExistingPrices = existingPricings.flatMap((p) => p.prices || [])
 
     for (const newPrice of newPrices) {
       const newStart = newPrice.started_at

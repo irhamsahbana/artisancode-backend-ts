@@ -200,27 +200,27 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
         },
       },
     })
-    
+
     // We need to cast here because the include type is slightly different (includes productSchedules)
     // but our toEntity handles the base enrollment structure.
     // Ideally we should update toEntity to map schedules if needed, but for now we just need the list.
     return data.map((item) => {
-        const entity = this.toEntity(item as unknown as EnrollmentWithRelations)
-        // Manually attach schedules if available, though toEntity might not map them by default
-        if (item.product && item.product.productSchedules) {
-            if (entity.program) {
-                entity.program.schedules = item.product.productSchedules.map(s => ({
-                    id: s.id,
-                    program_id: s.productId,
-                    day: s.day,
-                    start_time: s.startTime,
-                    end_time: s.endTime,
-                    created_at: s.createdAt,
-                    updated_at: s.updatedAt
-                }))
-            }
+      const entity = this.toEntity(item as unknown as EnrollmentWithRelations)
+      // Manually attach schedules if available, though toEntity might not map them by default
+      if (item.product && item.product.productSchedules) {
+        if (entity.program) {
+          entity.program.schedules = item.product.productSchedules.map((s) => ({
+            id: s.id,
+            program_id: s.productId,
+            day: s.day,
+            start_time: s.startTime,
+            end_time: s.endTime,
+            created_at: s.createdAt,
+            updated_at: s.updatedAt,
+          }))
         }
-        return entity
+      }
+      return entity
     })
   }
 
