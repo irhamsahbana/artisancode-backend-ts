@@ -1,5 +1,7 @@
 import Joi from 'joi'
 
+import { UserStatuses } from '@/entities/user.entity'
+
 export const createUserSchema = Joi.object({
   name: Joi.string().required().min(3).max(100),
   username: Joi.string().required().min(3).max(50),
@@ -8,7 +10,9 @@ export const createUserSchema = Joi.object({
   phone: Joi.string().required().max(20),
   company_id: Joi.string().required().uuid(),
   role_id: Joi.string().required().uuid(),
-  status: Joi.string().valid('active', 'inactive').optional(),
+  status: Joi.string()
+    .valid(...UserStatuses)
+    .optional(),
 })
 
 export const registerSchema = Joi.object({

@@ -4,6 +4,10 @@ import { Program, ProgramPricing } from './program.entity'
 import { Student } from './student.entity'
 import { Teacher } from './teacher.entity'
 
+export type EnrollmentStatus = 'active' | 'inactive'
+
+export const EnrollmentStatuses: EnrollmentStatus[] = ['active', 'inactive']
+
 export interface Enrollment {
   id: string
   company_id: string
@@ -12,7 +16,7 @@ export interface Enrollment {
   program_id: string
   pricing_id: string
   enrollment_date?: Date
-  status: string
+  status: EnrollmentStatus
   billing_cycle?: string
   next_billing_date?: Date | null
   auto_renew?: boolean

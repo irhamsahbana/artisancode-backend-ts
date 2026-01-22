@@ -1,6 +1,6 @@
 import Joi from 'joi'
 
-const validStatuses = ['active', 'inactive']
+import { CategoryStatuses } from '@/entities/category.entity'
 
 export const createCategorySchema = Joi.object({
   parent_id: Joi.string().uuid().optional().allow(null),
@@ -8,7 +8,7 @@ export const createCategorySchema = Joi.object({
   name: Joi.string().required().min(2).max(100),
   status: Joi.string()
     .optional()
-    .valid(...validStatuses),
+    .valid(...CategoryStatuses),
 })
 
 export const updateCategorySchema = Joi.object({
@@ -17,7 +17,7 @@ export const updateCategorySchema = Joi.object({
   name: Joi.string().optional().min(2).max(100),
   status: Joi.string()
     .optional()
-    .valid(...validStatuses),
+    .valid(...CategoryStatuses),
 })
 
 export const getCategoryListSchema = Joi.object({

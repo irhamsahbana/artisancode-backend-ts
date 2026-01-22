@@ -1,5 +1,20 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 
+export type BranchStatus =
+  | 'active'
+  | 'inactive'
+  | 'under_construction'
+  | 'temporarily_closed'
+  | 'planning'
+
+export const BranchStatuses: BranchStatus[] = [
+  'active',
+  'inactive',
+  'under_construction',
+  'temporarily_closed',
+  'planning',
+]
+
 export interface Branch {
   id: string
   company_id: string

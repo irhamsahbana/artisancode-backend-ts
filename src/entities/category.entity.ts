@@ -1,12 +1,16 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 
+export type CategoryStatus = 'active' | 'inactive'
+
+export const CategoryStatuses: CategoryStatus[] = ['active', 'inactive']
+
 export interface Category {
   id: string
   company_id: string
   parent_id: string | null
   group: string
   name: string
-  status: string
+  status: CategoryStatus
   created_at: Date
   updated_at: Date
   deleted_at: Date | null

@@ -1,5 +1,26 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 
+export type StudentStatus =
+  | 'active'
+  | 'inactive'
+  | 'graduated'
+  | 'suspended'
+  | 'dropped'
+  | 'pending'
+  | 'on_leave'
+
+export const StudentStatuses: StudentStatus[] = [
+  'active',
+  'inactive',
+  'graduated',
+  'suspended',
+  'dropped',
+  'pending',
+  'on_leave',
+]
+
+export const InactiveStudentStatuses: StudentStatus[] = ['suspended', 'dropped', 'inactive']
+
 export interface Student {
   id: string
   company_id: string

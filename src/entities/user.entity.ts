@@ -1,6 +1,10 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 import { BaseEntity } from './timestamp.entity'
 
+export type UserStatus = 'active' | 'inactive'
+
+export const UserStatuses: UserStatus[] = ['active', 'inactive']
+
 export interface CreateUserReq {
   name: string
   username: string
@@ -9,7 +13,7 @@ export interface CreateUserReq {
   phone: string
   company_id: string
   role_id: string
-  status?: 'active' | 'inactive'
+  status?: UserStatus
 }
 
 export interface LoginReq {
@@ -23,7 +27,7 @@ export interface UpdateUserReq {
   email?: string
   phone?: string
   role_id?: string
-  status?: 'active' | 'inactive'
+  status?: UserStatus
 }
 
 export interface GetUserReq {
@@ -41,7 +45,7 @@ export interface User extends BaseEntity {
   username: string
   email: string
   phone: string
-  status: string
+  status: UserStatus
 }
 
 export interface UserList {

@@ -1,16 +1,17 @@
 import { InvoiceStatus, Prisma } from '@prisma/client'
 
-import { IInvoiceRepo } from './invoice.contract'
-import { prisma } from '../../common/prisma'
+import prisma from '@/common/prisma'
 import {
   CreateInvoiceReq,
   GetInvoiceReq,
   Invoice,
   InvoiceList,
   UpdateInvoiceReq,
-} from '../../entities/invoice.entity'
+} from '@/entities/invoice.entity'
 
-export class InvoiceRepo implements IInvoiceRepo {
+import { IInvoiceRepo } from './invoice.contract'
+
+export default class InvoiceRepo implements IInvoiceRepo {
   async create(data: CreateInvoiceReq): Promise<Invoice> {
     const invoice = await prisma.invoice.create({
       data: {
@@ -50,7 +51,7 @@ export class InvoiceRepo implements IInvoiceRepo {
     return invoice ? this.mapToEntity(invoice) : null
   }
 
-  async findAll(req: GetInvoiceReq): Promise<InvoiceList> {
+  async findList(req: GetInvoiceReq): Promise<InvoiceList> {
     const { page = 1, per_page = 10 } = req.pagination || {}
     const skip = (page - 1) * per_page
 

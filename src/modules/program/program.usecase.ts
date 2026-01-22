@@ -41,7 +41,6 @@ export default class ProgramUsecase implements IProgramUsecase {
             ...p,
             id: '',
             pricing_id: '',
-            is_active: true,
             started_at: p.started_at || new Date(),
             ended_at: p.ended_at || null,
             created_at: new Date(),
@@ -113,7 +112,6 @@ export default class ProgramUsecase implements IProgramUsecase {
             ...p,
             id: '',
             pricing_id: '',
-            is_active: true,
             started_at: p.started_at || new Date(),
             ended_at: p.ended_at || null,
             created_at: new Date(),
@@ -182,7 +180,6 @@ export default class ProgramUsecase implements IProgramUsecase {
         ...p,
         id: '',
         pricing_id: '',
-        is_active: true,
         started_at: p.started_at || new Date(),
         ended_at: p.ended_at || null,
         created_at: new Date(),
@@ -213,7 +210,6 @@ export default class ProgramUsecase implements IProgramUsecase {
     const openEndedPrice = pricing.prices.find(
       (p) =>
         p.currency === req.currency &&
-        p.is_active &&
         p.ended_at === null &&
         new Date(p.started_at) < newStart,
     )
@@ -232,7 +228,7 @@ export default class ProgramUsecase implements IProgramUsecase {
     }
 
     // 2. Validate Overlap with ALL other prices (including the just-closed one)
-    const otherPrices = pricing.prices.filter((p) => p.currency === req.currency && p.is_active)
+    const otherPrices = pricing.prices.filter((p) => p.currency === req.currency)
 
     for (const other of otherPrices) {
       this.checkOverlap(
@@ -290,7 +286,7 @@ export default class ProgramUsecase implements IProgramUsecase {
     // 3. Overlap Check
     // Get all OTHER prices for the SAME currency in this pricing package
     const otherPrices = pricing.prices.filter(
-      (p) => p.id !== req.price_id && p.currency === price.currency && p.is_active,
+      (p) => p.id !== req.price_id && p.currency === price.currency,
     )
 
     for (const other of otherPrices) {
@@ -383,7 +379,7 @@ export default class ProgramUsecase implements IProgramUsecase {
     // or if the dates overlap.
 
     // For now, let's implement a simpler rule:
-    // A currency cannot have multiple prices active at the same time (is_active=true)
+    // A currency cannot have multiple prices active at the same time
     // and overlapping dates.
 
     // Note: The new prices are part of a NEW pricing package.
@@ -397,7 +393,6 @@ export default class ProgramUsecase implements IProgramUsecase {
 
     const allExistingPrices = existingPricings
       .flatMap((p) => p.prices || [])
-      .filter((p) => p.is_active)
 
     for (const newPrice of newPrices) {
       const newStart = newPrice.started_at

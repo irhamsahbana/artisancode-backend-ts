@@ -1,5 +1,7 @@
 import Joi from 'joi'
 
+import { ProgramStatuses } from '@/entities/program.entity'
+
 const programScheduleSchema = Joi.object({
   id: Joi.string().uuid().optional().allow(null),
   day: Joi.string()
@@ -34,7 +36,9 @@ export const createProgramSchema = Joi.object({
   name: Joi.string().required().min(2).max(100),
   description: Joi.string().optional().allow('').max(500),
   capacity: Joi.number().optional().min(0),
-  status: Joi.string().optional().valid('active', 'inactive'),
+  status: Joi.string()
+    .optional()
+    .valid(...ProgramStatuses),
   schedules: Joi.array().items(programScheduleSchema).optional(),
   pricings: Joi.array().items(programPricingSchema).optional(),
   teachers: Joi.array().items(Joi.string().uuid()).optional(),
@@ -45,7 +49,9 @@ export const updateProgramSchema = Joi.object({
   name: Joi.string().optional().min(2).max(100),
   description: Joi.string().optional().allow('').max(500),
   capacity: Joi.number().optional().min(0),
-  status: Joi.string().optional().valid('active', 'inactive'),
+  status: Joi.string()
+    .optional()
+    .valid(...ProgramStatuses),
 })
 
 export const updateProgramAllSchema = Joi.object({
@@ -53,7 +59,9 @@ export const updateProgramAllSchema = Joi.object({
   name: Joi.string().optional().min(2).max(100),
   description: Joi.string().optional().allow('').max(500),
   capacity: Joi.number().optional().min(0),
-  status: Joi.string().optional().valid('active', 'inactive'),
+  status: Joi.string()
+    .optional()
+    .valid(...ProgramStatuses),
   schedules: Joi.array().items(programScheduleSchema).optional(),
   pricings: Joi.array().items(programPricingSchema).optional(),
   teachers: Joi.array().items(Joi.string().uuid()).optional(),

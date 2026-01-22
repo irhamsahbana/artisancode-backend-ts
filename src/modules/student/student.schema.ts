@@ -1,5 +1,7 @@
 import Joi from 'joi'
 
+import { StudentStatuses } from '@/entities/student.entity'
+
 export const createStudentSchema = Joi.object({
   branch_id: Joi.string().uuid().required(),
   first_name: Joi.string().required().min(2).max(100),
@@ -18,7 +20,7 @@ export const createStudentSchema = Joi.object({
   medical_notes: Joi.string().optional().allow('').max(500),
   status: Joi.string()
     .optional()
-    .valid('active', 'inactive', 'graduated', 'suspended', 'dropped', 'pending'),
+    .valid(...StudentStatuses),
 })
 
 export const updateStudentSchema = Joi.object({
@@ -39,7 +41,7 @@ export const updateStudentSchema = Joi.object({
   medical_notes: Joi.string().optional().allow('').max(500),
   status: Joi.string()
     .optional()
-    .valid('active', 'inactive', 'graduated', 'suspended', 'dropped', 'pending'),
+    .valid(...StudentStatuses),
 })
 
 export const getStudentListSchema = Joi.object({

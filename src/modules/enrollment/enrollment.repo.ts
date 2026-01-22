@@ -1,4 +1,4 @@
-import { EnrollmentStatus, Prisma } from '@prisma/client'
+import { BillingCycle, EnrollmentStatus, Prisma } from '@prisma/client'
 
 import prisma from '@/common/prisma'
 import * as Entity from '@/entities/enrollment.entity'
@@ -15,6 +15,9 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
       program_id: data.productId,
       pricing_id: data.productPricingId,
       status: data.status,
+      billing_cycle: data.billingCycle,
+      next_billing_date: data.nextBillingDate,
+      auto_renew: data.autoRenew,
       created_at: data.createdAt,
       updated_at: data.updatedAt,
       deleted_at: data.deletedAt,
@@ -73,7 +76,6 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
               price: p.price.toNumber(),
               started_at: p.startedAt,
               ended_at: p.endedAt,
-              is_active: p.isActive,
               created_at: p.createdAt,
             })),
           }
@@ -90,6 +92,10 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
         productId: req.program_id,
         productPricingId: req.pricing_id,
         status: (req.status as EnrollmentStatus) || 'active',
+        billingCycle: (req.billing_cycle as BillingCycle) || 'monthly',
+        nextBillingDate: req.next_billing_date,
+        autoRenew: req.auto_renew,
+        createdAt: req.enrollment_date,
       },
       include: enrollmentIncludes,
     })
@@ -130,15 +136,92 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
 
   async findById(id: string, companyId: string): Promise<Entity.Enrollment | null> {
     const data = await prisma.enrollment.findFirst({
+      where: { id, companyId, deletedAt: null },
+      include: enrollmentIncludes,
+    })
+    if (!data) return null
+    return this.toEntity(data)
+  }
+
+  async findByStudentAndProgram(
+    studentId: string,
+    programId: string,
+    companyId: string,
+  ): Promise<Entity.Enrollment | null> {
+    const data = await prisma.enrollment.findFirst({
       where: {
-        id,
+        studentId,
+        productId: programId,
         companyId,
+        deletedAt: null,
+        student: {
+          status: { in: ['active', 'on_leave'] },
+        },
+      },
+      include: enrollmentIncludes,
+    })
+    if (!data) return null
+    return this.toEntity(data as unknown as EnrollmentWithRelations)
+  }
+
+  async findActiveByStudentAndProgram(
+    studentId: string,
+    programId: string,
+    companyId: string,
+  ): Promise<Entity.Enrollment | null> {
+    const data = await prisma.enrollment.findFirst({
+      where: {
+        studentId,
+        productId: programId,
+        companyId,
+        status: 'active',
         deletedAt: null,
       },
       include: enrollmentIncludes,
     })
     if (!data) return null
-    return this.toEntity(data)
+    return this.toEntity(data as unknown as EnrollmentWithRelations)
+  }
+
+  async findActiveByStudent(studentId: string, companyId: string): Promise<Entity.Enrollment[]> {
+    const data = await prisma.enrollment.findMany({
+      where: {
+        studentId,
+        companyId,
+        status: 'active',
+        deletedAt: null,
+      },
+      include: {
+        ...enrollmentIncludes,
+        product: {
+          include: {
+            productSchedules: true,
+          },
+        },
+      },
+    })
+    
+    // We need to cast here because the include type is slightly different (includes productSchedules)
+    // but our toEntity handles the base enrollment structure.
+    // Ideally we should update toEntity to map schedules if needed, but for now we just need the list.
+    return data.map((item) => {
+        const entity = this.toEntity(item as unknown as EnrollmentWithRelations)
+        // Manually attach schedules if available, though toEntity might not map them by default
+        if (item.product && item.product.productSchedules) {
+            if (entity.program) {
+                entity.program.schedules = item.product.productSchedules.map(s => ({
+                    id: s.id,
+                    program_id: s.productId,
+                    day: s.day,
+                    start_time: s.startTime,
+                    end_time: s.endTime,
+                    created_at: s.createdAt,
+                    updated_at: s.updatedAt
+                }))
+            }
+        }
+        return entity
+    })
   }
 
   async findList(req: Entity.GetEnrollmentReq): Promise<Entity.EnrollmentList> {

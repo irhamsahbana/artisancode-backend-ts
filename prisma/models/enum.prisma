@@ -40,6 +40,7 @@ enum StudentStatus {
   suspended
   dropped
   pending
+  on_leave
 }
 
 enum PricingType {

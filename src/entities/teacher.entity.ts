@@ -1,10 +1,14 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 
+export type TeacherStatus = 'active' | 'inactive' | 'on_leave' | 'terminated'
+
+export const TeacherStatuses: TeacherStatus[] = ['active', 'inactive', 'on_leave', 'terminated']
+
 export interface Teacher {
   id: string
   company_id: string
   branch_id: string | null
-  status: 'active' | 'inactive' | 'on_leave' | 'terminated'
+  status: TeacherStatus
   name: string
   email: string
   phone: string
@@ -21,7 +25,7 @@ export interface CreateTeacherReq {
   id?: string
   company_id: string
   branch_id?: string
-  status?: 'active' | 'inactive' | 'on_leave' | 'terminated'
+  status?: TeacherStatus
   name: string
   email: string
   phone?: string
@@ -35,7 +39,7 @@ export interface UpdateTeacherReq {
   id: string
   company_id: string
   branch_id?: string
-  status?: 'active' | 'inactive' | 'on_leave' | 'terminated'
+  status?: TeacherStatus
   name?: string
   email?: string
   phone?: string

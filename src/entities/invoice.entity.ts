@@ -3,6 +3,27 @@ import { Company } from './company.entity'
 import { Enrollment } from './enrollment.entity'
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 
+export type InvoiceStatus =
+  | 'draft'
+  | 'unpaid'
+  | 'paid'
+  | 'overdue'
+  | 'pending'
+  | 'expired'
+  | 'failed'
+  | 'cancelled'
+
+export const InvoiceStatuses: InvoiceStatus[] = [
+  'draft',
+  'unpaid',
+  'paid',
+  'overdue',
+  'pending',
+  'expired',
+  'failed',
+  'cancelled',
+]
+
 export interface Invoice {
   id: string
   company_id: string
@@ -13,7 +34,7 @@ export interface Invoice {
   due_date: Date
   amount: number
   currency: string
-  status: string
+  status: InvoiceStatus
   doku_invoice_id?: string | null
   payment_url?: string | null
   paid_at?: Date | null

@@ -1,6 +1,6 @@
 import Joi from 'joi'
 
-const validStatuses = ['active', 'inactive', 'under_construction', 'temporarily_closed', 'planning']
+import { BranchStatuses } from '@/entities/branch.entity'
 
 export const createBranchSchema = Joi.object({
   name: Joi.string().required().min(3).max(100),
@@ -13,7 +13,7 @@ export const createBranchSchema = Joi.object({
   head_coach: Joi.string().optional().allow('').max(100),
   status: Joi.string()
     .optional()
-    .valid(...validStatuses),
+    .valid(...BranchStatuses),
 })
 
 export const updateBranchSchema = Joi.object({
@@ -27,7 +27,7 @@ export const updateBranchSchema = Joi.object({
   head_coach: Joi.string().optional().allow('').max(100),
   status: Joi.string()
     .optional()
-    .valid(...validStatuses),
+    .valid(...BranchStatuses),
 })
 
 export const getBranchListSchema = Joi.object({
@@ -36,5 +36,5 @@ export const getBranchListSchema = Joi.object({
   q: Joi.string().allow('').optional(),
   status: Joi.string()
     .optional()
-    .valid(...validStatuses),
+    .valid(...BranchStatuses),
 })

@@ -1,13 +1,20 @@
 import Joi from 'joi'
 
+import { CompanyStatuses } from '@/entities/company.entity'
+
 export const createCompanySchema = Joi.object({
   name: Joi.string().required().min(3).max(100),
-  status: Joi.string().valid('active', 'inactive').optional(),
+  status: Joi.string()
+    .valid(...CompanyStatuses)
+    .optional(),
 })
 
 export const updateCompanySchema = Joi.object({
-  name: Joi.string().min(3).max(100).optional(),
-  status: Joi.string().valid('active', 'inactive').optional(),
+  name: Joi.string().optional().min(3).max(100),
+  status: Joi.string()
+    .valid(...CompanyStatuses)
+    .optional(),
+  accessible_company_id: Joi.string().uuid().optional(),
 })
 
 export const getCompanyListSchema = Joi.object({

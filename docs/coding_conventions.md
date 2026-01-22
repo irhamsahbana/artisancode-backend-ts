@@ -20,6 +20,12 @@
     - Example: `where: { companyId: user.companyId, deletedAt: null }`.
 - **Mapping**: Use `@map` in Prisma schema to map camelCase fields to snake_case DB columns.
 
+## Error Handling
+- **Use `AppError`**: For known business logic errors (e.g., resource not found, duplicate entry, validation failure), always throw an `AppError` with the appropriate HTTP status code (e.g., 404, 409, 400).
+- **Avoid Generic Errors**: Do not throw generic `Error` objects for business rules, as they result in 500 Internal Server Error responses.
+- **Try-Catch**: Avoid using `try-catch` blocks in controllers/handlers. Express 5 automatically catches async errors and passes them to the global error handler. Only use `try-catch` if you need to handle a specific error locally (e.g., fallback logic).
+- **Import**: `import { AppError } from '@/common/app_error'`
+
 ## API Response
 - Use standard helpers from `@/common/rest_response`:
     - `responseSuccess(data, message)`
@@ -31,6 +37,15 @@
 - Apply validation middleware in `*.index.ts`:
     - `validate(Schema)` for `req.body`.
     - `validateQuery(Schema)` for `req.query`.
+
+## Enums & Constants
+- **Centralized Definition**: Define Enums and their valid values in the Entity file (`src/entities/[entity].entity.ts`).
+    - **Type Definition**: Export a TypeScript type (e.g., `export type UserStatus = 'active' | 'inactive'`).
+    - **Value List**: Export a constant array of all valid values (e.g., `export const UserStatuses: UserStatus[] = ['active', 'inactive']`).
+- **Usage**:
+    - **Entities**: Use the defined Type in interface definitions.
+    - **Schemas**: Use the exported constant array in Joi validation (e.g., `.valid(...UserStatuses)`).
+    - **Database**: Ensure these values align with Prisma Enums in `schema.prisma`.
 
 ## Authentication
 - Use `authenticate` middleware from `@/common/middlewares/auth.middleware`.

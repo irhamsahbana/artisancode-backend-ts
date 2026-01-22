@@ -1,60 +1,63 @@
-import { NextFunction, Response } from 'express'
+import { Request, Response } from 'express'
+
+import { AuthenticatedRequest } from '@/common/middlewares/auth.middleware'
+import { responseSuccess } from '@/common/rest_response'
+import * as Entity from '@/entities/invoice.entity'
 
 import { IInvoiceUsecase } from './invoice.contract'
-import { AuthenticatedRequest, JwtPayload } from '../../common/middlewares/auth.middleware'
-import { responseSuccess } from '../../common/rest_response'
 
-export class InvoiceHandler {
+export default class InvoiceHandler {
   constructor(private usecase: IInvoiceUsecase) {}
 
-  create = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const user = req.user as JwtPayload
-      const result = await this.usecase.create({
-        ...req.body,
-        company_id: user.company_id,
-        branch_id: user.branch_id || req.body.branch_id,
-      })
-      return res.json(responseSuccess(result))
-    } catch (error) {
-      next(error)
+  create = async (req: Request, res: Response) => {
+    const user = (req as AuthenticatedRequest).user
+    const payload = req.body as Entity.CreateInvoiceReq
+
+    // Override or set company_id/branch_id from user token
+    payload.company_id = user?.company_id || ''
+    // branch_id might be in body or from user if restricted.
+    // Assuming for now we trust body if user has access, or overwrite if strictly user's branch.
+    // Matching previous logic: branch_id: user.branch_id || req.body.branch_id
+    if (user?.branch_id) {
+      payload.branch_id = user.branch_id
     }
+
+    const result = await this.usecase.create(payload)
+    return res.json(responseSuccess(result))
   }
 
-  getOne = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const user = req.user as JwtPayload
-      const result = await this.usecase.getOne(req.params.id, user.company_id)
-      return res.json(responseSuccess(result))
-    } catch (error) {
-      next(error)
-    }
+  findById = async (req: Request, res: Response) => {
+    const user = (req as AuthenticatedRequest).user
+    const result = await this.usecase.findById(req.params.id, user?.company_id || '')
+    return res.json(responseSuccess(result))
   }
 
-  getAll = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const user = req.user as JwtPayload
-      const page = req.query.page ? Number(req.query.page) : 1
-      const per_page = req.query.per_page ? Number(req.query.per_page) : 10
-      const result = await this.usecase.getAll({
-        company_id: user.company_id,
-        enrollment_id: req.query.enrollment_id as string,
-        status: req.query.status as string,
-        pagination: { page, per_page },
-      })
-      return res.json(responseSuccess(result))
-    } catch (error) {
-      next(error)
+  findList = async (req: Request, res: Response) => {
+    const { page, limit, enrollment_id, status } = req.query as unknown as {
+      page: number
+      limit: number
+      enrollment_id: string
+      status: string
     }
+    const user = (req as AuthenticatedRequest).user
+
+    const payload: Entity.GetInvoiceReq = {
+      company_id: user?.company_id || '',
+      enrollment_id,
+      status,
+      pagination: {
+        page: Number(page) || 1,
+        per_page: Number(limit) || 10,
+      },
+    }
+
+    const result = await this.usecase.findList(payload)
+    return res.json(responseSuccess(result))
   }
 
-  generatePaymentLink = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    try {
-      const user = req.user as JwtPayload
-      const result = await this.usecase.generatePaymentLink(req.params.id, user.company_id)
-      return res.json(responseSuccess(result))
-    } catch (error) {
-      next(error)
-    }
+  generatePaymentLink = async (req: Request, res: Response) => {
+    const user = (req as AuthenticatedRequest).user
+    const result = await this.usecase.generatePaymentLink(req.params.id, user?.company_id || '')
+    return res.json(responseSuccess(result))
   }
 }

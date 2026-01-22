@@ -60,7 +60,6 @@ export default class ProgramRepo implements IProgramRepo {
           price: price.price.toNumber(),
           started_at: price.startedAt,
           ended_at: price.endedAt,
-          is_active: price.isActive,
           created_at: price.createdAt,
         })),
       })),
@@ -436,7 +435,6 @@ export default class ProgramRepo implements IProgramRepo {
         price: p.price.toNumber(),
         started_at: p.startedAt,
         ended_at: p.endedAt,
-        is_active: p.isActive,
         created_at: p.createdAt,
       })),
     }
@@ -450,7 +448,6 @@ export default class ProgramRepo implements IProgramRepo {
         price: req.price,
         startedAt: req.started_at || new Date(),
         endedAt: req.ended_at,
-        isActive: true,
       },
     })
     return {
@@ -460,7 +457,6 @@ export default class ProgramRepo implements IProgramRepo {
       price: data.price.toNumber(),
       started_at: data.startedAt,
       ended_at: data.endedAt,
-      is_active: data.isActive,
       created_at: data.createdAt,
     }
   }
@@ -490,7 +486,6 @@ export default class ProgramRepo implements IProgramRepo {
       price: data.price.toNumber(),
       started_at: data.startedAt,
       ended_at: data.endedAt,
-      is_active: data.isActive,
       created_at: data.createdAt,
     }
   }

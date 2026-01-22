@@ -1,15 +1,19 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 import { BaseEntity } from './timestamp.entity'
 
+export type CompanyStatus = 'active' | 'inactive'
+
+export const CompanyStatuses: CompanyStatus[] = ['active', 'inactive']
+
 export interface CreateCompanyReq {
   name: string
-  status?: 'active' | 'inactive'
+  status?: CompanyStatus
 }
 
 export interface UpdateCompanyReq {
   id: string
   name?: string
-  status?: 'active' | 'inactive'
+  status?: CompanyStatus
   accessible_company_id?: string
 }
 
@@ -24,7 +28,7 @@ export interface GetCompanyReq {
 export interface Company extends BaseEntity {
   id: string
   name: string
-  status: 'active' | 'inactive'
+  status: CompanyStatus
 }
 
 export interface CompanyList {

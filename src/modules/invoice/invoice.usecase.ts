@@ -1,14 +1,10 @@
-import { IInvoiceRepo, IInvoiceUsecase } from './invoice.contract'
-import { AppError } from '../../common/app_error'
-import {
-  CreateInvoiceReq,
-  GetInvoiceReq,
-  Invoice,
-  InvoiceList,
-} from '../../entities/invoice.entity'
-import { DokuProvider } from '../../providers/doku'
+import { AppError } from '@/common/app_error'
+import { CreateInvoiceReq, GetInvoiceReq, Invoice, InvoiceList } from '@/entities/invoice.entity'
+import { DokuProvider } from '@/providers/doku'
 
-export class InvoiceUsecase implements IInvoiceUsecase {
+import { IInvoiceRepo, IInvoiceUsecase } from './invoice.contract'
+
+export default class InvoiceUsecase implements IInvoiceUsecase {
   constructor(
     private repo: IInvoiceRepo,
     private dokuProvider: DokuProvider,
@@ -26,14 +22,14 @@ export class InvoiceUsecase implements IInvoiceUsecase {
     return invoice
   }
 
-  async getOne(id: string, company_id: string): Promise<Invoice> {
+  async findById(id: string, company_id: string): Promise<Invoice> {
     const invoice = await this.repo.findById(id, company_id)
     if (!invoice) throw new AppError(404, 'Invoice not found')
     return invoice
   }
 
-  async getAll(req: GetInvoiceReq): Promise<InvoiceList> {
-    return this.repo.findAll(req)
+  async findList(req: GetInvoiceReq): Promise<InvoiceList> {
+    return this.repo.findList(req)
   }
 
   async updateStatus(id: string, company_id: string, status: string): Promise<Invoice> {

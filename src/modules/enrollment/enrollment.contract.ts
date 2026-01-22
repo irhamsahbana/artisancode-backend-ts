@@ -5,6 +5,17 @@ export interface IEnrollmentRepo {
   update(req: Entity.UpdateEnrollmentReq): Promise<Entity.Enrollment>
   delete(id: string, companyId: string): Promise<void>
   findById(id: string, companyId: string): Promise<Entity.Enrollment | null>
+  findByStudentAndProgram(
+    studentId: string,
+    programId: string,
+    companyId: string,
+  ): Promise<Entity.Enrollment | null>
+  findActiveByStudentAndProgram(
+    studentId: string,
+    programId: string,
+    companyId: string,
+  ): Promise<Entity.Enrollment | null>
+  findActiveByStudent(studentId: string, companyId: string): Promise<Entity.Enrollment[]>
   findList(req: Entity.GetEnrollmentReq): Promise<Entity.EnrollmentList>
   countActiveByProgram(programId: string, companyId: string): Promise<number>
   countActiveByPricing(pricingId: string, companyId: string): Promise<number>

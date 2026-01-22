@@ -2,6 +2,8 @@ import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 
 export type ProgramStatus = 'active' | 'inactive' | 'archived'
 
+export const ProgramStatuses: ProgramStatus[] = ['active', 'inactive', 'archived']
+
 export interface ProgramSchedule {
   id: string
   program_id: string
@@ -19,7 +21,6 @@ export interface ProgramPrice {
   price: number
   started_at: Date
   ended_at: Date | null
-  is_active: boolean
   created_at: Date
 }
 

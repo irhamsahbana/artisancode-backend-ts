@@ -37,7 +37,7 @@ export const env = {
     EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1d',
   },
   OTEL: {
-    ENABLED: parseBoolean(process.env.OTEL_ENABLED, true),
+    ENABLED: parseBoolean(process.env.OTEL_ENABLED, false),
     SERVICE_NAME: process.env.OTEL_SERVICE_NAME || process.env.APP_NAME || 'api',
     SERVICE_VERSION: process.env.OTEL_SERVICE_VERSION || process.env.APP_VERSION || '1.0.0',
     EXPORTER: {

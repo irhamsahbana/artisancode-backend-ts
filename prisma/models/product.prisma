@@ -49,12 +49,11 @@ model ProductPrice {
     createdAt        DateTime  @default(now()) @map("created_at")
     startedAt        DateTime  @default(now()) @map("started_at")
     endedAt          DateTime? @map("ended_at")
-    isActive         Boolean   @default(true)
 
     productPricing ProductPricing @relation(fields: [productPricingId], references: [id])
 
     @@map("product_prices")
-    @@index([productPricingId, startedAt, endedAt, isActive])
+    @@index([productPricingId, startedAt, endedAt])
 }
 
 model ProductSchedule {
