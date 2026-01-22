@@ -4,5 +4,3 @@ export const generateInvoiceNumber = (): string => {
   const uniqueSuffix = Date.now().toString().slice(-6)
   return `INV/${year}/${uniqueSuffix}`
 }
-
-
