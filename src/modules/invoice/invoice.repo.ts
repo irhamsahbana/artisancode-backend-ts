@@ -1,6 +1,7 @@
 import { InvoiceStatus, Prisma } from '@prisma/client'
 
 import prisma from '@/common/prisma'
+import { generateInvoiceNumber } from '@/common/utils/invoice.util'
 import {
   CreateInvoiceReq,
   GetInvoiceReq,
@@ -23,7 +24,7 @@ export default class InvoiceRepo implements IInvoiceRepo {
         issuedDate: data.issued_date || new Date(),
         invoiceDate: data.issued_date || new Date(),
         status: (data.status as InvoiceStatus) || InvoiceStatus.pending,
-        invoiceNumber: this.generateInvoiceNumber(),
+        invoiceNumber: generateInvoiceNumber(),
       },
     })
     return this.mapToEntity(invoice)
@@ -141,10 +142,5 @@ export default class InvoiceRepo implements IInvoiceRepo {
       deleted_at: data.deletedAt,
       enrollment: enrollment,
     }
-  }
-
-  private generateInvoiceNumber(): string {
-    // Simple generation for now, can be improved to be sequential per company
-    return `INV/${new Date().getFullYear()}/${Date.now().toString().slice(-6)}`
   }
 }

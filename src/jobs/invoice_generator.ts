@@ -1,6 +1,8 @@
 import cron from 'node-cron'
 
 import { prisma } from '../common/prisma'
+import { generateInvoiceNumber } from '../common/utils/invoice.util'
+import { selectValidPrice } from '../common/utils/select_valid_price'
 import logger from '../config/logger'
 import { DokuProvider } from '../providers/doku'
 
@@ -43,20 +45,21 @@ export const startInvoiceGeneratorJob = () => {
 
       for (const enrollment of enrollments) {
         try {
-          // Find active price
-          const activePrice = enrollment.productPricing.prices.find((p) => p.isActive)
-          if (!activePrice) {
-            logger.warn(`No active price found for enrollment ${enrollment.id}`)
-            continue
-          }
-
           if (!enrollment.nextBillingDate) {
             logger.warn(`Enrollment ${enrollment.id} has no nextBillingDate, skipping.`)
             continue
           }
 
-          const amount = activePrice.price.toNumber()
-          const invoiceNumber = `INV/${new Date().getFullYear()}/${Date.now().toString().slice(-6)}` // Better logic needed
+          const billingDate = new Date(enrollment.nextBillingDate)
+          const selectedPrice = selectValidPrice(enrollment.productPricing.prices, billingDate)
+
+          if (!selectedPrice) {
+            logger.warn(`No valid price found for enrollment ${enrollment.id}`)
+            continue
+          }
+
+          const amount = selectedPrice.price.toNumber()
+          const invoiceNumber = generateInvoiceNumber()
 
           // Create Invoice
           const invoice = await prisma.invoice.create({
@@ -70,7 +73,7 @@ export const startInvoiceGeneratorJob = () => {
               issuedDate: new Date(),
               invoiceDate: new Date(),
               status: 'pending',
-              currency: activePrice.currency,
+              currency: selectedPrice.currency,
             },
           })
 

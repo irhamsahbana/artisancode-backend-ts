@@ -1,4 +1,5 @@
 import { AppError } from '@/common/app_error'
+import { selectValidPrice } from '@/common/utils/select_valid_price'
 import * as Entity from '@/entities/enrollment.entity'
 import { Program, ProgramStatuses } from '@/entities/program.entity'
 import { InactiveStudentStatuses, StudentStatus } from '@/entities/student.entity'
@@ -73,13 +74,9 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
     // 1. It started BEFORE or ON the enrollment date (start <= enrollmentDate)
     // 2. It has NOT ended yet, OR it ends AFTER or ON the enrollment date (end == null || end >= enrollmentDate)
     const enrollmentDate = req.enrollment_date ? new Date(req.enrollment_date) : new Date()
-    const hasValidPrice = pricing.prices.some((p) => {
-      const start = new Date(p.started_at)
-      const end = p.ended_at ? new Date(p.ended_at) : null
-      return start <= enrollmentDate && (end === null || end >= enrollmentDate)
-    })
+    const validPrice = selectValidPrice(pricing.prices, enrollmentDate)
 
-    if (!hasValidPrice) {
+    if (!validPrice) {
       throw new AppError(400, 'Selected pricing package has no valid price for the enrollment date')
     }
 
