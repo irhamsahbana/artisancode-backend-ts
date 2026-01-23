@@ -231,7 +231,10 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
       }
       const validPrice = selectValidPrice(pricing.prices, effectiveEnrollmentDate)
       if (!validPrice) {
-        throw new AppError(400, 'Selected pricing package has no valid price for the enrollment date')
+        throw new AppError(
+          400,
+          'Selected pricing package has no valid price for the enrollment date',
+        )
       }
     }
 

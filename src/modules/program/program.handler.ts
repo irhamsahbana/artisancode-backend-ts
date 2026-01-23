@@ -62,7 +62,7 @@ export default class ProgramHandler {
     // I should probably refactor usecase signature to take payload object like others.
     // But that's a bigger change.
     // For now, I will just pass it where payload object is used.
-    
+
     await this.usecase.delete(id, user?.company_id || '')
     res.status(200).json(responseSuccess(null, 'Program deleted successfully'))
   }

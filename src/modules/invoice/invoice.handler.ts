@@ -12,7 +12,7 @@ export default class InvoiceHandler {
   create = async (req: Request, res: Response) => {
     const user = (req as AuthenticatedRequest).user
     const body = req.body as Entity.CreateInvoiceReq
-    
+
     const payload: Entity.CreateInvoiceReq = {
       ...body,
       user,
