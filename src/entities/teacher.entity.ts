@@ -1,4 +1,5 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
+import { UserContext } from './user.entity'
 
 export type TeacherStatus = 'active' | 'inactive' | 'on_leave' | 'terminated'
 
@@ -33,6 +34,7 @@ export interface CreateTeacherReq {
   birth_date?: string
   biography?: string
   specialty?: string
+  user?: UserContext
 }
 
 export interface UpdateTeacherReq {
@@ -47,6 +49,7 @@ export interface UpdateTeacherReq {
   birth_date?: string
   biography?: string
   specialty?: string
+  user?: UserContext
 }
 
 export interface GetTeacherReq {
@@ -55,6 +58,7 @@ export interface GetTeacherReq {
   branch_id?: string
   q?: string
   pagination?: PaginationQuery
+  user?: UserContext
 }
 
 export interface TeacherList {

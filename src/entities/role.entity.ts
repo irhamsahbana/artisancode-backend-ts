@@ -1,11 +1,13 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 import { BaseEntity, Timestamp } from './timestamp.entity'
+import { UserContext } from './user.entity'
 
 export interface CreateRoleReq {
   name: string
   description?: string
   permission_ids?: string[]
   company_id?: string
+  user?: UserContext
 }
 
 export interface UpdateRoleReq {
@@ -14,6 +16,7 @@ export interface UpdateRoleReq {
   description?: string
   permission_ids?: string[]
   company_id?: string
+  user?: UserContext
 }
 
 export interface GetRoleReq {
@@ -22,6 +25,7 @@ export interface GetRoleReq {
   company_id?: string
   q?: string
   pagination?: PaginationQuery
+  user?: UserContext
 }
 
 export interface Permission extends Timestamp {
@@ -45,12 +49,14 @@ export interface RoleList {
 export interface CreatePermissionReq {
   name: string
   description?: string
+  user?: UserContext
 }
 
 export interface GetPermissionReq {
   id?: string
   q?: string
   pagination?: PaginationQuery
+  user?: UserContext
 }
 
 export interface PermissionList {

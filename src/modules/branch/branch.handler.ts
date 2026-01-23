@@ -12,8 +12,11 @@ export default class BranchHandler {
   create = async (req: Request, res: Response) => {
     const user = (req as AuthenticatedRequest).user
     const companyId = user?.company_id || ''
-    const payload = req.body as Entity.CreateBranchReq
-    payload.company_id = companyId
+    const payload: Entity.CreateBranchReq = {
+      ...req.body,
+      company_id: companyId,
+      user,
+    }
 
     const data = await this.usecase.create(payload)
     res.status(201).json(responseSuccess(data, 'Branch created successfully'))
@@ -22,11 +25,14 @@ export default class BranchHandler {
   update = async (req: Request, res: Response) => {
     const { id } = req.params
     const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.UpdateBranchReq
     const companyId = user?.company_id || ''
 
-    payload.id = id
-    payload.company_id = companyId
+    const payload: Entity.UpdateBranchReq = {
+      ...req.body,
+      id,
+      company_id: companyId,
+      user,
+    }
 
     const data = await this.usecase.update(payload)
     res.status(200).json(responseSuccess(data, 'Branch updated successfully'))
@@ -65,6 +71,7 @@ export default class BranchHandler {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
+      user,
     }
 
     const data = await this.usecase.findList(payload)

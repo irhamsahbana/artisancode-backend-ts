@@ -13,6 +13,7 @@ export default class TeacherHandler {
     const user = (req as AuthenticatedRequest).user
     const payload = req.body as Entity.CreateTeacherReq
     payload.company_id = user?.company_id || ''
+    payload.user = user
 
     const data = await this.usecase.create(payload)
     res.status(201).json(responseSuccess(data, 'Teacher created successfully'))
@@ -25,6 +26,7 @@ export default class TeacherHandler {
 
     payload.id = id
     payload.company_id = user?.company_id || ''
+    payload.user = user
 
     const data = await this.usecase.update(payload)
     res.status(200).json(responseSuccess(data, 'Teacher updated successfully'))
@@ -66,6 +68,7 @@ export default class TeacherHandler {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
+      user,
     }
 
     const data = await this.usecase.findList(payload)

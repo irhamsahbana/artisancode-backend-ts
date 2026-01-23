@@ -11,7 +11,12 @@ export default class InvoiceHandler {
 
   create = async (req: Request, res: Response) => {
     const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.CreateInvoiceReq
+    const body = req.body as Entity.CreateInvoiceReq
+    
+    const payload: Entity.CreateInvoiceReq = {
+      ...body,
+      user,
+    }
 
     // Override or set company_id/branch_id from user token
     payload.company_id = user?.company_id || ''
@@ -28,6 +33,11 @@ export default class InvoiceHandler {
 
   findById = async (req: Request, res: Response) => {
     const user = (req as AuthenticatedRequest).user
+    // const payload: Entity.GetInvoiceReq = {
+    //   id: req.params.id,
+    //   company_id: user?.company_id || '',
+    //   user,
+    // }
     const result = await this.usecase.findById(req.params.id, user?.company_id || '')
     return res.json(responseSuccess(result))
   }
@@ -49,6 +59,7 @@ export default class InvoiceHandler {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
+      user,
     }
 
     const result = await this.usecase.findList(payload)

@@ -23,6 +23,7 @@ export const updateEnrollmentSchema = Joi.object({
   branch_id: Joi.string().uuid().optional(),
   student_id: Joi.string().uuid().optional(),
   program_id: Joi.string().uuid().optional(),
+  pricing_id: Joi.string().uuid().optional(),
   enrollment_date: Joi.date().optional(),
   status: Joi.string()
     .optional()

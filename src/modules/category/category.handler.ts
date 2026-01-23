@@ -12,8 +12,11 @@ export default class CategoryHandler {
   create = async (req: Request, res: Response) => {
     const user = (req as AuthenticatedRequest).user
     const companyId = user?.company_id || ''
-    const payload = req.body as Entity.CreateCategoryReq
-    payload.company_id = companyId
+    const payload: Entity.CreateCategoryReq = {
+      ...req.body,
+      company_id: companyId,
+      user,
+    }
 
     const data = await this.usecase.create(payload)
     res.status(201).json(responseSuccess(data, 'Category created successfully'))
@@ -23,10 +26,13 @@ export default class CategoryHandler {
     const { id } = req.params
     const user = (req as AuthenticatedRequest).user
     const companyId = user?.company_id || ''
-    const payload = req.body as Entity.UpdateCategoryReq
 
-    payload.id = id
-    payload.company_id = companyId
+    const payload: Entity.UpdateCategoryReq = {
+      ...req.body,
+      id,
+      company_id: companyId,
+      user,
+    }
 
     const data = await this.usecase.update(payload)
     res.status(200).json(responseSuccess(data, 'Category updated successfully'))
@@ -71,6 +77,7 @@ export default class CategoryHandler {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
+      user,
     }
 
     const data = await this.usecase.findList(payload)

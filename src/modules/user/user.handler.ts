@@ -17,6 +17,7 @@ export default class UserHandler {
     if (companyId) {
       payload.company_id = companyId
     }
+    payload.user = user
 
     const data = await this.usecase.create(payload)
     res.status(201).json(responseSuccess(data, 'User created successfully'))
@@ -47,6 +48,7 @@ export default class UserHandler {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
+      user,
     }
 
     if (companyId) {

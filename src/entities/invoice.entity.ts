@@ -2,6 +2,7 @@ import { Branch } from './branch.entity'
 import { Company } from './company.entity'
 import { Enrollment } from './enrollment.entity'
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
+import { UserContext } from './user.entity'
 
 export type InvoiceStatus =
   | 'draft'
@@ -55,6 +56,7 @@ export interface CreateInvoiceReq {
   due_date: Date
   issued_date?: Date
   status?: string
+  user?: UserContext
 }
 
 export interface UpdateInvoiceReq {
@@ -64,6 +66,7 @@ export interface UpdateInvoiceReq {
   paid_at?: Date
   doku_invoice_id?: string
   payment_url?: string
+  user?: UserContext
 }
 
 export interface GetInvoiceReq {
@@ -72,6 +75,7 @@ export interface GetInvoiceReq {
   enrollment_id?: string
   status?: string
   pagination?: PaginationQuery
+  user?: UserContext
 }
 
 export interface InvoiceList {

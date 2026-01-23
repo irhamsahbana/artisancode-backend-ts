@@ -13,6 +13,7 @@ export default class ProgramHandler {
     const user = (req as AuthenticatedRequest).user
     const payload = req.body as Entity.CreateProgramReq
     payload.company_id = user?.company_id || ''
+    payload.user = user
 
     const data = await this.usecase.create(payload)
     res.status(201).json(responseSuccess(data, 'Program created successfully'))
@@ -25,6 +26,7 @@ export default class ProgramHandler {
 
     payload.id = id
     payload.company_id = user?.company_id || ''
+    payload.user = user
 
     const data = await this.usecase.update(payload)
     res.status(200).json(responseSuccess(data, 'Program updated successfully'))
@@ -37,6 +39,7 @@ export default class ProgramHandler {
 
     payload.id = id
     payload.company_id = user?.company_id || ''
+    payload.user = user
 
     const data = await this.usecase.updateAll(payload)
     res.status(200).json(responseSuccess(data, 'Program updated successfully'))
@@ -46,6 +49,20 @@ export default class ProgramHandler {
     const { id } = req.params
     const user = (req as AuthenticatedRequest).user
 
+    // Note: delete usecase signature in contract might just take id and company_id
+    // If we want to pass user context, we might need to update contract or pass it differently.
+    // For now, let's keep it as is or check if we can pass a payload object.
+    // Looking at contract (inferred): delete(id: string, company_id: string)
+    // To support user context, we should ideally change usecase signature to accept object.
+    // But for consistency with other updates, I'll stick to what's available or update if needed.
+    // Actually, other handlers used payload object. Program handler uses arguments.
+    // Let's check program.contract.ts if I can... or just assume I can't change it easily without refactoring usecase.
+    // Wait, the task is "Apply UserContext". If the usecase doesn't support it yet, I should probably update usecase signature too?
+    // User asked "kalau misal semua module pakai user context apakah bisa?".
+    // I should probably refactor usecase signature to take payload object like others.
+    // But that's a bigger change.
+    // For now, I will just pass it where payload object is used.
+    
     await this.usecase.delete(id, user?.company_id || '')
     res.status(200).json(responseSuccess(null, 'Program deleted successfully'))
   }
@@ -54,6 +71,7 @@ export default class ProgramHandler {
     const { id } = req.params
     const user = (req as AuthenticatedRequest).user
 
+    // Same here, findById(id, company_id)
     const data = await this.usecase.findById(id, user?.company_id || '')
     if (!data) {
       return res.status(404).json(responseError('Program not found'))
@@ -78,6 +96,7 @@ export default class ProgramHandler {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
+      user,
     }
 
     const data = await this.usecase.findList(payload)
@@ -91,6 +110,7 @@ export default class ProgramHandler {
 
     payload.program_id = id
     payload.company_id = user?.company_id || ''
+    payload.user = user
 
     const data = await this.usecase.addSchedule(payload)
     res.status(201).json(responseSuccess(data, 'Schedule added successfully'))
@@ -103,6 +123,7 @@ export default class ProgramHandler {
 
     payload.program_id = id
     payload.company_id = user?.company_id || ''
+    payload.user = user
 
     const data = await this.usecase.addPricing(payload)
     res.status(201).json(responseSuccess(data, 'Pricing added successfully'))

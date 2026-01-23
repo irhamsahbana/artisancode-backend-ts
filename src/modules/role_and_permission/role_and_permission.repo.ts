@@ -137,7 +137,8 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
   }
 
   async updateRole(req: Entity.UpdateRoleReq): Promise<Entity.Role> {
-    const { id, permission_ids, company_id, ...rest } = req
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, permission_ids, company_id, user, ...rest } = req
     // If permission_ids is provided, we need to handle the update of relations
     // This is a "replace" strategy: delete existing and create new
     if (permission_ids) {

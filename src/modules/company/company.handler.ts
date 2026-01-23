@@ -10,7 +10,12 @@ export default class CompanyHandler {
   constructor(private readonly usecase: ICompanyUsecase) {}
 
   create = async (req: Request, res: Response) => {
-    const data = await this.usecase.create(req.body)
+    const user = (req as AuthenticatedRequest).user
+    const payload: Entity.CreateCompanyReq = {
+      ...req.body,
+      user,
+    }
+    const data = await this.usecase.create(payload)
     return res.status(201).json(responseSuccess(data, 'Company created successfully'))
   }
 
@@ -31,6 +36,7 @@ export default class CompanyHandler {
         page,
         per_page: limit,
       },
+      user,
     }
 
     if (companyId) {
@@ -50,7 +56,7 @@ export default class CompanyHandler {
     const user = (req as AuthenticatedRequest).user
     const companyId = user?.company_id || ''
 
-    const payload: Entity.GetCompanyReq = { id }
+    const payload: Entity.GetCompanyReq = { id, user }
     if (companyId) {
       payload.accessible_company_id = companyId
     }
@@ -67,7 +73,7 @@ export default class CompanyHandler {
     const user = (req as AuthenticatedRequest).user
     const companyId = user?.company_id || ''
 
-    const payload: Entity.UpdateCompanyReq = { ...req.body, id }
+    const payload: Entity.UpdateCompanyReq = { ...req.body, id, user }
     if (companyId) {
       payload.accessible_company_id = companyId
     }
@@ -81,7 +87,7 @@ export default class CompanyHandler {
     const user = (req as AuthenticatedRequest).user
     const companyId = user?.company_id || ''
 
-    const payload: Entity.GetCompanyReq = { id }
+    const payload: Entity.GetCompanyReq = { id, user }
     if (companyId) {
       payload.accessible_company_id = companyId
     }

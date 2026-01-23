@@ -19,6 +19,7 @@ export default class RoleAndPermissionHandler {
       if (companyId) {
         payload.company_id = companyId
       }
+      payload.user = user
 
       const data = await this.usecase.createRole(payload)
       res.status(201).json(responseSuccess(data, 'Role created successfully'))
@@ -45,6 +46,7 @@ export default class RoleAndPermissionHandler {
           page: Number(page) || 1,
           per_page: Number(limit) || 10,
         },
+        user,
       }
 
       if (companyId) {
@@ -81,6 +83,7 @@ export default class RoleAndPermissionHandler {
       const companyId = user?.company_id || ''
 
       const payload = { ...req.body, id } as Entity.UpdateRoleReq
+      payload.user = user
 
       if (companyId) {
         payload.company_id = companyId

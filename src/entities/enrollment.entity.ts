@@ -3,6 +3,7 @@ import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 import { Program, ProgramPricing } from './program.entity'
 import { Student } from './student.entity'
 import { Teacher } from './teacher.entity'
+import { UserContext } from './user.entity'
 
 export type EnrollmentStatus = 'active' | 'inactive'
 
@@ -42,6 +43,7 @@ export interface CreateEnrollmentReq {
   billing_cycle?: string
   next_billing_date?: Date
   auto_renew?: boolean
+  user?: UserContext
 }
 
 export interface UpdateEnrollmentReq {
@@ -56,6 +58,7 @@ export interface UpdateEnrollmentReq {
   billing_cycle?: string
   next_billing_date?: Date
   auto_renew?: boolean
+  user?: UserContext
 }
 
 export interface GetEnrollmentReq {
@@ -66,6 +69,7 @@ export interface GetEnrollmentReq {
   program_id?: string
   pricing_id?: string
   pagination?: PaginationQuery
+  user?: UserContext
 }
 
 export interface EnrollmentList {

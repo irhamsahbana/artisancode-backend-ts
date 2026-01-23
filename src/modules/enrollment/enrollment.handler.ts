@@ -6,13 +6,27 @@ import * as Entity from '@/entities/enrollment.entity'
 
 import { IEnrollmentUsecase } from './enrollment.contract'
 
+export interface UserContext {
+  id: string
+  company_id: string
+  branch_id?: string
+  role_id: string
+  name: string
+  username: string
+}
+
 export default class EnrollmentHandler {
   constructor(private usecase: IEnrollmentUsecase) {}
 
   create = async (req: Request, res: Response) => {
     const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.CreateEnrollmentReq
-    payload.company_id = user?.company_id || ''
+    const body = req.body
+    const payload: Entity.CreateEnrollmentReq = {
+      ...body,
+      company_id: user?.company_id || '',
+      next_billing_date: body.next_payment_date,
+      user,
+    }
 
     const data = await this.usecase.create(payload)
     res.status(201).json(responseSuccess(data, 'Enrollment created successfully'))
@@ -21,10 +35,15 @@ export default class EnrollmentHandler {
   update = async (req: Request, res: Response) => {
     const { id } = req.params
     const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.UpdateEnrollmentReq
+    const body = req.body
 
-    payload.id = id
-    payload.company_id = user?.company_id || ''
+    const payload: Entity.UpdateEnrollmentReq = {
+      ...body,
+      id,
+      company_id: user?.company_id || '',
+      next_billing_date: body.next_payment_date,
+      user,
+    }
 
     const data = await this.usecase.update(payload)
     res.status(200).json(responseSuccess(data, 'Enrollment updated successfully'))
@@ -68,6 +87,7 @@ export default class EnrollmentHandler {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
+      user,
     }
 
     const data = await this.usecase.findList(payload)
