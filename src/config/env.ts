@@ -50,8 +50,11 @@ export const env = {
     DIAG_LOG_LEVEL: process.env.OTEL_DIAG_LOG_LEVEL,
     ALLOW_BUN: parseBoolean(process.env.OTEL_ALLOW_BUN, false),
   },
+  DOKU: {
+    CLIENT_ID: process.env.DOKU_CLIENT_ID,
+    SECRET_KEY: process.env.DOKU_SECRET_KEY,
+    PUBLIC_KEY: process.env.DOKU_PUBLIC_KEY,
+  },
   IS_PRODUCTION: process.env.APP_ENV === 'production',
-  DOKU_CLIENT_ID: process.env.DOKU_CLIENT_ID,
-  DOKU_SHARED_KEY: process.env.DOKU_SHARED_KEY,
   API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3000/api',
 }

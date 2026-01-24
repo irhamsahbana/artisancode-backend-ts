@@ -17,7 +17,14 @@ class RESTServer {
     const app: Express = express()
 
     app.use(cors)
-    app.use(express.json())
+    app.use(
+      express.json({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        verify: (req: any, res, buf) => {
+          req.rawBody = buf.toString()
+        },
+      }),
+    )
     app.use(requestLogger)
 
     app.use('/api', restRouter)

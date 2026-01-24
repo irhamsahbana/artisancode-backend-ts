@@ -1,14 +1,23 @@
-// import { Library } from 'doku-nodejs-library'
+import crypto from 'crypto'
 
+import { env } from '@/config/env'
 import logger from '@/config/logger'
 
-import { env } from '../config/env'
+export interface DokuLineItem {
+  name: string
+  price: number
+  quantity: number
+}
 
 export interface DokuPaymentLinkReq {
   invoice_number: string
   amount: number
   customer_email: string
   customer_name: string
+  customer_phone?: string
+  customer_address?: string
+  customer_country?: string
+  line_items?: DokuLineItem[]
   expiry_time?: number // in minutes
 }
 
@@ -17,81 +26,149 @@ export interface DokuPaymentLinkRes {
   payment_url: string
 }
 
-interface DokuPaymentLinkPayload {
-  order: {
-    amount: number
-    invoice_number: string
-    currency: string
-    callback_url: string
-    auto_redirect: boolean
+interface DokuCheckoutResponse {
+  message: string[]
+  response: {
+    order: {
+      invoice_number: string
+      amount: number
+    }
+    payment: {
+      url: string
+    }
   }
-  payment: {
-    payment_due_date: number
-  }
-  customer: {
-    name: string
-    email: string
-  }
-}
-
-// Minimal interface for DOKU Library since it lacks types
-interface DokuLibrary {
-  generatePaymentLink(payload: DokuPaymentLinkPayload): Promise<{
-    order: { invoice_number: string }
-    payment: { url: string }
-  }>
 }
 
 export class DokuProvider {
-  private client: DokuLibrary
+  private clientId: string
+  private secretKey: string
+  private publicKey: string
+  private baseUrl: string
 
   constructor() {
-    // Initialize DOKU Library
-    // Note: Assuming env vars are set: DOKU_CLIENT_ID, DOKU_SHARED_KEY, DOKU_IS_PRODUCTION
-    // this.client = new Library({
-    //   environment: env.IS_PRODUCTION ? 'production' : 'sandbox',
-    //   clientId: env.DOKU_CLIENT_ID || 'dummy_client_id',
-    //   sharedKey: env.DOKU_SHARED_KEY || 'dummy_shared_key',
-    //   setupConfiguration: {
-    //     json_body: true,
-    //   },
-    // }) as unknown as DokuLibrary
-    this.client = {} as DokuLibrary
+    this.clientId = env.DOKU.CLIENT_ID || ''
+    this.secretKey = env.DOKU.SECRET_KEY || ''
+
+    // Decode Public Key as requested (even if not used for Checkout API directly, might be needed for other ops)
+    const encodedPublicKey = env.DOKU.PUBLIC_KEY || ''
+    this.publicKey = encodedPublicKey
+      ? Buffer.from(encodedPublicKey, 'base64').toString('utf-8')
+      : ''
+
+    this.baseUrl = env.IS_PRODUCTION ? 'https://api.doku.com' : 'https://api-sandbox.doku.com'
+  }
+
+  private generateSignature(
+    payload: string,
+    timestamp: string,
+    requestId: string,
+    targetPath: string,
+  ): string {
+    const digest = crypto.createHash('sha256').update(payload).digest('base64')
+
+    const component =
+      `Client-Id:${this.clientId}\n` +
+      `Request-Id:${requestId}\n` +
+      `Request-Timestamp:${timestamp}\n` +
+      `Request-Target:${targetPath}\n` +
+      `Digest:${digest}`
+
+    const signature = crypto.createHmac('sha256', this.secretKey).update(component).digest('base64')
+
+    return `HMACSHA256=${signature}`
+  }
+
+  public verifyNotificationSignature(
+    headers: Record<string, string | string[] | undefined>,
+    body: string,
+    targetPath: string,
+  ): boolean {
+    const clientId = headers['client-id'] as string
+    const requestId = headers['request-id'] as string
+    const timestamp = headers['request-timestamp'] as string
+    const signature = headers['signature'] as string
+
+    if (!clientId || !requestId || !timestamp || !signature) {
+      return false
+    }
+
+    // Calculate Digest
+    const digest = crypto.createHash('sha256').update(body).digest('base64')
+
+    // Construct Component
+    const component =
+      `Client-Id:${clientId}\n` +
+      `Request-Id:${requestId}\n` +
+      `Request-Timestamp:${timestamp}\n` +
+      `Request-Target:${targetPath}\n` +
+      `Digest:${digest}`
+
+    // Calculate Expected Signature
+    const expectedSignature =
+      'HMACSHA256=' +
+      crypto.createHmac('sha256', this.secretKey).update(component).digest('base64')
+
+    return signature === expectedSignature
   }
 
   async generatePaymentLink(req: DokuPaymentLinkReq): Promise<DokuPaymentLinkRes> {
+    const targetPath = '/checkout/v1/payment'
+    const url = `${this.baseUrl}${targetPath}`
+    const requestId = crypto.randomUUID()
+    const timestamp = new Date().toISOString().slice(0, 19) + 'Z'
+
+    const payloadObj = {
+      order: {
+        amount: req.amount,
+        invoice_number: req.invoice_number,
+        currency: 'IDR',
+        callback_url: `${env.API_BASE_URL}/webhooks/doku`,
+        auto_redirect: true,
+        line_items: req.line_items,
+      },
+      payment: {
+        payment_due_date: req.expiry_time || 10080, // Default 7 days
+      },
+      customer: {
+        name: req.customer_name,
+        email: req.customer_email,
+        phone: req.customer_phone,
+        address: req.customer_address,
+        country: req.customer_country || 'ID',
+      },
+    }
+
+    const payloadStr = JSON.stringify(payloadObj)
+    const signature = this.generateSignature(payloadStr, timestamp, requestId, targetPath)
+
     try {
-      const payload = {
-        order: {
-          amount: req.amount,
-          invoice_number: req.invoice_number,
-          currency: 'IDR',
-          callback_url: `${env.API_BASE_URL}/webhooks/doku`, // Adjust as needed
-          auto_redirect: true,
+      logger.info(`Generating DOKU Payment Link for ${req.invoice_number}`)
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Client-Id': this.clientId,
+          'Request-Id': requestId,
+          'Request-Timestamp': timestamp,
+          Signature: signature,
         },
-        payment: {
-          payment_due_date: req.expiry_time || 60 * 24 * 7, // Default 7 days in minutes
-        },
-        customer: {
-          name: req.customer_name,
-          email: req.customer_email,
-        },
+        body: payloadStr,
+      })
+
+      const responseBody = (await response.json()) as DokuCheckoutResponse
+
+      if (!response.ok) {
+        logger.error('DOKU API Error Response:', responseBody)
+        throw new Error(`DOKU API Error: ${JSON.stringify(responseBody)}`)
       }
 
-      // Call DOKU API
-      // Note: The library signature might vary, assuming generatePaymentLink or similar
-      // For now, using a generic request wrapper if specific method unknown or specific endpoint
-      // The library usually has .generatePaymentLink()
-
-      const response = await this.client.generatePaymentLink(payload)
-
       return {
-        invoice_id: response.order.invoice_number,
-        payment_url: response.payment.url,
+        invoice_id: responseBody.response.order.invoice_number,
+        payment_url: responseBody.response.payment.url,
       }
     } catch (error) {
       logger.error('DOKU Generate Payment Link Error:', error)
-      throw new Error('Failed to generate payment link')
+      throw error
     }
   }
 }

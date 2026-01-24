@@ -83,6 +83,15 @@ export const startInvoiceGeneratorJob = () => {
             amount,
             customer_email: enrollment.student.email,
             customer_name: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+            customer_phone: enrollment.student.parentPhone,
+            customer_address: enrollment.student.address,
+            line_items: [
+              {
+                name: enrollment.productPricing.name,
+                price: amount,
+                quantity: 1,
+              },
+            ],
           })
 
           // Update Invoice
