@@ -104,23 +104,181 @@ export default class ProgramUsecase implements IProgramUsecase {
       }
     }
 
+    type PricingList = NonNullable<Entity.UpdateProgramAllReq['pricings']>
+    type PriceList = PricingList[number]['prices']
+
+    let nextReq = req
     if (req.pricings) {
-      for (const pricing of req.pricings) {
-        this.validatePricingOverlap(
-          [],
-          pricing.prices.map((p) => ({
-            ...p,
-            id: '',
-            pricing_id: '',
-            started_at: p.started_at || new Date(),
-            ended_at: p.ended_at || null,
-            created_at: new Date(),
-          })),
+      const normalizedPricings: PricingList = req.pricings.map((pricing) => {
+        if (!pricing.id) {
+          return pricing
+        }
+
+        const existingPricing = program.pricings?.find(
+          (p: Entity.ProgramPricing) => p.id === pricing.id,
         )
+        if (!existingPricing) {
+          throw new AppError(404, 'Pricing package not found')
+        }
+
+        const mergedPrices: PriceList = existingPricing.prices.map((price: Entity.ProgramPrice) => ({
+          id: price.id,
+          currency: price.currency,
+          price: price.price,
+          started_at: price.started_at,
+          ended_at: price.ended_at,
+        }))
+
+        for (const reqPrice of pricing.prices) {
+          if (reqPrice.id) {
+            const existingPrice = existingPricing.prices.find(
+              (p: Entity.ProgramPrice) => p.id === reqPrice.id,
+            )
+            if (!existingPrice) {
+              throw new AppError(404, 'Price not found')
+            }
+
+            const priceChanged =
+              reqPrice.price !== existingPrice.price || reqPrice.currency !== existingPrice.currency
+
+            if (priceChanged) {
+              const newStart = reqPrice.started_at ? new Date(reqPrice.started_at) : new Date()
+              const newEnd = reqPrice.ended_at === undefined ? null : reqPrice.ended_at
+
+              if (newEnd && newStart > newEnd) {
+                throw new AppError(400, 'Start date cannot be after end date')
+              }
+
+              const existingIndex = mergedPrices.findIndex((p: PriceList[number]) => p.id === reqPrice.id)
+              if (existingIndex >= 0) {
+                const existingEndedAt = mergedPrices[existingIndex].ended_at
+                if (!existingEndedAt || new Date(existingEndedAt) > newStart) {
+                  mergedPrices[existingIndex] = {
+                    ...mergedPrices[existingIndex],
+                    ended_at: newStart,
+                  }
+                }
+              }
+
+              const otherPrices = mergedPrices.filter(
+                (p: PriceList[number]) => p.currency === reqPrice.currency,
+              )
+              for (const other of otherPrices) {
+                const otherStart = other.started_at ? new Date(other.started_at) : new Date(0)
+                this.checkOverlap(
+                  { start: newStart, end: newEnd },
+                  {
+                    start: otherStart,
+                    end: other.ended_at ? new Date(other.ended_at) : null,
+                    id: other.id || 'existing',
+                  },
+                  reqPrice.currency,
+                )
+              }
+
+              mergedPrices.push({
+                currency: reqPrice.currency,
+                price: reqPrice.price,
+                started_at: newStart,
+                ended_at: newEnd,
+              })
+              continue
+            }
+
+            const effectiveStartedAt = (reqPrice.started_at || existingPrice.started_at) as Date
+            const effectiveEndedAt =
+              reqPrice.ended_at === undefined ? existingPrice.ended_at : reqPrice.ended_at
+
+            if (effectiveEndedAt && new Date(effectiveStartedAt) > new Date(effectiveEndedAt)) {
+              throw new AppError(400, 'Start date cannot be after end date')
+            }
+
+            const otherPrices = mergedPrices.filter(
+              (p: PriceList[number]) => p.id !== reqPrice.id && p.currency === reqPrice.currency,
+            )
+            for (const other of otherPrices) {
+              const otherStart = other.started_at ? new Date(other.started_at) : new Date(0)
+              this.checkOverlap(
+                { start: new Date(effectiveStartedAt), end: effectiveEndedAt || null },
+                {
+                  start: otherStart,
+                  end: other.ended_at ? new Date(other.ended_at) : null,
+                  id: other.id || 'existing',
+                },
+                reqPrice.currency,
+              )
+            }
+
+            const targetIndex = mergedPrices.findIndex((p: PriceList[number]) => p.id === reqPrice.id)
+            if (targetIndex >= 0) {
+              mergedPrices[targetIndex] = {
+                id: reqPrice.id,
+                currency: reqPrice.currency,
+                price: reqPrice.price,
+                started_at: effectiveStartedAt,
+                ended_at: effectiveEndedAt,
+              }
+            }
+            continue
+          }
+
+          const newStart = reqPrice.started_at ? new Date(reqPrice.started_at) : new Date()
+          const newEnd = reqPrice.ended_at === undefined ? null : reqPrice.ended_at
+
+          if (newEnd && newStart > newEnd) {
+            throw new AppError(400, 'Start date cannot be after end date')
+          }
+
+          const openEndedPrice = mergedPrices.find((p: PriceList[number]) => {
+            const currentStart = p.started_at ? new Date(p.started_at) : new Date(0)
+            return (
+              p.currency === reqPrice.currency &&
+              p.ended_at === null &&
+              currentStart < newStart
+            )
+          })
+
+          if (openEndedPrice) {
+            openEndedPrice.ended_at = newStart
+          }
+
+          const otherPrices = mergedPrices.filter(
+            (p: PriceList[number]) => p.currency === reqPrice.currency,
+          )
+          for (const other of otherPrices) {
+            const otherStart = other.started_at ? new Date(other.started_at) : new Date(0)
+            this.checkOverlap(
+              { start: newStart, end: newEnd },
+              {
+                start: otherStart,
+                end: other.ended_at ? new Date(other.ended_at) : null,
+                id: other.id || 'existing',
+              },
+              reqPrice.currency,
+            )
+          }
+
+          mergedPrices.push({
+            currency: reqPrice.currency,
+            price: reqPrice.price,
+            started_at: newStart,
+            ended_at: newEnd,
+          })
+        }
+
+        return {
+          ...pricing,
+          prices: mergedPrices,
+        }
+      })
+
+      nextReq = {
+        ...req,
+        pricings: normalizedPricings,
       }
     }
 
-    return this.repo.updateAll(req)
+    return this.repo.updateAll(nextReq)
   }
 
   async delete(id: string, companyId: string): Promise<void> {

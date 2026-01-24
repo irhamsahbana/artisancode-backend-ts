@@ -160,7 +160,9 @@ export default class ProgramRepo implements IProgramRepo {
   }
 
   async updateAll(req: Entity.UpdateProgramAllReq): Promise<Entity.Program> {
-    const { id, company_id, branch_id, schedules, pricings, teachers, ...rest } = req
+    const { id, company_id, branch_id, schedules, pricings, teachers, user, ...rest } = req
+    void user // suppress unused variable warning
+
 
     let scheduleOps: Prisma.ProductUpdateInput['productSchedules'] = undefined
     if (schedules) {
@@ -191,12 +193,19 @@ export default class ProgramRepo implements IProgramRepo {
 
     let pricingOps: Prisma.ProductUpdateInput['pricings'] = undefined
     if (pricings) {
+      const idsToKeep = pricings.filter((p) => p.id).map((p) => p.id as string)
+      const newPricings = pricings.filter((p) => !p.id)
+      const updatePricings = pricings.filter((p) => p.id)
+
       pricingOps = {
         updateMany: {
-          where: { deletedAt: null },
+          where: {
+            id: { notIn: idsToKeep },
+            deletedAt: null,
+          },
           data: { deletedAt: new Date() },
         },
-        create: pricings.map((p) => ({
+        create: newPricings.map((p) => ({
           name: p.name,
           description: p.description || '',
           prices: {
@@ -208,6 +217,39 @@ export default class ProgramRepo implements IProgramRepo {
             })),
           },
         })),
+        update: updatePricings.map((p) => {
+          const priceIdsToKeep = p.prices.filter((price) => price.id).map((price) => price.id as string)
+          const newPrices = p.prices.filter((price) => !price.id)
+          const updatePrices = p.prices.filter((price) => price.id)
+
+          return {
+            where: { id: p.id as string },
+            data: {
+              name: p.name,
+              description: p.description,
+              prices: {
+                deleteMany: {
+                  id: { notIn: priceIdsToKeep },
+                },
+                create: newPrices.map((price) => ({
+                  currency: price.currency,
+                  price: price.price,
+                  startedAt: price.started_at || new Date(),
+                  endedAt: price.ended_at,
+                })),
+                update: updatePrices.map((price) => ({
+                  where: { id: price.id as string },
+                  data: {
+                    currency: price.currency,
+                    price: price.price,
+                    startedAt: price.started_at,
+                    endedAt: price.ended_at,
+                  },
+                })),
+              },
+            },
+          }
+        }),
       }
     }
 

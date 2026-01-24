@@ -75,10 +75,11 @@ export interface CreateProgramReq {
     name: string
     description?: string
     prices: {
+      id?: string | null
       currency: string
       price: number
       started_at?: Date
-      ended_at?: Date
+      ended_at?: Date | null
     }[]
   }[]
   teachers?: string[]
@@ -115,10 +116,11 @@ export interface UpdateProgramAllReq {
     name: string
     description?: string
     prices: {
+      id?: string | null
       currency: string
       price: number
       started_at?: Date
-      ended_at?: Date
+      ended_at?: Date | null
     }[]
   }[]
   teachers?: string[]
@@ -154,7 +156,7 @@ export interface AddPricingReq {
     currency: string
     price: number
     started_at?: Date
-    ended_at?: Date
+    ended_at?: Date | null
   }[]
   user?: UserContext
 }
@@ -166,7 +168,7 @@ export interface AddPriceReq {
   currency: string
   price: number
   started_at?: Date
-  ended_at?: Date
+  ended_at?: Date | null
   user?: UserContext
 }
 

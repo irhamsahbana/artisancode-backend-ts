@@ -19,13 +19,15 @@ const programScheduleSchema = Joi.object({
 })
 
 const programPriceSchema = Joi.object({
+  id: Joi.string().uuid().optional().allow(null),
   currency: Joi.string().required().length(3), // ISO 4217
   price: Joi.number().required().min(0), // Minor units
   started_at: Joi.date().optional(),
-  ended_at: Joi.date().optional(),
+  ended_at: Joi.date().optional().allow(null),
 })
 
 const programPricingSchema = Joi.object({
+  id: Joi.string().uuid().optional().allow(null),
   name: Joi.string().required(),
   description: Joi.string().optional().allow(''),
   prices: Joi.array().items(programPriceSchema).required().min(1),
