@@ -18,6 +18,14 @@ export const env = {
   APP_NAME: process.env.APP_NAME || 'artisancode-backend-ts',
   APP_VERSION: process.env.APP_VERSION || '1.0.0',
   APP_LOG_LEVEL: process.env.APP_LOG_LEVEL || 'info',
+  IS_PRODUCTION: process.env.APP_ENV === 'production',
+  CORS: {
+    ORIGINS: (process.env.CORS_ORIGINS || '')
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean),
+    ALLOW_CREDENTIALS: parseBoolean(process.env.CORS_ALLOW_CREDENTIALS, true),
+  },
   DATABASE_URL: process.env.DATABASE_URL,
   DATABASE: {
     URL: process.env.DATABASE_URL,
@@ -55,6 +63,5 @@ export const env = {
     SECRET_KEY: process.env.DOKU_SECRET_KEY,
     PUBLIC_KEY: process.env.DOKU_PUBLIC_KEY,
   },
-  IS_PRODUCTION: process.env.APP_ENV === 'production',
   API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3000/api',
 }
