@@ -163,7 +163,6 @@ export default class ProgramRepo implements IProgramRepo {
     const { id, company_id, branch_id, schedules, pricings, teachers, user, ...rest } = req
     void user // suppress unused variable warning
 
-
     let scheduleOps: Prisma.ProductUpdateInput['productSchedules'] = undefined
     if (schedules) {
       const idsToKeep = schedules.filter((s) => s.id).map((s) => s.id as string)
@@ -218,7 +217,9 @@ export default class ProgramRepo implements IProgramRepo {
           },
         })),
         update: updatePricings.map((p) => {
-          const priceIdsToKeep = p.prices.filter((price) => price.id).map((price) => price.id as string)
+          const priceIdsToKeep = p.prices
+            .filter((price) => price.id)
+            .map((price) => price.id as string)
           const newPrices = p.prices.filter((price) => !price.id)
           const updatePrices = p.prices.filter((price) => price.id)
 

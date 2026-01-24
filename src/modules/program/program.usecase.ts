@@ -121,13 +121,15 @@ export default class ProgramUsecase implements IProgramUsecase {
           throw new AppError(404, 'Pricing package not found')
         }
 
-        const mergedPrices: PriceList = existingPricing.prices.map((price: Entity.ProgramPrice) => ({
-          id: price.id,
-          currency: price.currency,
-          price: price.price,
-          started_at: price.started_at,
-          ended_at: price.ended_at,
-        }))
+        const mergedPrices: PriceList = existingPricing.prices.map(
+          (price: Entity.ProgramPrice) => ({
+            id: price.id,
+            currency: price.currency,
+            price: price.price,
+            started_at: price.started_at,
+            ended_at: price.ended_at,
+          }),
+        )
 
         for (const reqPrice of pricing.prices) {
           if (reqPrice.id) {
@@ -149,7 +151,9 @@ export default class ProgramUsecase implements IProgramUsecase {
                 throw new AppError(400, 'Start date cannot be after end date')
               }
 
-              const existingIndex = mergedPrices.findIndex((p: PriceList[number]) => p.id === reqPrice.id)
+              const existingIndex = mergedPrices.findIndex(
+                (p: PriceList[number]) => p.id === reqPrice.id,
+              )
               if (existingIndex >= 0) {
                 const existingEndedAt = mergedPrices[existingIndex].ended_at
                 if (!existingEndedAt || new Date(existingEndedAt) > newStart) {
@@ -209,7 +213,9 @@ export default class ProgramUsecase implements IProgramUsecase {
               )
             }
 
-            const targetIndex = mergedPrices.findIndex((p: PriceList[number]) => p.id === reqPrice.id)
+            const targetIndex = mergedPrices.findIndex(
+              (p: PriceList[number]) => p.id === reqPrice.id,
+            )
             if (targetIndex >= 0) {
               mergedPrices[targetIndex] = {
                 id: reqPrice.id,
@@ -232,9 +238,7 @@ export default class ProgramUsecase implements IProgramUsecase {
           const openEndedPrice = mergedPrices.find((p: PriceList[number]) => {
             const currentStart = p.started_at ? new Date(p.started_at) : new Date(0)
             return (
-              p.currency === reqPrice.currency &&
-              p.ended_at === null &&
-              currentStart < newStart
+              p.currency === reqPrice.currency && p.ended_at === null && currentStart < newStart
             )
           })
 
