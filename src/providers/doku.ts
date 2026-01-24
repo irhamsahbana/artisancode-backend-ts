@@ -105,8 +105,7 @@ export class DokuProvider {
 
     // Calculate Expected Signature
     const expectedSignature =
-      'HMACSHA256=' +
-      crypto.createHmac('sha256', this.secretKey).update(component).digest('base64')
+      'HMACSHA256=' + crypto.createHmac('sha256', this.secretKey).update(component).digest('base64')
 
     return signature === expectedSignature
   }
