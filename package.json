@@ -31,11 +31,6 @@
       "eslint --fix"
     ]
   },
-  "jest": {
-    "transform": {
-      "^.+\\.[t|j]sx?$": "babel-jest"
-    }
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
