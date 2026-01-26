@@ -16,6 +16,7 @@ export interface Enrollment {
   student_id: string
   program_id: string
   pricing_id: string
+  currency?: string
   enrollment_date?: Date
   status: EnrollmentStatus
   billing_cycle?: string
@@ -38,6 +39,7 @@ export interface CreateEnrollmentReq {
   student_id: string
   program_id: string
   pricing_id: string
+  currency?: string
   enrollment_date?: Date
   status?: string
   billing_cycle?: string
@@ -53,6 +55,7 @@ export interface UpdateEnrollmentReq {
   student_id?: string
   program_id?: string
   pricing_id?: string
+  currency?: string
   enrollment_date?: Date
   status?: string
   billing_cycle?: string

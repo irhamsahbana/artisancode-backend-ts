@@ -155,7 +155,9 @@ export class WebhookHandler {
                   )
                 } else {
                   const prices = enrollmentDetails.productPricing?.prices || []
-                  const selectedPrice = selectValidPrice(prices, nextDate)
+                  const currency = enrollmentDetails.currency
+                  const priceCandidates = prices.filter((price) => price.currency === currency)
+                  const selectedPrice = selectValidPrice(priceCandidates, nextDate)
 
                   if (selectedPrice) {
                     const amount = selectedPrice.price.toNumber()

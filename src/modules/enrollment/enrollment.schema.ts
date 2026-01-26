@@ -9,6 +9,7 @@ export const createEnrollmentSchema = Joi.object({
   student_id: Joi.string().uuid().required(),
   program_id: Joi.string().uuid().required(),
   pricing_id: Joi.string().uuid().required(),
+  currency: Joi.string().optional(),
   enrollment_date: Joi.date().optional(),
   status: Joi.string()
     .optional()
@@ -24,6 +25,7 @@ export const updateEnrollmentSchema = Joi.object({
   student_id: Joi.string().uuid().optional(),
   program_id: Joi.string().uuid().optional(),
   pricing_id: Joi.string().uuid().optional(),
+  currency: Joi.string().optional(),
   enrollment_date: Joi.date().optional(),
   status: Joi.string()
     .optional()

@@ -51,7 +51,10 @@ export const startInvoiceGeneratorJob = () => {
           }
 
           const billingDate = new Date(enrollment.nextBillingDate)
-          const selectedPrice = selectValidPrice(enrollment.productPricing.prices, billingDate)
+          const prices = enrollment.productPricing?.prices || []
+          const currency = enrollment.currency
+          const priceCandidates = prices.filter((price) => price.currency === currency)
+          const selectedPrice = selectValidPrice(priceCandidates, billingDate)
 
           if (!selectedPrice) {
             logger.warn(`No valid price found for enrollment ${enrollment.id}`)

@@ -5,6 +5,7 @@ model Enrollment {
     studentId        String           @map("student_id")
     productId        String           @map("product_id")
     productPricingId String           @map("product_pricing_id")
+    currency         String           @default("IDR") @map("currency")
     billingCycle     BillingCycle     @default(monthly) @map("billing_cycle")
     nextBillingDate  DateTime?        @map("next_billing_date")
     autoRenew        Boolean          @default(true) @map("auto_renew")

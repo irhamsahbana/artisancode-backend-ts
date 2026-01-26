@@ -74,10 +74,26 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
     // 1. It started BEFORE or ON the enrollment date (start <= enrollmentDate)
     // 2. It has NOT ended yet, OR it ends AFTER or ON the enrollment date (end == null || end >= enrollmentDate)
     const enrollmentDate = req.enrollment_date ? new Date(req.enrollment_date) : new Date()
-    const validPrice = selectValidPrice(pricing.prices, enrollmentDate)
+    const prices = pricing.prices || []
 
-    if (!validPrice) {
-      throw new AppError(400, 'Selected pricing package has no valid price for the enrollment date')
+    if (req.currency) {
+      const priceCandidates = prices.filter((price) => price.currency === req.currency)
+      const validPrice = selectValidPrice(priceCandidates, enrollmentDate)
+      if (!validPrice) {
+        throw new AppError(
+          400,
+          'Selected pricing package has no valid price for the enrollment currency',
+        )
+      }
+    } else {
+      const validPrice = selectValidPrice(prices, enrollmentDate)
+      if (!validPrice) {
+        throw new AppError(
+          400,
+          'Selected pricing package has no valid price for the enrollment date',
+        )
+      }
+      req.currency = validPrice.currency
     }
 
     if (req.billing_cycle) {
@@ -219,7 +235,7 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
       }
     }
 
-    if (req.pricing_id || req.program_id || req.enrollment_date) {
+    if (req.pricing_id || req.program_id || req.enrollment_date || req.currency) {
       const programData = await resolveProgram()
       const pricingId = req.pricing_id ?? enrollment.pricing_id
       const pricing = programData.pricings?.find((p) => p.id === pricingId)
@@ -229,12 +245,27 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
       if (!pricing.is_active) {
         throw new AppError(400, 'Selected pricing is not active')
       }
-      const validPrice = selectValidPrice(pricing.prices, effectiveEnrollmentDate)
-      if (!validPrice) {
-        throw new AppError(
-          400,
-          'Selected pricing package has no valid price for the enrollment date',
-        )
+      const prices = pricing.prices || []
+      const effectiveCurrency = req.currency ?? enrollment.currency
+
+      if (effectiveCurrency) {
+        const priceCandidates = prices.filter((price) => price.currency === effectiveCurrency)
+        const validPrice = selectValidPrice(priceCandidates, effectiveEnrollmentDate)
+        if (!validPrice) {
+          throw new AppError(
+            400,
+            'Selected pricing package has no valid price for the enrollment currency',
+          )
+        }
+      } else {
+        const validPrice = selectValidPrice(prices, effectiveEnrollmentDate)
+        if (!validPrice) {
+          throw new AppError(
+            400,
+            'Selected pricing package has no valid price for the enrollment date',
+          )
+        }
+        req.currency = validPrice.currency
       }
     }
 
