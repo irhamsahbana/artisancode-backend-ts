@@ -25,20 +25,46 @@ export class WebhookHandler {
         return res.status(401).json({ message: 'Invalid Signature' })
       }
 
-      // debug
-      logger.info('DOKU Webhook received', { headers, body: req.body })
-      // console.log('DOKU Webhook received', { headers, body: req.body })
-      // return res.status(200).json({ message: 'Webhook received' })
+      const service = req.body?.service || {}
+      const acquirer = req.body?.acquirer || {}
+      const channel = req.body?.channel || {}
+      const order = req.body?.order || {}
+      const transaction = req.body?.transaction || {}
+      const virtualAccountInfo = req.body?.virtual_account_info
+      const virtualAccountPayment = req.body?.virtual_account_payment
+      const creditCardPayment =
+        req.body?.credit_card_payment || req.body?.card_payment || req.body?.credit_card_info
+      const qrisInfo = req.body?.qris || req.body?.qris_info || req.body?.qris_payment
 
-      const { order, transaction } = req.body
+      const readablePayload = {
+        service_id: service?.id,
+        acquirer_id: acquirer?.id,
+        channel_id: channel?.id,
+        transaction_status: transaction?.status,
+        transaction_date: transaction?.date,
+        transaction_request_id: transaction?.original_request_id,
+        invoice_number: order?.invoice_number,
+        amount: order?.amount,
+        virtual_account_number: virtualAccountInfo?.virtual_account_number,
+        virtual_account_identifier:
+          virtualAccountPayment?.identifier || virtualAccountPayment?.identifer,
+        qris_info: qrisInfo,
+        credit_card_payment: creditCardPayment,
+      }
 
-      if (!order || !order.invoice_number) {
+      logger.info('DOKU Webhook received', { headers, readable_payload: readablePayload })
+
+      const invoiceNumber = order?.invoice_number
+
+      if (!invoiceNumber || typeof invoiceNumber !== 'string') {
         logger.warn('Webhook received without invoice number', req.body)
         return res.status(400).json({ message: 'Invalid payload' })
       }
 
-      if (transaction && transaction.status === 'SUCCESS') {
-        const invoiceNumber = order.invoice_number
+      const statusValue = String(transaction?.status || '')
+      const normalizedStatus = statusValue.toUpperCase()
+
+      if (normalizedStatus === 'SUCCESS') {
         logger.info(`Processing successful payment for ${invoiceNumber}`)
 
         const invoice = await prisma.invoice.findFirst({
