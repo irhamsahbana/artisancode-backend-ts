@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 
-import { env } from '@/config/env'
+import { env } from '../src/config/env'
 
 
 const main = () => {

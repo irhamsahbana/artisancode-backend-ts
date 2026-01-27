@@ -1,6 +1,6 @@
-import { env } from '@/config/env'
-import logger from '@/config/logger'
-import { DokuProvider } from '@/providers/doku'
+import { env } from '../src/config/env'
+import logger from '../src/config/logger'
+import { DokuProvider } from '../src/providers/doku'
 
 const main = async () => {
   // Dynamic import for ESM module compatibility
