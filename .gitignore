@@ -9,4 +9,3 @@ curl
 dist
 node_modules
 prd
-src/generated
