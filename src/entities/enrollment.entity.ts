@@ -1,4 +1,5 @@
 import { Branch } from './branch.entity'
+import { Invoice } from './invoice.entity'
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
 import { Program, ProgramPricing } from './program.entity'
 import { Student } from './student.entity'
@@ -31,6 +32,7 @@ export interface Enrollment {
     teachers?: Teacher[]
   }
   pricing?: ProgramPricing
+  latest_invoice?: Invoice
 }
 
 export interface CreateEnrollmentReq {
@@ -45,6 +47,7 @@ export interface CreateEnrollmentReq {
   billing_cycle?: string
   next_billing_date?: Date
   auto_renew?: boolean
+  generate_invoice?: boolean
   user?: UserContext
 }
 

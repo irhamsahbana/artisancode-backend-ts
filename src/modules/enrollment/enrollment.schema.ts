@@ -18,6 +18,7 @@ export const createEnrollmentSchema = Joi.object({
     .optional()
     .valid(...validBillingTypes),
   next_payment_date: Joi.date().optional().allow(null),
+  generate_invoice: Joi.boolean().default(false),
 })
 
 export const updateEnrollmentSchema = Joi.object({

@@ -53,6 +53,7 @@ export interface CreateInvoiceReq {
   branch_id: string
   enrollment_id: string
   amount: number
+  currency?: string
   due_date: Date
   issued_date?: Date
   status?: string

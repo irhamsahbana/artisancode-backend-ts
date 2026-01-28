@@ -4,6 +4,7 @@ import * as Entity from '@/entities/enrollment.entity'
 import { Program, ProgramStatuses } from '@/entities/program.entity'
 import { InactiveStudentStatuses, StudentStatus } from '@/entities/student.entity'
 import { IBranchRepo } from '@/modules/branch/branch.contract'
+import { IInvoiceUsecase } from '@/modules/invoice/invoice.contract'
 import { IProgramRepo } from '@/modules/program/program.contract'
 import { IStudentRepo } from '@/modules/student/student.contract'
 
@@ -15,6 +16,7 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
     private branchRepo: IBranchRepo,
     private studentRepo: IStudentRepo,
     private programRepo: IProgramRepo,
+    private invoiceUsecase: IInvoiceUsecase,
   ) {}
 
   async create(req: Entity.CreateEnrollmentReq): Promise<Entity.Enrollment> {
@@ -75,6 +77,7 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
     // 2. It has NOT ended yet, OR it ends AFTER or ON the enrollment date (end == null || end >= enrollmentDate)
     const enrollmentDate = req.enrollment_date ? new Date(req.enrollment_date) : new Date()
     const prices = pricing.prices || []
+    let selectedPrice: { price: number } | undefined
 
     if (req.currency) {
       const priceCandidates = prices.filter((price) => price.currency === req.currency)
@@ -85,6 +88,7 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
           'Selected pricing package has no valid price for the enrollment currency',
         )
       }
+      selectedPrice = validPrice
     } else {
       const validPrice = selectValidPrice(prices, enrollmentDate)
       if (!validPrice) {
@@ -94,6 +98,7 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
         )
       }
       req.currency = validPrice.currency
+      selectedPrice = validPrice
     }
 
     if (req.billing_cycle) {
@@ -128,7 +133,26 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
       this.checkScheduleConflict(program, activeEnrollments)
     }
 
-    return this.repo.create(req)
+    const enrollment = await this.repo.create(req)
+
+    let invoice = undefined
+    if (req.generate_invoice && selectedPrice) {
+      const amount = selectedPrice.price
+      const invoiceData = await this.invoiceUsecase.create({
+        company_id: req.company_id,
+        branch_id: req.branch_id,
+        enrollment_id: enrollment.id,
+        amount,
+        currency: req.currency || 'IDR',
+        due_date: req.next_billing_date || req.enrollment_date || new Date(),
+        issued_date: new Date(),
+        status: 'pending',
+        user: req.user,
+      })
+      invoice = await this.invoiceUsecase.generatePaymentLink(invoiceData.id, req.company_id)
+    }
+
+    return { ...enrollment, latest_invoice: invoice }
   }
 
   private checkScheduleConflict(newProgram: Program, existingEnrollments: Entity.Enrollment[]) {

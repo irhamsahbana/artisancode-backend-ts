@@ -20,6 +20,7 @@ export default class InvoiceRepo implements IInvoiceRepo {
         branchId: data.branch_id,
         enrollmentId: data.enrollment_id,
         amount: data.amount,
+        currency: data.currency || 'IDR',
         dueDate: data.due_date,
         issuedDate: data.issued_date || new Date(),
         invoiceDate: data.issued_date || new Date(),
@@ -38,6 +39,7 @@ export default class InvoiceRepo implements IInvoiceRepo {
           include: {
             student: true,
             product: true,
+            productPricing: true,
           },
         },
       },
@@ -118,6 +120,27 @@ export default class InvoiceRepo implements IInvoiceRepo {
               first_name: data.enrollment.student.firstName,
               last_name: data.enrollment.student.lastName,
               email: data.enrollment.student.email,
+              address: data.enrollment.student.address,
+              parent_phone: data.enrollment.student.parentPhone,
+            }
+          : undefined,
+        pricing: data.enrollment.productPricing
+          ? {
+              ...data.enrollment.productPricing,
+              program_id: data.enrollment.productPricing.programId,
+              is_active: data.enrollment.productPricing.isActive,
+              created_at: data.enrollment.productPricing.createdAt,
+              updated_at: data.enrollment.productPricing.updatedAt,
+            }
+          : undefined,
+        program: data.enrollment.product
+          ? {
+              ...data.enrollment.product,
+              company_id: data.enrollment.product.companyId,
+              branch_id: data.enrollment.product.branchId,
+              created_at: data.enrollment.product.createdAt,
+              updated_at: data.enrollment.product.updatedAt,
+              deleted_at: data.enrollment.product.deletedAt,
             }
           : undefined,
       }

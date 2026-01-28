@@ -59,6 +59,15 @@ export default class InvoiceUsecase implements IInvoiceUsecase {
       customer_name: invoice.enrollment?.student
         ? `${invoice.enrollment.student.first_name} ${invoice.enrollment.student.last_name}`
         : 'Customer',
+      customer_phone: invoice.enrollment?.student?.parent_phone,
+      customer_address: invoice.enrollment?.student?.address,
+      line_items: [
+        {
+          name: `${invoice.enrollment?.program?.name || 'Tuition Fee'} - ${invoice.enrollment?.pricing?.name || ''}`,
+          price: invoice.amount,
+          quantity: 1,
+        },
+      ],
     })
 
     // Update Invoice with Payment Link
