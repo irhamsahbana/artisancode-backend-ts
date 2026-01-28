@@ -122,6 +122,7 @@ export default class InvoiceRepo implements IInvoiceRepo {
               email: data.enrollment.student.email,
               address: data.enrollment.student.address,
               parent_phone: data.enrollment.student.parentPhone,
+              parent_email: data.enrollment.student.parentEmail,
             }
           : undefined,
         pricing: data.enrollment.productPricing

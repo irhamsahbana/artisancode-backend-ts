@@ -89,6 +89,7 @@ export class DokuProvider {
     const signature = headers['signature'] as string
 
     if (!clientId || !requestId || !timestamp || !signature) {
+      logger.warn('DOKU Webhook missing required headers', { headers })
       return false
     }
 

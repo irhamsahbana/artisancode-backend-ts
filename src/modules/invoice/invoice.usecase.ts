@@ -55,7 +55,10 @@ export default class InvoiceUsecase implements IInvoiceUsecase {
     const paymentLink = await this.dokuProvider.generatePaymentLink({
       invoice_number: invoice.invoice_number,
       amount: invoice.amount,
-      customer_email: invoice.enrollment?.student?.email || 'customer@example.com',
+      customer_email:
+        invoice.enrollment?.student?.parent_email ||
+        invoice.enrollment?.student?.email ||
+        '',
       customer_name: invoice.enrollment?.student
         ? `${invoice.enrollment.student.first_name} ${invoice.enrollment.student.last_name}`
         : 'Customer',
