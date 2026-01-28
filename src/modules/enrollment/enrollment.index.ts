@@ -23,13 +23,7 @@ const invoiceRepo = new InvoiceRepo()
 const dokuProvider = new DokuProvider()
 const invoiceUsecase = new InvoiceUsecase(invoiceRepo, dokuProvider)
 
-const usecase = new EnrollmentUsecase(
-  repo,
-  branchRepo,
-  studentRepo,
-  programRepo,
-  invoiceUsecase,
-)
+const usecase = new EnrollmentUsecase(repo, branchRepo, studentRepo, programRepo, invoiceUsecase)
 const handler = new EnrollmentHandler(usecase)
 
 const router = Router()
