@@ -17,14 +17,16 @@ export default class CompanyRepo implements ICompanyRepo {
   }
 
   async findList(req: Entity.GetCompanyReq): Promise<Entity.CompanyList> {
-    const { pagination = {}, q, accessible_company_id, ...rest } = req
+    const { pagination = {}, q, accessible_company_id, ids, id } = req
     const { page = 1, per_page = 10 } = pagination
     const skip = (page - 1) * per_page
     const take = per_page
 
     const where: Prisma.CompanyWhereInput = {
       deletedAt: null,
-      ...rest,
+    }
+    if (id) {
+      where.id = id
     }
 
     if (q) {
@@ -36,9 +38,9 @@ export default class CompanyRepo implements ICompanyRepo {
 
     if (accessible_company_id) {
       where.id = accessible_company_id
-    } else if (req.ids) {
+    } else if (ids) {
       where.id = {
-        in: req.ids,
+        in: ids,
       }
     }
 
