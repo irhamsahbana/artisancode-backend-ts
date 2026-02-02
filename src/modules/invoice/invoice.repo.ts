@@ -77,6 +77,8 @@ export default class InvoiceRepo implements IInvoiceRepo {
           enrollment: {
             include: {
               student: true,
+              product: true,
+              productPricing: true,
             },
           },
         },
