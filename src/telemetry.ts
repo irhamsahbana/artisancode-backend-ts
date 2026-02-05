@@ -1,4 +1,13 @@
-import { context, diag, DiagConsoleLogger, DiagLogLevel, trace } from '@opentelemetry/api'
+import {
+  context,
+  diag,
+  DiagConsoleLogger,
+  DiagLogLevel,
+  type Attributes,
+  type Span,
+  SpanStatusCode,
+  trace,
+} from '@opentelemetry/api'
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
@@ -104,4 +113,50 @@ export const shutdownTelemetry = async () => {
   const current = sdk
   sdk = null
   await current.shutdown()
+}
+
+export const withSpan = async <T>(
+  tracerName: string,
+  spanName: string,
+  fn: () => Promise<T> | T,
+): Promise<T> => {
+  const tracer = trace.getTracer(tracerName)
+  return tracer.startActiveSpan(spanName, async (span) => {
+    try {
+      return await fn()
+    } catch (error) {
+      span.recordException(error as Error)
+      span.setStatus({ code: SpanStatusCode.ERROR })
+      throw error
+    } finally {
+      span.end()
+    }
+  })
+}
+
+export type SpanAttributeSetter = Attributes | ((span: Span) => void)
+
+export const withSpanAttributes = async <T>(
+  tracerName: string,
+  spanName: string,
+  attributes: SpanAttributeSetter,
+  fn: () => Promise<T> | T,
+): Promise<T> => {
+  const tracer = trace.getTracer(tracerName)
+  return tracer.startActiveSpan(spanName, async (span) => {
+    if (typeof attributes === 'function') {
+      attributes(span)
+    } else {
+      span.setAttributes(attributes)
+    }
+    try {
+      return await fn()
+    } catch (error) {
+      span.recordException(error as Error)
+      span.setStatus({ code: SpanStatusCode.ERROR })
+      throw error
+    } finally {
+      span.end()
+    }
+  })
 }
