@@ -49,6 +49,20 @@ export default class EnrollmentHandler {
     res.status(200).json(responseSuccess(data, 'Enrollment updated successfully'))
   }
 
+  generateInvoice = async (req: Request, res: Response) => {
+    const { id } = req.params
+    const user = (req as AuthenticatedRequest).user
+
+    const payload: Entity.GenerateEnrollmentInvoiceReq = {
+      id,
+      company_id: user?.company_id || '',
+      user,
+    }
+
+    const data = await this.usecase.generateInvoice(payload)
+    res.status(201).json(responseSuccess(data, 'Invoice generated successfully'))
+  }
+
   delete = async (req: Request, res: Response) => {
     const { id } = req.params
     const user = (req as AuthenticatedRequest).user

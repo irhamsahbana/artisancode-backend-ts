@@ -3,6 +3,7 @@ import { InvoiceStatus, Prisma } from '@prisma/client'
 import prisma from '@/common/prisma'
 import { generateInvoiceNumber } from '@/common/utils/invoice.util'
 import {
+  ActiveInvoiceStatuses,
   CreateInvoiceReq,
   GetInvoiceReq,
   Invoice,
@@ -50,6 +51,19 @@ export default class InvoiceRepo implements IInvoiceRepo {
   async findByInvoiceNumber(invoiceNumber: string, company_id: string): Promise<Invoice | null> {
     const invoice = await prisma.invoice.findFirst({
       where: { invoiceNumber, companyId: company_id, deletedAt: null },
+    })
+    return invoice ? this.mapToEntity(invoice) : null
+  }
+
+  async findActiveByEnrollment(enrollment_id: string, company_id: string): Promise<Invoice | null> {
+    const invoice = await prisma.invoice.findFirst({
+      where: {
+        enrollmentId: enrollment_id,
+        companyId: company_id,
+        deletedAt: null,
+        status: { in: ActiveInvoiceStatuses },
+      },
+      orderBy: { createdAt: 'desc' },
     })
     return invoice ? this.mapToEntity(invoice) : null
   }

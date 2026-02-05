@@ -26,6 +26,19 @@ export interface DokuPaymentLinkRes {
   payment_url: string
 }
 
+export interface DokuCheckStatusRes {
+  order?: {
+    invoice_number?: string
+    amount?: number
+    status?: string
+  }
+  transaction?: {
+    status?: string
+    date?: string
+    original_request_id?: string
+  }
+}
+
 interface DokuCheckoutResponse {
   message: string[]
   response: {
@@ -72,6 +85,18 @@ export class DokuProvider {
       `Request-Timestamp:${timestamp}\n` +
       `Request-Target:${targetPath}\n` +
       `Digest:${digest}`
+
+    const signature = crypto.createHmac('sha256', this.secretKey).update(component).digest('base64')
+
+    return `HMACSHA256=${signature}`
+  }
+
+  private generateGetSignature(timestamp: string, requestId: string, targetPath: string): string {
+    const component =
+      `Client-Id:${this.clientId}\n` +
+      `Request-Id:${requestId}\n` +
+      `Request-Timestamp:${timestamp}\n` +
+      `Request-Target:${targetPath}`
 
     const signature = crypto.createHmac('sha256', this.secretKey).update(component).digest('base64')
 
@@ -168,6 +193,39 @@ export class DokuProvider {
       }
     } catch (error) {
       logger.error('DOKU Generate Payment Link Error:', error)
+      throw error
+    }
+  }
+
+  async checkStatus(invoiceNumber: string): Promise<DokuCheckStatusRes> {
+    const targetPath = `/orders/v1/status/${invoiceNumber}`
+    const url = `${this.baseUrl}${targetPath}`
+    const requestId = crypto.randomUUID()
+    const timestamp = new Date().toISOString().slice(0, 19) + 'Z'
+    const signature = this.generateGetSignature(timestamp, requestId, targetPath)
+
+    try {
+      logger.info(`Checking DOKU status for ${invoiceNumber}`)
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Client-Id': this.clientId,
+          'Request-Id': requestId,
+          'Request-Timestamp': timestamp,
+          Signature: signature,
+        },
+      })
+
+      const responseBody = (await response.json()) as DokuCheckStatusRes
+
+      if (!response.ok) {
+        logger.error('DOKU Status API Error Response:', responseBody)
+        throw new Error(`DOKU Status API Error: ${JSON.stringify(responseBody)}`)
+      }
+
+      return responseBody
+    } catch (error) {
+      logger.error('DOKU Status Check Error:', error)
       throw error
     }
   }

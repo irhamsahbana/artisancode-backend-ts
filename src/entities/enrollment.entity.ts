@@ -67,6 +67,12 @@ export interface UpdateEnrollmentReq {
   user?: UserContext
 }
 
+export interface GenerateEnrollmentInvoiceReq {
+  id: string
+  company_id: string
+  user?: UserContext
+}
+
 export interface GetEnrollmentReq {
   id?: string
   company_id: string

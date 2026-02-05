@@ -1,4 +1,5 @@
 import * as Entity from '@/entities/enrollment.entity'
+import { Invoice } from '@/entities/invoice.entity'
 
 export interface IEnrollmentRepo {
   create(req: Entity.CreateEnrollmentReq): Promise<Entity.Enrollment>
@@ -24,6 +25,7 @@ export interface IEnrollmentRepo {
 export interface IEnrollmentUsecase {
   create(req: Entity.CreateEnrollmentReq): Promise<Entity.Enrollment>
   update(req: Entity.UpdateEnrollmentReq): Promise<Entity.Enrollment>
+  generateInvoice(req: Entity.GenerateEnrollmentInvoiceReq): Promise<Invoice>
   delete(id: string, companyId: string): Promise<void>
   findById(id: string, companyId: string): Promise<Entity.Enrollment | null>
   findList(req: Entity.GetEnrollmentReq): Promise<Entity.EnrollmentList>

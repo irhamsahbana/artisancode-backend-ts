@@ -25,6 +25,8 @@ export const InvoiceStatuses: InvoiceStatus[] = [
   'cancelled',
 ]
 
+export const ActiveInvoiceStatuses: InvoiceStatus[] = ['draft', 'unpaid', 'overdue', 'pending']
+
 export interface Invoice {
   id: string
   company_id: string

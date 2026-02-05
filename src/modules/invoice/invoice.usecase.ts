@@ -1,6 +1,13 @@
 import { AppError } from '@/common/app_error'
-import { CreateInvoiceReq, GetInvoiceReq, Invoice, InvoiceList } from '@/entities/invoice.entity'
-import { DokuProvider } from '@/providers/doku'
+import {
+  ActiveInvoiceStatuses,
+  CreateInvoiceReq,
+  GetInvoiceReq,
+  Invoice,
+  InvoiceList,
+  InvoiceStatus,
+} from '@/entities/invoice.entity'
+import { DokuCheckStatusRes, DokuProvider } from '@/providers/doku'
 
 import { IInvoiceRepo, IInvoiceUsecase } from './invoice.contract'
 
@@ -51,7 +58,54 @@ export default class InvoiceUsecase implements IInvoiceUsecase {
       throw new AppError(400, 'Invoice is already paid')
     }
 
-    // Generate DOKU Link
+    if (invoice.payment_url) {
+      let statusPayload: DokuCheckStatusRes
+      try {
+        statusPayload = await this.dokuProvider.checkStatus(invoice.invoice_number)
+      } catch (error) {
+        throw new AppError(502, 'DOKU status check failed', error)
+      }
+      const resolvedStatus = this.resolveDokuStatus(statusPayload)
+
+      if (!resolvedStatus) {
+        throw new AppError(502, 'DOKU status is not recognized', statusPayload)
+      }
+
+      if (resolvedStatus === 'paid') {
+        return this.repo.update({
+          id,
+          company_id,
+          status: 'paid',
+          paid_at: new Date(),
+        })
+      }
+
+      if (resolvedStatus === 'pending') {
+        if (!ActiveInvoiceStatuses.includes(invoice.status as InvoiceStatus)) {
+          return this.repo.update({
+            id,
+            company_id,
+            status: 'pending',
+          })
+        }
+        return invoice
+      }
+
+      if (resolvedStatus === 'cancelled') {
+        return this.repo.update({
+          id,
+          company_id,
+          status: 'cancelled',
+        })
+      }
+
+      await this.repo.update({
+        id,
+        company_id,
+        status: resolvedStatus,
+      })
+    }
+
     const paymentLink = await this.dokuProvider.generatePaymentLink({
       invoice_number: invoice.invoice_number,
       amount: invoice.amount,
@@ -75,8 +129,30 @@ export default class InvoiceUsecase implements IInvoiceUsecase {
     return this.repo.update({
       id,
       company_id,
+      status: 'pending',
       doku_invoice_id: paymentLink.invoice_id,
       payment_url: paymentLink.payment_url,
     })
+  }
+
+  async findActiveByEnrollment(enrollment_id: string, company_id: string): Promise<Invoice | null> {
+    return this.repo.findActiveByEnrollment(enrollment_id, company_id)
+  }
+
+  private resolveDokuStatus(payload: DokuCheckStatusRes): InvoiceStatus | null {
+    const transactionStatus = String(payload.transaction?.status ?? '').toUpperCase()
+    const orderStatus = String(payload.order?.status ?? '').toUpperCase()
+
+    if (transactionStatus === 'SUCCESS') return 'paid'
+    if (transactionStatus === 'PENDING') return 'pending'
+    if (transactionStatus === 'FAILED') return 'failed'
+    if (transactionStatus === 'EXPIRED') return 'expired'
+    if (transactionStatus === 'TIMEOUT') return 'pending'
+    if (transactionStatus === 'REDIRECT') return 'pending'
+    if (transactionStatus === 'REFUNDED') return 'cancelled'
+    if (orderStatus === 'ORDER_EXPIRED') return 'expired'
+    if (orderStatus === 'ORDER_GENERATED') return 'pending'
+
+    return null
   }
 }

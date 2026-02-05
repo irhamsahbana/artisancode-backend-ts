@@ -30,6 +30,7 @@ const router = Router()
 
 router.post('/', authenticate, validate(Schema.createEnrollmentSchema), handler.create)
 router.put('/:id', authenticate, validate(Schema.updateEnrollmentSchema), handler.update)
+router.post('/:id/invoices', authenticate, handler.generateInvoice)
 router.delete('/:id', authenticate, handler.delete)
 router.get('/:id', authenticate, handler.findById)
 router.get('/', authenticate, validateQuery(Schema.getEnrollmentListSchema), handler.findList)
