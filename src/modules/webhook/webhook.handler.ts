@@ -65,7 +65,9 @@ export class WebhookHandler {
       const statusValue = String(transaction?.status || '')
       const normalizedStatus = statusValue.toUpperCase()
       const transactionRequestId =
-        typeof transaction?.original_request_id === 'string' ? transaction.original_request_id : null
+        typeof transaction?.original_request_id === 'string'
+          ? transaction.original_request_id
+          : null
 
       const invoice = await this.getInvoiceByNumber(invoiceNumber)
       if (!invoice) {
