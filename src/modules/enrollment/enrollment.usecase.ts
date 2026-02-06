@@ -408,6 +408,10 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
       if (!enrollment) {
         throw new AppError(404, 'Enrollment not found')
       }
+      const activeInvoice = await this.invoiceUsecase.findActiveByEnrollment(id, companyId)
+      if (activeInvoice) {
+        throw new AppError(400, 'Cannot delete enrollment with active invoice')
+      }
       return this.repo.delete(id, companyId)
     })
   }

@@ -24,6 +24,7 @@ export interface DokuPaymentLinkReq {
 export interface DokuPaymentLinkRes {
   invoice_id: string
   payment_url: string
+  request_id: string
 }
 
 export interface DokuCheckStatusRes {
@@ -190,6 +191,7 @@ export class DokuProvider {
       return {
         invoice_id: responseBody.response.order.invoice_number,
         payment_url: responseBody.response.payment.url,
+        request_id: requestId,
       }
     } catch (error) {
       logger.error('DOKU Generate Payment Link Error:', error)

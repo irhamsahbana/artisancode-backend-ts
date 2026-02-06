@@ -39,6 +39,7 @@ export interface Invoice {
   currency: string
   status: InvoiceStatus
   doku_invoice_id?: string | null
+  doku_request_id?: string | null
   payment_url?: string | null
   paid_at?: Date | null
   created_at: Date
@@ -68,6 +69,7 @@ export interface UpdateInvoiceReq {
   status?: string
   paid_at?: Date
   doku_invoice_id?: string
+  doku_request_id?: string
   payment_url?: string
   user?: UserContext
 }

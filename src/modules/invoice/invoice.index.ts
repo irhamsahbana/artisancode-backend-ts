@@ -19,6 +19,5 @@ const handler = new InvoiceHandler(usecase)
 router.post('/', authenticate, validate(createInvoiceSchema), handler.create)
 router.get('/', authenticate, handler.findList)
 router.get('/:id', authenticate, handler.findById)
-router.post('/:id/generate-payment-link', authenticate, handler.generatePaymentLink)
 
 export default router

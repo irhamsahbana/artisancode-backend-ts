@@ -20,8 +20,15 @@ export default class InvoiceUsecase implements IInvoiceUsecase {
 
   async create(data: CreateInvoiceReq): Promise<Invoice> {
     return withSpan('invoice.usecase', 'InvoiceUsecase.create', async () => {
+      const activeInvoice = await this.repo.findActiveByEnrollment(
+        data.enrollment_id,
+        data.company_id,
+      )
+      if (activeInvoice) {
+        throw new AppError(400, 'Active invoice already exists for this enrollment')
+      }
       const invoice = await this.repo.create(data)
-      return invoice
+      return this.generatePaymentLink(invoice.id, data.company_id)
     })
   }
 
@@ -133,6 +140,7 @@ export default class InvoiceUsecase implements IInvoiceUsecase {
         company_id,
         status: 'pending',
         doku_invoice_id: paymentLink.invoice_id,
+        doku_request_id: paymentLink.request_id,
         payment_url: paymentLink.payment_url,
       })
     })

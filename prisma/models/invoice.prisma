@@ -11,6 +11,7 @@ model Invoice {
     currency     String        @default("IDR")
     status       InvoiceStatus
     dokuInvoiceId String?      @map("doku_invoice_id")
+    dokuRequestId String?      @map("doku_request_id")
     paymentUrl    String?      @map("payment_url")
     createdAt    DateTime      @default(now()) @map("created_at")
     paidAt       DateTime?     @map("paid_at")

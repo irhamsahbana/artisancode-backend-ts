@@ -63,12 +63,4 @@ export default class InvoiceHandler {
       return res.json(responseSuccess(result))
     })
   }
-
-  generatePaymentLink = async (req: Request, res: Response) => {
-    return withSpan('invoice.handler', 'InvoiceHandler.generatePaymentLink', async () => {
-      const user = (req as AuthenticatedRequest).user
-      const result = await this.usecase.generatePaymentLink(req.params.id, user?.company_id || '')
-      return res.json(responseSuccess(result))
-    })
-  }
 }

@@ -102,6 +102,7 @@ export const startInvoiceGeneratorJob = () => {
             where: { id: invoice.id },
             data: {
               dokuInvoiceId: paymentLink.invoice_id,
+              dokuRequestId: paymentLink.request_id,
               paymentUrl: paymentLink.payment_url,
             },
           })

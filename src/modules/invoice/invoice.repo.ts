@@ -115,6 +115,7 @@ export default class InvoiceRepo implements IInvoiceRepo {
     if (data.status) updateData.status = data.status as InvoiceStatus
     if (data.paid_at) updateData.paidAt = data.paid_at
     if (data.doku_invoice_id) updateData.dokuInvoiceId = data.doku_invoice_id
+    if (data.doku_request_id) updateData.dokuRequestId = data.doku_request_id
     if (data.payment_url) updateData.paymentUrl = data.payment_url
 
     const invoice = await prisma.invoice.update({
@@ -175,6 +176,7 @@ export default class InvoiceRepo implements IInvoiceRepo {
       currency: data.currency,
       status: data.status,
       doku_invoice_id: data.dokuInvoiceId,
+      doku_request_id: data.dokuRequestId,
       payment_url: data.paymentUrl,
       paid_at: data.paidAt,
       created_at: data.createdAt,

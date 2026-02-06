@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { NextFunction, Request, Response } from 'express'
 
 import { prisma } from '../../common/prisma'
@@ -63,183 +64,307 @@ export class WebhookHandler {
 
       const statusValue = String(transaction?.status || '')
       const normalizedStatus = statusValue.toUpperCase()
+      const transactionRequestId =
+        typeof transaction?.original_request_id === 'string' ? transaction.original_request_id : null
 
-      if (normalizedStatus === 'SUCCESS') {
-        logger.info(`Processing successful payment for ${invoiceNumber}`)
-
-        const invoice = await prisma.invoice.findFirst({
-          where: { invoiceNumber },
-          include: { enrollment: true },
-        })
-
-        if (!invoice) {
-          logger.error(`Invoice not found for webhook: ${invoiceNumber}`)
-          return res.status(404).json({ message: 'Invoice not found' })
-        }
-
-        if (invoice.status === 'paid') {
-          logger.info(`Invoice ${invoiceNumber} already paid. Ignoring.`)
-          return res.json(responseSuccess({ message: 'Already paid' }))
-        }
-
-        const paidAt = new Date()
-
-        await prisma.$transaction([
-          // Create Payment Record
-          prisma.payment.create({
-            data: {
-              companyId: invoice.companyId,
-              branchId: invoice.branchId,
-              invoiceId: invoice.id,
-              amount: invoice.amount,
-              method: 'DOKU',
-              paymentDate: paidAt,
-            },
-          }),
-
-          // Update Invoice
-          prisma.invoice.update({
-            where: { id: invoice.id },
-            data: {
-              status: 'paid',
-              paidAt: paidAt,
-            },
-          }),
-        ])
-
-        // Update Enrollment Next Billing Date
-        const enrollment = invoice.enrollment
-        const currentBillingDate = enrollment?.nextBillingDate
-
-        if (enrollment && currentBillingDate && enrollment.billingCycle) {
-          const nextDate = new Date(currentBillingDate)
-
-          switch (enrollment.billingCycle) {
-            case 'monthly':
-              nextDate.setMonth(nextDate.getMonth() + 1)
-              break
-            case 'quarterly':
-              nextDate.setMonth(nextDate.getMonth() + 3)
-              break
-            case 'annually':
-              nextDate.setFullYear(nextDate.getFullYear() + 1)
-              break
-            case 'one_time':
-              break
-          }
-
-          await prisma.enrollment.update({
-            where: { id: enrollment.id },
-            data: {
-              nextBillingDate: nextDate,
-            },
-          })
-
-          logger.info(`Updated enrollment ${enrollment.id} next billing date to ${nextDate}`)
-
-          if (enrollment.billingCycle !== 'one_time') {
-            const todayPlusBuffer = new Date()
-            todayPlusBuffer.setDate(todayPlusBuffer.getDate() + 7)
-
-            if (nextDate <= todayPlusBuffer) {
-              const enrollmentDetails = await prisma.enrollment.findFirst({
-                where: {
-                  id: enrollment.id,
-                  status: 'active',
-                  deletedAt: null,
-                },
-                include: {
-                  student: true,
-                  productPricing: {
-                    include: {
-                      prices: true,
-                    },
-                  },
-                },
-              })
-
-              if (enrollmentDetails) {
-                const startOfDay = new Date(nextDate)
-                startOfDay.setHours(0, 0, 0, 0)
-                const endOfDay = new Date(nextDate)
-                endOfDay.setHours(23, 59, 59, 999)
-
-                const existingInvoice = await prisma.invoice.findFirst({
-                  where: {
-                    enrollmentId: enrollment.id,
-                    dueDate: {
-                      gte: startOfDay,
-                      lte: endOfDay,
-                    },
-                    deletedAt: null,
-                  },
-                })
-
-                if (existingInvoice) {
-                  logger.info(
-                    `Catch-up skipped for enrollment ${enrollment.id}, invoice already exists`,
-                  )
-                } else {
-                  const prices = enrollmentDetails.productPricing?.prices || []
-                  const currency = enrollmentDetails.currency
-                  const priceCandidates = prices.filter((price) => price.currency === currency)
-                  const selectedPrice = selectValidPrice(priceCandidates, nextDate)
-
-                  if (selectedPrice) {
-                    const amount = selectedPrice.price.toNumber()
-                    const invoiceNumber = generateInvoiceNumber()
-
-                    const createdInvoice = await prisma.invoice.create({
-                      data: {
-                        companyId: enrollmentDetails.companyId,
-                        branchId: enrollmentDetails.branchId,
-                        enrollmentId: enrollmentDetails.id,
-                        invoiceNumber,
-                        amount,
-                        dueDate: nextDate,
-                        issuedDate: new Date(),
-                        invoiceDate: new Date(),
-                        status: 'pending',
-                        currency: selectedPrice.currency,
-                      },
-                    })
-
-                    const paymentLink = await dokuProvider.generatePaymentLink({
-                      invoice_number: invoiceNumber,
-                      amount,
-                      customer_email: enrollmentDetails.student.email,
-                      customer_name: `${enrollmentDetails.student.firstName} ${enrollmentDetails.student.lastName}`,
-                    })
-
-                    await prisma.invoice.update({
-                      where: { id: createdInvoice.id },
-                      data: {
-                        dokuInvoiceId: paymentLink.invoice_id,
-                        paymentUrl: paymentLink.payment_url,
-                      },
-                    })
-
-                    logger.info(
-                      `Catch-up invoice generated for enrollment ${enrollment.id} due ${nextDate}`,
-                    )
-                  } else {
-                    logger.warn(`No valid price found for catch-up enrollment ${enrollment.id}`)
-                  }
-                }
-              } else {
-                logger.warn(`Enrollment ${enrollment.id} not found for catch-up`)
-              }
-            }
-          }
-        }
-
-        logger.info(`Payment processed successfully for ${invoiceNumber}`)
+      const invoice = await this.getInvoiceByNumber(invoiceNumber)
+      if (!invoice) {
+        logger.error(`Invoice not found for webhook: ${invoiceNumber}`)
+        return res.status(404).json({ message: 'Invoice not found' })
       }
 
+      const handled = await this.handleDokuStatus({
+        normalizedStatus,
+        invoiceNumber,
+        invoice,
+        transactionRequestId,
+        res,
+      })
+      if (handled) return handled
+
+      await this.updateTransactionRequestId(invoice, transactionRequestId)
       return res.json(responseSuccess({ message: 'Webhook processed' }))
     } catch (error) {
       logger.error('Webhook Error:', error)
       next(error)
     }
   }
+
+  private async getInvoiceByNumber(invoiceNumber: string) {
+    return prisma.invoice.findFirst({
+      where: { invoiceNumber },
+      include: { enrollment: true },
+    })
+  }
+
+  private async handleDokuStatus({
+    normalizedStatus,
+    invoiceNumber,
+    invoice,
+    transactionRequestId,
+    res,
+  }: {
+    normalizedStatus: string
+    invoiceNumber: string
+    invoice: InvoiceWithEnrollment
+    transactionRequestId: string | null
+    res: Response
+  }) {
+    if (normalizedStatus === 'SUCCESS') {
+      return this.handleSuccess({
+        invoiceNumber,
+        invoice,
+        transactionRequestId,
+        res,
+      })
+    }
+
+    if (normalizedStatus === 'EXPIRED') {
+      return this.handleExpired({
+        invoiceNumber,
+        invoice,
+        transactionRequestId,
+        res,
+      })
+    }
+
+    return null
+  }
+
+  private async handleSuccess({
+    invoiceNumber,
+    invoice,
+    transactionRequestId,
+    res,
+  }: {
+    invoiceNumber: string
+    invoice: InvoiceWithEnrollment
+    transactionRequestId: string | null
+    res: Response
+  }) {
+    logger.info(`Processing successful payment for ${invoiceNumber}`)
+
+    if (invoice.status === 'paid') {
+      logger.info(`Invoice ${invoiceNumber} already paid. Ignoring.`)
+      return res.json(responseSuccess({ message: 'Already paid' }))
+    }
+
+    const paidAt = new Date()
+
+    await prisma.$transaction([
+      prisma.payment.create({
+        data: {
+          companyId: invoice.companyId,
+          branchId: invoice.branchId,
+          invoiceId: invoice.id,
+          amount: invoice.amount,
+          method: 'DOKU',
+          paymentDate: paidAt,
+        },
+      }),
+      prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          status: 'paid',
+          paidAt: paidAt,
+          dokuRequestId: transactionRequestId || undefined,
+        },
+      }),
+    ])
+
+    const enrollment = invoice.enrollment
+    const currentBillingDate = enrollment?.nextBillingDate
+
+    if (enrollment && currentBillingDate && enrollment.billingCycle) {
+      await this.updateEnrollmentBilling(enrollment, currentBillingDate)
+    }
+
+    logger.info(`Payment processed successfully for ${invoiceNumber}`)
+    return res.json(responseSuccess({ message: 'Webhook processed' }))
+  }
+
+  private async handleExpired({
+    invoiceNumber,
+    invoice,
+    transactionRequestId,
+    res,
+  }: {
+    invoiceNumber: string
+    invoice: InvoiceWithEnrollment
+    transactionRequestId: string | null
+    res: Response
+  }) {
+    logger.info(`Processing expired payment for ${invoiceNumber}`)
+
+    if (invoice.status === 'paid') {
+      logger.info(`Invoice ${invoiceNumber} already paid. Ignoring.`)
+      return res.json(responseSuccess({ message: 'Already paid' }))
+    }
+
+    if (invoice.status !== 'expired') {
+      await prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          status: 'expired',
+          dokuRequestId: transactionRequestId || undefined,
+        },
+      })
+    } else if (transactionRequestId) {
+      await prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          dokuRequestId: transactionRequestId,
+        },
+      })
+    }
+
+    logger.info(`Expired status recorded for ${invoiceNumber}`)
+    return res.json(responseSuccess({ message: 'Webhook processed' }))
+  }
+
+  private async updateTransactionRequestId(
+    invoice: InvoiceWithEnrollment,
+    transactionRequestId: string | null,
+  ) {
+    if (!transactionRequestId || invoice.dokuRequestId === transactionRequestId) return
+    await prisma.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        dokuRequestId: transactionRequestId,
+      },
+    })
+  }
+
+  private async updateEnrollmentBilling(
+    enrollment: NonNullable<InvoiceWithEnrollment['enrollment']>,
+    currentBillingDate: Date,
+  ) {
+    const nextDate = new Date(currentBillingDate)
+
+    switch (enrollment.billingCycle) {
+      case 'monthly':
+        nextDate.setMonth(nextDate.getMonth() + 1)
+        break
+      case 'quarterly':
+        nextDate.setMonth(nextDate.getMonth() + 3)
+        break
+      case 'annually':
+        nextDate.setFullYear(nextDate.getFullYear() + 1)
+        break
+      case 'one_time':
+        break
+    }
+
+    await prisma.enrollment.update({
+      where: { id: enrollment.id },
+      data: {
+        nextBillingDate: nextDate,
+      },
+    })
+
+    logger.info(`Updated enrollment ${enrollment.id} next billing date to ${nextDate}`)
+
+    if (enrollment.billingCycle === 'one_time') return
+
+    const todayPlusBuffer = new Date()
+    todayPlusBuffer.setDate(todayPlusBuffer.getDate() + 7)
+
+    if (nextDate <= todayPlusBuffer) {
+      await this.handleCatchUpInvoice(enrollment, nextDate)
+    }
+  }
+
+  private async handleCatchUpInvoice(
+    enrollment: NonNullable<InvoiceWithEnrollment['enrollment']>,
+    nextDate: Date,
+  ) {
+    const enrollmentDetails = await prisma.enrollment.findFirst({
+      where: {
+        id: enrollment.id,
+        status: 'active',
+        deletedAt: null,
+      },
+      include: {
+        student: true,
+        productPricing: {
+          include: {
+            prices: true,
+          },
+        },
+      },
+    })
+
+    if (!enrollmentDetails) {
+      logger.warn(`Enrollment ${enrollment.id} not found for catch-up`)
+      return
+    }
+
+    const startOfDay = new Date(nextDate)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(nextDate)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    const existingInvoice = await prisma.invoice.findFirst({
+      where: {
+        enrollmentId: enrollment.id,
+        dueDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        deletedAt: null,
+      },
+    })
+
+    if (existingInvoice) {
+      logger.info(`Catch-up skipped for enrollment ${enrollment.id}, invoice already exists`)
+      return
+    }
+
+    const prices = enrollmentDetails.productPricing?.prices || []
+    const currency = enrollmentDetails.currency
+    const priceCandidates = prices.filter((price) => price.currency === currency)
+    const selectedPrice = selectValidPrice(priceCandidates, nextDate)
+
+    if (!selectedPrice) {
+      logger.warn(`No valid price found for catch-up enrollment ${enrollment.id}`)
+      return
+    }
+
+    const amount = selectedPrice.price.toNumber()
+    const invoiceNumber = generateInvoiceNumber()
+
+    const createdInvoice = await prisma.invoice.create({
+      data: {
+        companyId: enrollmentDetails.companyId,
+        branchId: enrollmentDetails.branchId,
+        enrollmentId: enrollmentDetails.id,
+        invoiceNumber,
+        amount,
+        dueDate: nextDate,
+        issuedDate: new Date(),
+        invoiceDate: new Date(),
+        status: 'pending',
+        currency: selectedPrice.currency,
+      },
+    })
+
+    const paymentLink = await dokuProvider.generatePaymentLink({
+      invoice_number: invoiceNumber,
+      amount,
+      customer_email: enrollmentDetails.student.email,
+      customer_name: `${enrollmentDetails.student.firstName} ${enrollmentDetails.student.lastName}`,
+    })
+
+    await prisma.invoice.update({
+      where: { id: createdInvoice.id },
+      data: {
+        dokuInvoiceId: paymentLink.invoice_id,
+        paymentUrl: paymentLink.payment_url,
+      },
+    })
+
+    logger.info(`Catch-up invoice generated for enrollment ${enrollment.id} due ${nextDate}`)
+  }
 }
+
+type InvoiceWithEnrollment = Prisma.InvoiceGetPayload<{ include: { enrollment: true } }>
