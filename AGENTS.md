@@ -8,6 +8,7 @@
   - Use `fish` (preferred) or `bash` for shell commands.
   - Use `pnpm` for package management (installing dependencies).
   - **Running the App**: Prefer `pnpm run dev:bun` or `pnpm run start:bun` (using Bun runtime).
+  - **Verification**: Run `pnpm lint:fix` and `pnpm type-check` after changes.
 - **Documentation Maintenance**:
   - The AI agent is authorized to update `AGENTS.md` and `docs/` files to keep them accurate.
   - **Protocol**:

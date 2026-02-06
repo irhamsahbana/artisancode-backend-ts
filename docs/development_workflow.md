@@ -10,3 +10,4 @@
     - Implement `Handler`.
     - Wire up in `Index`.
 4.  **Register Route**: Add module router to `src/routes/rest.ts`.
+5.  **Verification**: Run `pnpm lint:fix` and `pnpm type-check`.
