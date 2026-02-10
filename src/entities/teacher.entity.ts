@@ -8,7 +8,10 @@ export const TeacherStatuses: TeacherStatus[] = ['active', 'inactive', 'on_leave
 export interface Teacher {
   id: string
   company_id: string
-  branch_id: string | null
+  branch?: {
+    id: string
+    name: string
+  }
   status: TeacherStatus
   name: string
   email: string

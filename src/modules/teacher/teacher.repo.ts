@@ -1,31 +1,13 @@
-import { Prisma, Teacher } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { v7 as uuidv7 } from 'uuid'
 
 import prisma from '@/common/prisma'
 import * as Entity from '@/entities/teacher.entity'
 
 import { ITeacherRepo } from './teacher.contract'
+import { toTeacherEntity } from './teacher.mapper'
 
 export default class TeacherRepo implements ITeacherRepo {
-  private toEntity(data: Teacher): Entity.Teacher {
-    return {
-      id: data.id,
-      company_id: data.companyId,
-      branch_id: data.branchId,
-      status: data.status,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      birth_date: data.birthDate,
-      biography: data.biography,
-      specialty: data.specialty,
-      created_at: data.createdAt,
-      updated_at: data.updatedAt,
-      deleted_at: data.deletedAt,
-    }
-  }
-
   async create(req: Entity.CreateTeacherReq): Promise<Entity.Teacher> {
     const data = await prisma.teacher.create({
       data: {
@@ -41,8 +23,16 @@ export default class TeacherRepo implements ITeacherRepo {
         biography: req.biography || '',
         specialty: req.specialty || '',
       },
+      include: {
+        branch: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     })
-    return this.toEntity(data)
+    return toTeacherEntity(data)
   }
 
   async update(req: Entity.UpdateTeacherReq): Promise<Entity.Teacher> {
@@ -63,8 +53,16 @@ export default class TeacherRepo implements ITeacherRepo {
         biography: req.biography,
         specialty: req.specialty,
       },
+      include: {
+        branch: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     })
-    return this.toEntity(data)
+    return toTeacherEntity(data)
   }
 
   async delete(id: string, companyId: string): Promise<void> {
@@ -87,9 +85,17 @@ export default class TeacherRepo implements ITeacherRepo {
         companyId,
         deletedAt: null,
       },
+      include: {
+        branch: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     })
     if (!data) return null
-    return this.toEntity(data)
+    return toTeacherEntity(data)
   }
 
   async findByEmail(email: string): Promise<Entity.Teacher | null> {
@@ -100,7 +106,7 @@ export default class TeacherRepo implements ITeacherRepo {
       },
     })
     if (!data) return null
-    return this.toEntity(data)
+    return toTeacherEntity(data)
   }
 
   async findList(req: Entity.GetTeacherReq): Promise<Entity.TeacherList> {
@@ -132,12 +138,20 @@ export default class TeacherRepo implements ITeacherRepo {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
+        include: {
+          branch: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
       }),
       prisma.teacher.count({ where }),
     ])
 
     return {
-      items: items.map((item) => this.toEntity(item)),
+      items: items.map((item) => toTeacherEntity(item)),
       pagination: {
         total,
         page,

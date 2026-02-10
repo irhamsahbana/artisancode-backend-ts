@@ -20,6 +20,8 @@
 - **Error Handling**:
   - Follow the guidelines in [Coding Conventions](docs/coding_conventions.md#error-handling).
   - Prioritize `AppError` for business logic and avoid generic errors.
+- **Mapper Separation**:
+  - For complex repo-to-entity transformations, extract mapping into `*.mapper.ts` within the module and keep repos focused on data access.
 
 # Documentation Index
 
