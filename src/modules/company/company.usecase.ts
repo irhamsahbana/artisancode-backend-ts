@@ -1,36 +1,31 @@
-import { AppError } from '@/common/app_error'
-import * as Entity from '@/entities/company.entity'
+import { withSpan } from '@/telemetry'
 
 import { ICompanyRepo, ICompanyUsecase } from './company.contract'
+import { createCompany } from './company.usecase/create'
+import { deleteCompany } from './company.usecase/delete'
+import { findCompanyById } from './company.usecase/find-by-id'
+import { findCompanyList } from './company.usecase/find-list'
+import { updateCompany } from './company.usecase/update'
 
-export default class CompanyUsecase implements ICompanyUsecase {
-  constructor(private readonly repo: ICompanyRepo) {}
+export interface CompanyUsecaseDeps {
+  repo: ICompanyRepo
+}
 
-  async create(req: Entity.CreateCompanyReq): Promise<Entity.Company> {
-    return await this.repo.create(req)
-  }
+export function createCompanyUsecase(repo: ICompanyRepo): ICompanyUsecase {
+  const deps: CompanyUsecaseDeps = { repo }
 
-  async findList(req: Entity.GetCompanyReq): Promise<Entity.CompanyList> {
-    return await this.repo.findList(req)
-  }
-
-  async findById(req: Entity.GetCompanyReq): Promise<Entity.Company | null> {
-    return await this.repo.findById(req)
-  }
-
-  async update(req: Entity.UpdateCompanyReq): Promise<Entity.Company> {
-    const existing = await this.repo.findById(req)
-    if (!existing) {
-      throw new AppError(404, 'Company not found')
-    }
-    return await this.repo.update(req)
-  }
-
-  async delete(req: Entity.GetCompanyReq): Promise<void> {
-    const existing = await this.repo.findById(req)
-    if (!existing) {
-      throw new AppError(404, 'Company not found')
-    }
-    await this.repo.delete(req)
+  return {
+    create: (req) =>
+      withSpan('company.usecase', 'CompanyUsecase.create', () => createCompany(deps, req)),
+    findList: (req) =>
+      withSpan('company.usecase', 'CompanyUsecase.findList', () => findCompanyList(deps, req)),
+    findById: (req) =>
+      withSpan('company.usecase', 'CompanyUsecase.findById', () => findCompanyById(deps, req)),
+    update: (req) =>
+      withSpan('company.usecase', 'CompanyUsecase.update', () => updateCompany(deps, req)),
+    delete: (req) =>
+      withSpan('company.usecase', 'CompanyUsecase.delete', () => deleteCompany(deps, req)),
   }
 }
+
+export default createCompanyUsecase

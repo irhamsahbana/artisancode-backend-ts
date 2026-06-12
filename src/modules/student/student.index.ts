@@ -5,13 +5,13 @@ import { validate, validateQuery } from '@/common/middlewares/validation.middlew
 import { createBranchRepo } from '@/modules/branch/branch.repo'
 
 import StudentHandler from './student.handler'
-import StudentRepo from './student.repo'
+import { createStudentRepo } from './student.repo'
 import * as Schema from './student.schema'
-import StudentUsecase from './student.usecase'
+import { createStudentUsecase } from './student.usecase'
 
-const repo = new StudentRepo()
+const repo = createStudentRepo()
 const branchRepo = createBranchRepo()
-const usecase = new StudentUsecase(repo, branchRepo)
+const usecase = createStudentUsecase(repo, branchRepo)
 const handler = new StudentHandler(usecase)
 
 const router = new Hono()

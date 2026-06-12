@@ -4,13 +4,13 @@ import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 
 import UserHandler from './user.handler'
-import UserRepo from './user.repo'
+import { createUserRepo } from './user.repo'
 import * as Schema from './user.schema'
-import UserUsecase from './user.usecase'
+import { createUserUsecase } from './user.usecase'
 
 const router = new Hono()
-const repo = new UserRepo()
-const usecase = new UserUsecase(repo)
+const repo = createUserRepo()
+const usecase = createUserUsecase(repo)
 const handler = new UserHandler(usecase)
 
 router.post('/register', validate(Schema.registerSchema), handler.register)

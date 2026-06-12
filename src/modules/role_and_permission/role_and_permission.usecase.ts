@@ -1,42 +1,42 @@
-import { AppError } from '@/common/app_error'
-import * as Entity from '@/entities/role.entity'
+import { withSpan } from '@/telemetry'
 
 import { IRoleAndPermissionRepo, IRoleAndPermissionUsecase } from './role_and_permission.contract'
+import { createRole } from './role_and_permission.usecase/create-role'
+import { deleteRole } from './role_and_permission.usecase/delete-role'
+import { findRoleById } from './role_and_permission.usecase/find-by-id'
+import { findPermissionList } from './role_and_permission.usecase/find-permission-list'
+import { findRoleList } from './role_and_permission.usecase/find-role-list'
+import { updateRole } from './role_and_permission.usecase/update-role'
 
-export default class RoleAndPermissionUsecase implements IRoleAndPermissionUsecase {
-  constructor(private repo: IRoleAndPermissionRepo) {}
+export interface RoleAndPermissionUsecaseDeps {
+  repo: IRoleAndPermissionRepo
+}
 
-  // Role Methods
-  async createRole(req: Entity.CreateRoleReq): Promise<Entity.Role> {
-    return this.repo.createRole(req)
-  }
+export function createRoleAndPermissionUsecase(
+  repo: IRoleAndPermissionRepo,
+): IRoleAndPermissionUsecase {
+  const deps: RoleAndPermissionUsecaseDeps = { repo }
 
-  async findRoleList(req: Entity.GetRoleReq): Promise<Entity.RoleList> {
-    return this.repo.findRoleList(req)
-  }
-
-  async findRoleById(id: string, companyId?: string): Promise<Entity.Role | null> {
-    return this.repo.findRoleById(id, companyId)
-  }
-
-  async updateRole(req: Entity.UpdateRoleReq): Promise<Entity.Role> {
-    const existing = await this.repo.findRoleById(req.id, req.company_id)
-    if (!existing) {
-      throw new AppError(404, 'Role not found')
-    }
-    return this.repo.updateRole(req)
-  }
-
-  async deleteRole(id: string, companyId?: string): Promise<void> {
-    const existing = await this.repo.findRoleById(id, companyId)
-    if (!existing) {
-      throw new AppError(404, 'Role not found')
-    }
-    await this.repo.deleteRole(id, companyId)
-  }
-
-  // Permission Methods
-  async findPermissionList(req: Entity.GetPermissionReq): Promise<Entity.PermissionList> {
-    return this.repo.findPermissionList(req)
+  return {
+    createRole: (req) =>
+      withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.createRole', () =>
+        createRole(deps, req)),
+    findRoleList: (req) =>
+      withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.findRoleList', () =>
+        findRoleList(deps, req)),
+    findRoleById: (id, companyId) =>
+      withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.findRoleById', () =>
+        findRoleById(deps, id, companyId)),
+    updateRole: (req) =>
+      withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.updateRole', () =>
+        updateRole(deps, req)),
+    deleteRole: (id, companyId) =>
+      withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.deleteRole', () =>
+        deleteRole(deps, id, companyId)),
+    findPermissionList: (req) =>
+      withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.findPermissionList', () =>
+        findPermissionList(deps, req)),
   }
 }
+
+export default createRoleAndPermissionUsecase

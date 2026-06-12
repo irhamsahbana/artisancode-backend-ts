@@ -1,576 +1,120 @@
 import { AppError } from '@/common/app_error'
-import * as Entity from '@/entities/program.entity'
 import { IBranchRepo } from '@/modules/branch/branch.contract'
 import { IEnrollmentRepo } from '@/modules/enrollment/enrollment.contract'
+import { withSpan } from '@/telemetry'
 
 import { IProgramRepo, IProgramUsecase } from './program.contract'
+import { addPrice } from './program.usecase/add-price'
+import { addPricing } from './program.usecase/add-pricing'
+import { addSchedule } from './program.usecase/add-schedule'
+import { createProgram } from './program.usecase/create'
+import { deleteProgram } from './program.usecase/delete'
+import { deletePricing } from './program.usecase/delete-pricing'
+import { deleteSchedule } from './program.usecase/delete-schedule'
+import { findProgramById } from './program.usecase/find-by-id'
+import { findProgramList } from './program.usecase/find-list'
+import { updateProgram } from './program.usecase/update'
+import { updateAllProgram } from './program.usecase/update-all'
+import { updatePrice } from './program.usecase/update-price'
 
-export default class ProgramUsecase implements IProgramUsecase {
-  constructor(
-    private repo: IProgramRepo,
-    private branchRepo: IBranchRepo,
-    private enrollmentRepo: IEnrollmentRepo,
-  ) {}
-
-  async create(req: Entity.CreateProgramReq): Promise<Entity.Program> {
-    if (req.branch_id) {
-      const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
-      if (!branch) {
-        throw new AppError(404, 'Branch not found')
-      }
-    }
-
-    // Check duplicated name
-    const existingProgram = await this.repo.findByName(
-      req.name,
-      req.company_id,
-      req.branch_id || null,
-    )
-    if (existingProgram) {
-      throw new AppError(409, 'Program with this name already exists')
-    }
-
-    // Validate pricing overlap if pricings are provided
-    if (req.pricings) {
-      // Since we are creating a new program, there are no "existing" pricings in DB yet.
-      // We only need to check overlap WITHIN the request payload itself.
-      for (const pricing of req.pricings) {
-        this.validatePricingOverlap(
-          [],
-          pricing.prices.map((p) => ({
-            ...p,
-            id: '',
-            pricing_id: '',
-            started_at: p.started_at || new Date(),
-            ended_at: p.ended_at || null,
-            created_at: new Date(),
-          })),
-        )
-      }
-    }
-
-    return this.repo.create(req)
-  }
-
-  async update(req: Entity.UpdateProgramReq): Promise<Entity.Program> {
-    const program = await this.repo.findById(req.id, req.company_id)
-    if (!program) {
-      throw new AppError(404, 'Program not found')
-    }
-
-    if (req.name && req.name !== program.name) {
-      // Check duplicated name
-      const existingProgram = await this.repo.findByName(
-        req.name,
-        req.company_id,
-        req.branch_id || program.branch_id,
-      )
-      if (existingProgram && existingProgram.id !== req.id) {
-        throw new AppError(409, 'Program with this name already exists')
-      }
-    }
-
-    if (req.branch_id) {
-      const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
-      if (!branch) {
-        throw new AppError(404, 'Branch not found')
-      }
-    }
-
-    return this.repo.update(req)
-  }
-
-  async updateAll(req: Entity.UpdateProgramAllReq): Promise<Entity.Program> {
-    const program = await this.repo.findById(req.id, req.company_id)
-    if (!program) {
-      throw new AppError(404, 'Program not found')
-    }
-
-    if (req.branch_id !== undefined && req.branch_id !== null) {
-      const branch = await this.branchRepo.findById(req.branch_id, req.company_id)
-      if (!branch) {
-        throw new AppError(404, 'Branch not found')
-      }
-    }
-
-    if (req.name && req.name !== program.name) {
-      const existingProgram = await this.repo.findByName(
-        req.name,
-        req.company_id,
-        req.branch_id !== undefined ? req.branch_id : program.branch_id,
-      )
-      if (existingProgram && existingProgram.id !== req.id) {
-        throw new AppError(409, 'Program with this name already exists')
-      }
-    }
-
-    type PricingList = NonNullable<Entity.UpdateProgramAllReq['pricings']>
-    type PriceList = PricingList[number]['prices']
-
-    let nextReq = req
-    if (req.pricings) {
-      const normalizedPricings: PricingList = req.pricings.map((pricing) => {
-        if (!pricing.id) {
-          return pricing
-        }
-
-        const existingPricing = program.pricings?.find(
-          (p: Entity.ProgramPricing) => p.id === pricing.id,
-        )
-        if (!existingPricing) {
-          throw new AppError(404, 'Pricing package not found')
-        }
-
-        const mergedPrices: PriceList = existingPricing.prices.map(
-          (price: Entity.ProgramPrice) => ({
-            id: price.id,
-            currency: price.currency,
-            price: price.price,
-            started_at: price.started_at,
-            ended_at: price.ended_at,
-          }),
-        )
-
-        for (const reqPrice of pricing.prices) {
-          if (reqPrice.id) {
-            const existingPrice = existingPricing.prices.find(
-              (p: Entity.ProgramPrice) => p.id === reqPrice.id,
-            )
-            if (!existingPrice) {
-              throw new AppError(404, 'Price not found')
-            }
-
-            const priceChanged =
-              reqPrice.price !== existingPrice.price || reqPrice.currency !== existingPrice.currency
-
-            if (priceChanged) {
-              const newStart = reqPrice.started_at ? new Date(reqPrice.started_at) : new Date()
-              const newEnd = reqPrice.ended_at === undefined ? null : reqPrice.ended_at
-
-              if (newEnd && newStart > newEnd) {
-                throw new AppError(400, 'Start date cannot be after end date')
-              }
-
-              const existingIndex = mergedPrices.findIndex(
-                (p: PriceList[number]) => p.id === reqPrice.id,
-              )
-              if (existingIndex >= 0) {
-                const existingEndedAt = mergedPrices[existingIndex].ended_at
-                if (!existingEndedAt || new Date(existingEndedAt) > newStart) {
-                  mergedPrices[existingIndex] = {
-                    ...mergedPrices[existingIndex],
-                    ended_at: newStart,
-                  }
-                }
-              }
-
-              const otherPrices = mergedPrices.filter(
-                (p: PriceList[number]) => p.currency === reqPrice.currency,
-              )
-              for (const other of otherPrices) {
-                const otherStart = other.started_at ? new Date(other.started_at) : new Date(0)
-                this.checkOverlap(
-                  { start: newStart, end: newEnd },
-                  {
-                    start: otherStart,
-                    end: other.ended_at ? new Date(other.ended_at) : null,
-                    id: other.id || 'existing',
-                  },
-                  reqPrice.currency,
-                )
-              }
-
-              mergedPrices.push({
-                currency: reqPrice.currency,
-                price: reqPrice.price,
-                started_at: newStart,
-                ended_at: newEnd,
-              })
-              continue
-            }
-
-            const effectiveStartedAt = (reqPrice.started_at || existingPrice.started_at) as Date
-            const effectiveEndedAt =
-              reqPrice.ended_at === undefined ? existingPrice.ended_at : reqPrice.ended_at
-
-            if (effectiveEndedAt && new Date(effectiveStartedAt) > new Date(effectiveEndedAt)) {
-              throw new AppError(400, 'Start date cannot be after end date')
-            }
-
-            const otherPrices = mergedPrices.filter(
-              (p: PriceList[number]) => p.id !== reqPrice.id && p.currency === reqPrice.currency,
-            )
-            for (const other of otherPrices) {
-              const otherStart = other.started_at ? new Date(other.started_at) : new Date(0)
-              this.checkOverlap(
-                { start: new Date(effectiveStartedAt), end: effectiveEndedAt || null },
-                {
-                  start: otherStart,
-                  end: other.ended_at ? new Date(other.ended_at) : null,
-                  id: other.id || 'existing',
-                },
-                reqPrice.currency,
-              )
-            }
-
-            const targetIndex = mergedPrices.findIndex(
-              (p: PriceList[number]) => p.id === reqPrice.id,
-            )
-            if (targetIndex >= 0) {
-              mergedPrices[targetIndex] = {
-                id: reqPrice.id,
-                currency: reqPrice.currency,
-                price: reqPrice.price,
-                started_at: effectiveStartedAt,
-                ended_at: effectiveEndedAt,
-              }
-            }
-            continue
-          }
-
-          const newStart = reqPrice.started_at ? new Date(reqPrice.started_at) : new Date()
-          const newEnd = reqPrice.ended_at === undefined ? null : reqPrice.ended_at
-
-          if (newEnd && newStart > newEnd) {
-            throw new AppError(400, 'Start date cannot be after end date')
-          }
-
-          const openEndedPrice = mergedPrices.find((p: PriceList[number]) => {
-            const currentStart = p.started_at ? new Date(p.started_at) : new Date(0)
-            return (
-              p.currency === reqPrice.currency && p.ended_at === null && currentStart < newStart
-            )
-          })
-
-          if (openEndedPrice) {
-            openEndedPrice.ended_at = newStart
-          }
-
-          const otherPrices = mergedPrices.filter(
-            (p: PriceList[number]) => p.currency === reqPrice.currency,
-          )
-          for (const other of otherPrices) {
-            const otherStart = other.started_at ? new Date(other.started_at) : new Date(0)
-            this.checkOverlap(
-              { start: newStart, end: newEnd },
-              {
-                start: otherStart,
-                end: other.ended_at ? new Date(other.ended_at) : null,
-                id: other.id || 'existing',
-              },
-              reqPrice.currency,
-            )
-          }
-
-          mergedPrices.push({
-            currency: reqPrice.currency,
-            price: reqPrice.price,
-            started_at: newStart,
-            ended_at: newEnd,
-          })
-        }
-
-        return {
-          ...pricing,
-          prices: mergedPrices,
-        }
-      })
-
-      nextReq = {
-        ...req,
-        pricings: normalizedPricings,
-      }
-    }
-
-    return this.repo.updateAll(nextReq)
-  }
-
-  async delete(id: string, companyId: string): Promise<void> {
-    const program = await this.repo.findById(id, companyId)
-    if (!program) {
-      throw new AppError(404, 'Program not found')
-    }
-
-    // Check active enrollments
-    const activeEnrollments = await this.enrollmentRepo.countActiveByProgram(id, companyId)
-    if (activeEnrollments > 0) {
-      throw new AppError(
-        409,
-        `Cannot delete program. There are ${activeEnrollments} active enrollments.`,
-      )
-    }
-
-    return this.repo.delete(id, companyId)
-  }
-
-  async findById(id: string, companyId: string): Promise<Entity.Program | null> {
-    return this.repo.findById(id, companyId)
-  }
-
-  async findList(req: Entity.GetProgramReq): Promise<Entity.ProgramList> {
-    return this.repo.findList(req)
-  }
-
-  async addSchedule(req: Entity.AddScheduleReq): Promise<Entity.ProgramSchedule> {
-    const program = await this.repo.findById(req.program_id, req.company_id)
-    if (!program) {
-      throw new AppError(404, 'Program not found')
-    }
-    return this.repo.addSchedule(req)
-  }
-
-  async addPricing(req: Entity.AddPricingReq): Promise<Entity.ProgramPricing> {
-    const program = await this.repo.findById(req.program_id, req.company_id)
-    if (!program) {
-      throw new AppError(404, 'Program not found')
-    }
-
-    // Check duplicated pricing name
-    const existingPricingName = program.pricings?.find(
-      (p) => p.name.toLowerCase() === req.name.toLowerCase(),
-    )
-    if (existingPricingName) {
-      throw new AppError(409, 'Pricing package with this name already exists')
-    }
-
-    // Validate pricing overlap
-    // Pass empty array for existing pricings because we allow different pricing packages
-    // to have overlapping currencies/dates (e.g. Basic vs Premium).
-    this.validatePricingOverlap(
-      [],
-      req.prices.map((p) => ({
-        ...p,
-        id: '',
-        pricing_id: '',
-        started_at: p.started_at || new Date(),
-        ended_at: p.ended_at || null,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })),
-    )
-
-    return this.repo.addPricing(req)
-  }
-
-  async addPrice(req: Entity.AddPriceReq): Promise<Entity.ProgramPrice> {
-    const program = await this.repo.findById(req.program_id, req.company_id)
-    if (!program) {
-      throw new AppError(404, 'Program not found')
-    }
-
-    const pricing = program.pricings?.find((p) => p.id === req.pricing_id)
-    if (!pricing) {
-      throw new AppError(404, 'Pricing package not found')
-    }
-
-    const newStart = req.started_at ? new Date(req.started_at) : new Date()
-    const newEnd = req.ended_at ? new Date(req.ended_at) : null
-
-    // 1. Auto-Cutoff Logic:
-    // Find active price for same currency that has NO end date (open-ended)
-    // and close it at the new start date.
-    const openEndedPrice = pricing.prices.find(
-      (p) =>
-        p.currency === req.currency && p.ended_at === null && new Date(p.started_at) < newStart,
-    )
-
-    if (openEndedPrice) {
-      // Close the previous price
-      await this.repo.updatePrice({
-        program_id: req.program_id,
-        pricing_id: req.pricing_id,
-        price_id: openEndedPrice.id,
-        company_id: req.company_id,
-        ended_at: newStart,
-      })
-      // Update local object for overlap check below
-      openEndedPrice.ended_at = newStart
-    }
-
-    // 2. Validate Overlap with ALL other prices (including the just-closed one)
-    const otherPrices = pricing.prices.filter((p) => p.currency === req.currency)
-
-    for (const other of otherPrices) {
-      this.checkOverlap(
-        { start: newStart, end: newEnd },
-        {
-          start: new Date(other.started_at),
-          end: other.ended_at ? new Date(other.ended_at) : null,
-          id: other.id,
-        },
-        req.currency,
-      )
-    }
-
-    return this.repo.addPrice(req)
-  }
-
-  async updatePrice(req: Entity.UpdatePriceReq): Promise<Entity.ProgramPrice> {
-    const program = await this.repo.findById(req.program_id, req.company_id)
-    if (!program) {
-      throw new AppError(404, 'Program not found')
-    }
-
-    const pricing = program.pricings?.find((p) => p.id === req.pricing_id)
-    if (!pricing) {
-      throw new AppError(404, 'Pricing package not found')
-    }
-
-    const price = pricing.prices.find((p) => p.id === req.price_id)
-    if (!price) {
-      throw new AppError(404, 'Price not found')
-    }
-
-    // 1. Determine the effective start and end dates
-    const effectiveStartedAt = req.started_at
-      ? new Date(req.started_at)
-      : new Date(price.started_at)
-    // For ended_at:
-    // If req.ended_at is explicitly null => it becomes null (infinite)
-    // If req.ended_at is undefined => use existing price.ended_at
-    // If req.ended_at is a date => use that date
-    let effectiveEndedAt: Date | null
-    if (req.ended_at === null) {
-      effectiveEndedAt = null
-    } else if (req.ended_at === undefined) {
-      effectiveEndedAt = price.ended_at ? new Date(price.ended_at) : null
-    } else {
-      effectiveEndedAt = new Date(req.ended_at)
-    }
-
-    // 2. Validate Date Logic (Start must be before End)
-    if (effectiveEndedAt && effectiveStartedAt > effectiveEndedAt) {
-      throw new AppError(400, 'Start date cannot be after end date')
-    }
-
-    // 3. Overlap Check
-    // Get all OTHER prices for the SAME currency in this pricing package
-    const otherPrices = pricing.prices.filter(
-      (p) => p.id !== req.price_id && p.currency === price.currency,
-    )
-
-    for (const other of otherPrices) {
-      this.checkOverlap(
-        { start: effectiveStartedAt, end: effectiveEndedAt },
-        {
-          start: new Date(other.started_at),
-          end: other.ended_at ? new Date(other.ended_at) : null,
-          id: other.id,
-        },
-        price.currency,
-      )
-    }
-
-    return this.repo.updatePrice(req)
-  }
-
-  private checkOverlap(
+export interface ProgramUsecaseDeps {
+  repo: IProgramRepo
+  branchRepo: IBranchRepo
+  enrollmentRepo: IEnrollmentRepo
+  checkOverlap: (
     current: { start: Date; end: Date | null },
     existing: { start: Date; end: Date | null; id: string },
     currency: string,
-  ) {
-    const startA = current.start
-    const endA = current.end
-    const startB = existing.start
-    const endB = existing.end
+  ) => void
+  validatePricingOverlap: (
+    existingPricings: import('@/entities/program.entity').ProgramPricing[],
+    newPrices: import('@/entities/program.entity').ProgramPrice[],
+  ) => void
+}
 
-    // Overlap Logic:
-    // Two ranges [StartA, EndA] and [StartB, EndB] overlap if:
-    // (StartA < EndB) AND (EndA > StartB)
-    // Handling nulls (infinity):
-    // - If EndA is null, it overlaps if EndB > StartA (or EndB is null)
-    // - If EndB is null, it overlaps if EndA > StartB (or EndA is null)
+function checkOverlap(
+  current: { start: Date; end: Date | null },
+  existing: { start: Date; end: Date | null; id: string },
+  currency: string,
+) {
+  const startA = current.start
+  const endA = current.end
+  const startB = existing.start
+  const endB = existing.end
 
-    const isStartABeforeEndB = endB === null || startA < endB
-    const isEndAAfterStartB = endA === null || endA > startB
+  const isStartABeforeEndB = endB === null || startA < endB
+  const isEndAAfterStartB = endA === null || endA > startB
 
-    if (isStartABeforeEndB && isEndAAfterStartB) {
-      throw new AppError(
-        409,
-        `Date overlap detected with another price (ID: ${existing.id}) for currency ${currency}.`,
-      )
-    }
+  if (isStartABeforeEndB && isEndAAfterStartB) {
+    throw new AppError(
+      409,
+      `Date overlap detected with another price (ID: ${existing.id}) for currency ${currency}.`,
+    )
   }
+}
 
-  async deleteSchedule(programId: string, scheduleId: string, companyId: string): Promise<void> {
-    const program = await this.repo.findById(programId, companyId)
-    if (!program) {
-      throw new AppError(404, 'Program not found')
-    }
+function validatePricingOverlap(
+  existingPricings: import('@/entities/program.entity').ProgramPricing[],
+  newPrices: import('@/entities/program.entity').ProgramPrice[],
+) {
+  const allExistingPrices = existingPricings.flatMap((p) => p.prices || [])
 
-    const schedule = program.schedules?.find((s) => s.id === scheduleId)
-    if (!schedule) {
-      throw new AppError(404, 'Schedule not found')
-    }
+  for (const newPrice of newPrices) {
+    const newStart = newPrice.started_at
+      ? new Date(newPrice.started_at).getTime()
+      : new Date().getTime()
+    const newEnd = newPrice.ended_at ? new Date(newPrice.ended_at).getTime() : Infinity
 
-    return this.repo.deleteSchedule(programId, scheduleId, companyId)
-  }
+    const overlap = allExistingPrices.find((existing) => {
+      if (existing.currency !== newPrice.currency) return false
 
-  async deletePricing(programId: string, pricingId: string, companyId: string): Promise<void> {
-    const program = await this.repo.findById(programId, companyId)
-    if (!program) {
-      throw new AppError(404, 'Program not found')
-    }
+      const existStart = existing.started_at ? new Date(existing.started_at).getTime() : 0
+      const existEnd = existing.ended_at ? new Date(existing.ended_at).getTime() : Infinity
 
-    const pricing = program.pricings?.find((p) => p.id === pricingId)
-    if (!pricing) {
-      throw new AppError(404, 'Pricing package not found')
-    }
+      return Math.max(newStart, existStart) < Math.min(newEnd, existEnd)
+    })
 
-    // Check active enrollments
-    const activeEnrollments = await this.enrollmentRepo.countActiveByPricing(pricingId, companyId)
-    if (activeEnrollments > 0) {
-      throw new AppError(
-        409,
-        `Cannot delete pricing package. There are ${activeEnrollments} active enrollments using it.`,
-      )
-    }
-
-    return this.repo.deletePricing(programId, pricingId, companyId)
-  }
-
-  private validatePricingOverlap(
-    existingPricings: Entity.ProgramPricing[],
-    newPrices: Entity.ProgramPrice[],
-  ) {
-    // Collect all active prices including new ones
-    // Check if any currency has overlapping active dates
-    // Simplified: Check if there is already an active price for the same currency with no end date
-    // or if the dates overlap.
-
-    // For now, let's implement a simpler rule:
-    // A currency cannot have multiple prices active at the same time
-    // and overlapping dates.
-
-    // Note: The new prices are part of a NEW pricing package.
-    // However, existing logic seems to structure pricing as packages containing prices.
-
-    // If the requirement is "Active Pricing Overlap", we need to check against ALL active prices of the program.
-
-    // Strategy:
-    // 1. Flatten all existing prices
-    // 2. For each new price, check against flattened list
-
-    const allExistingPrices = existingPricings.flatMap((p) => p.prices || [])
-
-    for (const newPrice of newPrices) {
-      const newStart = newPrice.started_at
-        ? new Date(newPrice.started_at).getTime()
-        : new Date().getTime()
-      const newEnd = newPrice.ended_at ? new Date(newPrice.ended_at).getTime() : Infinity
-
-      const overlap = allExistingPrices.find((existing) => {
-        if (existing.currency !== newPrice.currency) return false
-
-        const existStart = existing.started_at ? new Date(existing.started_at).getTime() : 0
-        const existEnd = existing.ended_at ? new Date(existing.ended_at).getTime() : Infinity
-
-        return Math.max(newStart, existStart) < Math.min(newEnd, existEnd)
-      })
-
-      if (overlap) {
-        throw new AppError(409, `Price overlap detected for currency ${newPrice.currency}.`)
-      }
+    if (overlap) {
+      throw new AppError(409, `Price overlap detected for currency ${newPrice.currency}.`)
     }
   }
 }
+
+export function createProgramUsecase(
+  repo: IProgramRepo,
+  branchRepo: IBranchRepo,
+  enrollmentRepo: IEnrollmentRepo,
+): IProgramUsecase {
+  const deps: ProgramUsecaseDeps = { repo, branchRepo, enrollmentRepo, checkOverlap, validatePricingOverlap }
+
+  return {
+    create: (req) =>
+      withSpan('program.usecase', 'ProgramUsecase.create', () => createProgram(deps, req)),
+    update: (req) =>
+      withSpan('program.usecase', 'ProgramUsecase.update', () => updateProgram(deps, req)),
+    updateAll: (req) =>
+      withSpan('program.usecase', 'ProgramUsecase.updateAll', () => updateAllProgram(deps, req)),
+    delete: (id, companyId) =>
+      withSpan('program.usecase', 'ProgramUsecase.delete', () => deleteProgram(deps, id, companyId)),
+    findById: (id, companyId) =>
+      withSpan('program.usecase', 'ProgramUsecase.findById', () => findProgramById(deps, id, companyId)),
+    findList: (req) =>
+      withSpan('program.usecase', 'ProgramUsecase.findList', () => findProgramList(deps, req)),
+    addSchedule: (req) =>
+      withSpan('program.usecase', 'ProgramUsecase.addSchedule', () => addSchedule(deps, req)),
+    addPricing: (req) =>
+      withSpan('program.usecase', 'ProgramUsecase.addPricing', () => addPricing(deps, req)),
+    addPrice: (req) =>
+      withSpan('program.usecase', 'ProgramUsecase.addPrice', () => addPrice(deps, req)),
+    updatePrice: (req) =>
+      withSpan('program.usecase', 'ProgramUsecase.updatePrice', () => updatePrice(deps, req)),
+    deleteSchedule: (programId, scheduleId, companyId) =>
+      withSpan('program.usecase', 'ProgramUsecase.deleteSchedule', () =>
+        deleteSchedule(deps, programId, scheduleId, companyId)),
+    deletePricing: (programId, pricingId, companyId) =>
+      withSpan('program.usecase', 'ProgramUsecase.deletePricing', () =>
+        deletePricing(deps, programId, pricingId, companyId)),
+  }
+}
+
+export default createProgramUsecase

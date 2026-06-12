@@ -1,64 +1,34 @@
-import { AppError } from '@/common/app_error'
-import { comparePassword, hashPassword } from '@/common/encryption'
-import { generateToken } from '@/common/jwt'
-import * as Entity from '@/entities/user.entity'
+import { withSpan } from '@/telemetry'
 
 import { IUserRepo, IUserUsecase } from './user.contract'
+import { createUser } from './user.usecase/create'
+import { findUserById } from './user.usecase/find-by-id'
+import { findUserByUsername } from './user.usecase/find-by-username'
+import { findUserList } from './user.usecase/find-list'
+import { loginUser } from './user.usecase/login'
+import { registerUser } from './user.usecase/register'
 
-export default class UserUsecase implements IUserUsecase {
-  constructor(private repo: IUserRepo) {}
+export interface UserUsecaseDeps {
+  repo: IUserRepo
+}
 
-  async create(req: Entity.CreateUserReq): Promise<Entity.User> {
-    const password = await hashPassword(req.password)
-    return this.repo.create({ ...req, password })
-  }
+export function createUserUsecase(repo: IUserRepo): IUserUsecase {
+  const deps: UserUsecaseDeps = { repo }
 
-  async register(req: Entity.RegisterReq): Promise<Entity.RegisterRes> {
-    const isExist = await this.repo.checkExistingUser(req.username, req.email)
-    if (isExist) {
-      throw new AppError(409, 'Username or email already exists')
-    }
-
-    const password = await hashPassword(req.password)
-    return await this.repo.register({ ...req, password })
-  }
-
-  async login(req: Entity.LoginReq): Promise<Entity.LoginRes | null> {
-    const user = await this.repo.findByUsernameForLogin(req.username)
-    if (!user) return null
-
-    const isValid = await comparePassword(req.password, user.password)
-    if (!isValid) return null
-
-    if (user.status !== 'active') {
-      throw new AppError(403, 'User account is not active')
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...cleanUser } = user
-    const token = generateToken({
-      id: user.id,
-      company_id: user.companyId,
-      role_id: user.roleId,
-      name: user.name,
-      username: user.username,
-    })
-
-    return {
-      token,
-      ...cleanUser,
-    }
-  }
-
-  async findList(req: Entity.GetUserReq): Promise<Entity.UserList> {
-    return this.repo.findList(req)
-  }
-
-  async findById(id: string, companyId?: string): Promise<Entity.User | null> {
-    return this.repo.findById(id, companyId)
-  }
-
-  async findByUsername(username: string): Promise<Entity.User | null> {
-    return this.repo.findByUsername(username)
+  return {
+    create: (req) =>
+      withSpan('user.usecase', 'UserUsecase.create', () => createUser(deps, req)),
+    register: (req) =>
+      withSpan('user.usecase', 'UserUsecase.register', () => registerUser(deps, req)),
+    login: (req) =>
+      withSpan('user.usecase', 'UserUsecase.login', () => loginUser(deps, req)),
+    findList: (req) =>
+      withSpan('user.usecase', 'UserUsecase.findList', () => findUserList(deps, req)),
+    findById: (id, companyId) =>
+      withSpan('user.usecase', 'UserUsecase.findById', () => findUserById(deps, id, companyId)),
+    findByUsername: (username) =>
+      withSpan('user.usecase', 'UserUsecase.findByUsername', () => findUserByUsername(deps, username)),
   }
 }
+
+export default createUserUsecase

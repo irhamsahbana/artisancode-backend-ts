@@ -1,0 +1,15 @@
+import { AppError } from '@/common/app_error'
+
+import { StudentUsecaseDeps } from '../student.usecase'
+
+export async function deleteStudent(
+  deps: StudentUsecaseDeps,
+  id: string,
+  companyId: string,
+): Promise<void> {
+  const student = await deps.repo.findById(id, companyId)
+  if (!student) {
+    throw new AppError(404, 'Student not found')
+  }
+  return deps.repo.delete(id, companyId)
+}

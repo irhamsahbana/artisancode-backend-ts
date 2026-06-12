@@ -4,12 +4,12 @@ import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 
 import CompanyHandler from './company.handler'
-import CompanyRepo from './company.repo'
+import { createCompanyRepo } from './company.repo'
 import * as Schema from './company.schema'
-import CompanyUsecase from './company.usecase'
+import { createCompanyUsecase } from './company.usecase'
 
-const repo = new CompanyRepo()
-const usecase = new CompanyUsecase(repo)
+const repo = createCompanyRepo()
+const usecase = createCompanyUsecase(repo)
 const handler = new CompanyHandler(usecase)
 
 const router = new Hono()

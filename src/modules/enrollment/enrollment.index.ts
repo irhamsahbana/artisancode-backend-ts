@@ -5,26 +5,26 @@ import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 import { createPaymentGateway } from '@/integrations'
 import { createBranchRepo } from '@/modules/branch/branch.repo'
-import InvoiceRepo from '@/modules/invoice/invoice.repo'
-import InvoiceUsecase from '@/modules/invoice/invoice.usecase'
-import ProgramRepo from '@/modules/program/program.repo'
-import StudentRepo from '@/modules/student/student.repo'
+import { createInvoiceRepo } from '@/modules/invoice/invoice.repo'
+import { createInvoiceUsecase } from '@/modules/invoice/invoice.usecase'
+import { createProgramRepo } from '@/modules/program/program.repo'
+import { createStudentRepo } from '@/modules/student/student.repo'
 
 import EnrollmentHandler from './enrollment.handler'
-import EnrollmentRepo from './enrollment.repo'
+import { createEnrollmentRepo } from './enrollment.repo'
 import * as Schema from './enrollment.schema'
-import EnrollmentUsecase from './enrollment.usecase'
+import { createEnrollmentUsecase } from './enrollment.usecase'
 
-const repo = new EnrollmentRepo()
+const repo = createEnrollmentRepo()
 const branchRepo = createBranchRepo()
-const studentRepo = new StudentRepo()
-const programRepo = new ProgramRepo()
+const studentRepo = createStudentRepo()
+const programRepo = createProgramRepo()
 
-const invoiceRepo = new InvoiceRepo()
+const invoiceRepo = createInvoiceRepo()
 const paymentGateway = createPaymentGateway()
-const invoiceUsecase = new InvoiceUsecase(invoiceRepo, paymentGateway)
+const invoiceUsecase = createInvoiceUsecase(invoiceRepo, paymentGateway)
 
-const usecase = new EnrollmentUsecase(
+const usecase = createEnrollmentUsecase(
   repo,
   branchRepo,
   studentRepo,

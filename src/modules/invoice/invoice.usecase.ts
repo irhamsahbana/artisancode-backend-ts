@@ -1,173 +1,160 @@
-import { AppError } from '@/common/app_error'
 import { CheckStatusRes, IPaymentGateway } from '@/contracts/integration'
 import {
   ActiveInvoiceStatuses,
-  CreateInvoiceReq,
-  GetInvoiceReq,
   Invoice,
-  InvoiceList,
   InvoiceStatus,
 } from '@/entities/invoice.entity'
 import { withSpan } from '@/telemetry'
 
 import { IInvoiceRepo, IInvoiceUsecase } from './invoice.contract'
+import { createInvoice } from './invoice.usecase/create'
+import { findActiveInvoiceByEnrollment } from './invoice.usecase/find-active-by-enrollment'
+import { findInvoiceById } from './invoice.usecase/find-by-id'
+import { findInvoiceList } from './invoice.usecase/find-list'
+import { updateInvoiceStatus } from './invoice.usecase/update-status'
 
-export default class InvoiceUsecase implements IInvoiceUsecase {
-  constructor(
-    private repo: IInvoiceRepo,
-    private paymentGateway: IPaymentGateway,
-  ) {}
+export interface InvoiceUsecaseDeps {
+  repo: IInvoiceRepo
+  paymentGateway: IPaymentGateway
+  generatePaymentLink: (id: string, companyId: string) => Promise<Invoice>
+  resolveDokuStatus: (payload: CheckStatusRes) => Promise<InvoiceStatus | null>
+}
 
-  async create(data: CreateInvoiceReq): Promise<Invoice> {
-    return withSpan('invoice.usecase', 'InvoiceUsecase.create', async () => {
-      const activeInvoice = await this.repo.findActiveByEnrollment(
-        data.enrollment_id,
-        data.company_id,
-      )
-      if (activeInvoice) {
-        throw new AppError(400, 'Active invoice already exists for this enrollment')
-      }
-      const invoice = await this.repo.create(data)
-      return this.generatePaymentLink(invoice.id, data.company_id)
-    })
+async function generatePaymentLink(
+  deps: InvoiceUsecaseDeps,
+  id: string,
+  companyId: string,
+): Promise<Invoice> {
+  const invoice = await deps.repo.findById(id, companyId)
+  if (!invoice) throw new Error('Invoice not found')
+
+  if (invoice.status === 'paid') {
+    throw new Error('Invoice is already paid')
   }
 
-  async findById(id: string, company_id: string): Promise<Invoice> {
-    return withSpan('invoice.usecase', 'InvoiceUsecase.findById', async () => {
-      const invoice = await this.repo.findById(id, company_id)
-      if (!invoice) throw new AppError(404, 'Invoice not found')
-      return invoice
-    })
-  }
+  if (invoice.payment_url) {
+    let statusPayload: CheckStatusRes
+    try {
+      statusPayload = await deps.paymentGateway.checkStatus(invoice.invoice_number)
+    } catch {
+      throw new Error('DOKU status check failed')
+    }
+    const resolvedStatus = await deps.resolveDokuStatus(statusPayload)
 
-  async findList(req: GetInvoiceReq): Promise<InvoiceList> {
-    return withSpan('invoice.usecase', 'InvoiceUsecase.findList', async () => {
-      return this.repo.findList(req)
-    })
-  }
+    if (!resolvedStatus) {
+      throw new Error('DOKU status is not recognized')
+    }
 
-  async updateStatus(id: string, company_id: string, status: string): Promise<Invoice> {
-    return withSpan('invoice.usecase', 'InvoiceUsecase.updateStatus', async () => {
-      const invoice = await this.repo.findById(id, company_id)
-      if (!invoice) throw new AppError(404, 'Invoice not found')
-
-      return this.repo.update({
+    if (resolvedStatus === 'paid') {
+      return deps.repo.update({
         id,
-        company_id,
-        status,
+        company_id: companyId,
+        status: 'paid',
+        paid_at: new Date(),
       })
-    })
-  }
+    }
 
-  async generatePaymentLink(id: string, company_id: string): Promise<Invoice> {
-    return withSpan('invoice.usecase', 'InvoiceUsecase.generatePaymentLink', async () => {
-      const invoice = await this.repo.findById(id, company_id)
-      if (!invoice) throw new AppError(404, 'Invoice not found')
-
-      if (invoice.status === 'paid') {
-        throw new AppError(400, 'Invoice is already paid')
-      }
-
-      if (invoice.payment_url) {
-        let statusPayload: CheckStatusRes
-        try {
-          statusPayload = await this.paymentGateway.checkStatus(invoice.invoice_number)
-        } catch (error) {
-          throw new AppError(502, 'DOKU status check failed', error)
-        }
-        const resolvedStatus = await this.resolveDokuStatus(statusPayload)
-
-        if (!resolvedStatus) {
-          throw new AppError(502, 'DOKU status is not recognized', statusPayload)
-        }
-
-        if (resolvedStatus === 'paid') {
-          return this.repo.update({
-            id,
-            company_id,
-            status: 'paid',
-            paid_at: new Date(),
-          })
-        }
-
-        if (resolvedStatus === 'pending') {
-          if (!ActiveInvoiceStatuses.includes(invoice.status as InvoiceStatus)) {
-            return this.repo.update({
-              id,
-              company_id,
-              status: 'pending',
-            })
-          }
-          return invoice
-        }
-
-        if (resolvedStatus === 'cancelled') {
-          return this.repo.update({
-            id,
-            company_id,
-            status: 'cancelled',
-          })
-        }
-
-        await this.repo.update({
+    if (resolvedStatus === 'pending') {
+      if (!ActiveInvoiceStatuses.includes(invoice.status as InvoiceStatus)) {
+        return deps.repo.update({
           id,
-          company_id,
-          status: resolvedStatus,
+          company_id: companyId,
+          status: 'pending',
         })
       }
+      return invoice
+    }
 
-      const paymentLink = await this.paymentGateway.generatePaymentLink({
-        invoice_number: invoice.invoice_number,
-        amount: invoice.amount,
-        customer_email:
-          invoice.enrollment?.student?.parent_email || invoice.enrollment?.student?.email || '',
-        customer_name: invoice.enrollment?.student
-          ? `${invoice.enrollment.student.first_name} ${invoice.enrollment.student.last_name}`
-          : 'Customer',
-        customer_phone: invoice.enrollment?.student?.parent_phone,
-        customer_address: invoice.enrollment?.student?.address,
-        line_items: [
-          {
-            name: `${invoice.enrollment?.program?.name || 'Tuition Fee'} - ${invoice.enrollment?.pricing?.name || ''}`,
-            price: invoice.amount,
-            quantity: 1,
-          },
-        ],
-      })
-
-      return this.repo.update({
+    if (resolvedStatus === 'cancelled') {
+      return deps.repo.update({
         id,
-        company_id,
-        status: 'pending',
-        doku_invoice_id: paymentLink.invoice_id,
-        doku_request_id: paymentLink.request_id,
-        payment_url: paymentLink.payment_url,
+        company_id: companyId,
+        status: 'cancelled',
       })
+    }
+
+    await deps.repo.update({
+      id,
+      company_id: companyId,
+      status: resolvedStatus,
     })
   }
 
-  async findActiveByEnrollment(enrollment_id: string, company_id: string): Promise<Invoice | null> {
-    return withSpan('invoice.usecase', 'InvoiceUsecase.findActiveByEnrollment', async () => {
-      return this.repo.findActiveByEnrollment(enrollment_id, company_id)
-    })
+  const paymentLink = await deps.paymentGateway.generatePaymentLink({
+    invoice_number: invoice.invoice_number,
+    amount: invoice.amount,
+    customer_email:
+      invoice.enrollment?.student?.parent_email || invoice.enrollment?.student?.email || '',
+    customer_name: invoice.enrollment?.student
+      ? `${invoice.enrollment.student.first_name} ${invoice.enrollment.student.last_name}`
+      : 'Customer',
+    customer_phone: invoice.enrollment?.student?.parent_phone,
+    customer_address: invoice.enrollment?.student?.address,
+    line_items: [
+      {
+        name: `${invoice.enrollment?.program?.name || 'Tuition Fee'} - ${invoice.enrollment?.pricing?.name || ''}`,
+        price: invoice.amount,
+        quantity: 1,
+      },
+    ],
+  })
+
+  return deps.repo.update({
+    id,
+    company_id: companyId,
+    status: 'pending',
+    doku_invoice_id: paymentLink.invoice_id,
+    doku_request_id: paymentLink.request_id,
+    payment_url: paymentLink.payment_url,
+  })
+}
+
+async function resolveDokuStatus(payload: CheckStatusRes): Promise<InvoiceStatus | null> {
+  const transactionStatus = String(payload.transaction?.status ?? '').toUpperCase()
+  const orderStatus = String(payload.order?.status ?? '').toUpperCase()
+
+  if (transactionStatus === 'SUCCESS') return 'paid'
+  if (transactionStatus === 'PENDING') return 'pending'
+  if (transactionStatus === 'FAILED') return 'failed'
+  if (transactionStatus === 'EXPIRED') return 'expired'
+  if (transactionStatus === 'TIMEOUT') return 'pending'
+  if (transactionStatus === 'REDIRECT') return 'pending'
+  if (transactionStatus === 'REFUNDED') return 'cancelled'
+  if (orderStatus === 'ORDER_EXPIRED') return 'expired'
+  if (orderStatus === 'ORDER_GENERATED') return 'pending'
+
+  return null
+}
+
+export function createInvoiceUsecase(
+  repo: IInvoiceRepo,
+  paymentGateway: IPaymentGateway,
+): IInvoiceUsecase {
+  const deps: InvoiceUsecaseDeps = {
+    repo,
+    paymentGateway,
+    generatePaymentLink: (id, companyId) => generatePaymentLink(deps, id, companyId),
+    resolveDokuStatus,
   }
 
-  private async resolveDokuStatus(payload: CheckStatusRes): Promise<InvoiceStatus | null> {
-    return withSpan('invoice.usecase', 'InvoiceUsecase.resolveDokuStatus', async () => {
-      const transactionStatus = String(payload.transaction?.status ?? '').toUpperCase()
-      const orderStatus = String(payload.order?.status ?? '').toUpperCase()
-
-      if (transactionStatus === 'SUCCESS') return 'paid'
-      if (transactionStatus === 'PENDING') return 'pending'
-      if (transactionStatus === 'FAILED') return 'failed'
-      if (transactionStatus === 'EXPIRED') return 'expired'
-      if (transactionStatus === 'TIMEOUT') return 'pending'
-      if (transactionStatus === 'REDIRECT') return 'pending'
-      if (transactionStatus === 'REFUNDED') return 'cancelled'
-      if (orderStatus === 'ORDER_EXPIRED') return 'expired'
-      if (orderStatus === 'ORDER_GENERATED') return 'pending'
-
-      return null
-    })
+  return {
+    create: (data) =>
+      withSpan('invoice.usecase', 'InvoiceUsecase.create', () => createInvoice(deps, data)),
+    findById: (id, companyId) =>
+      withSpan('invoice.usecase', 'InvoiceUsecase.findById', () =>
+        findInvoiceById(deps, id, companyId)),
+    findList: (req) =>
+      withSpan('invoice.usecase', 'InvoiceUsecase.findList', () => findInvoiceList(deps, req)),
+    updateStatus: (id, companyId, status) =>
+      withSpan('invoice.usecase', 'InvoiceUsecase.updateStatus', () =>
+        updateInvoiceStatus(deps, id, companyId, status)),
+    generatePaymentLink: (id, companyId) =>
+      withSpan('invoice.usecase', 'InvoiceUsecase.generatePaymentLink', () =>
+        generatePaymentLink(deps, id, companyId)),
+    findActiveByEnrollment: (enrollmentId, companyId) =>
+      withSpan('invoice.usecase', 'InvoiceUsecase.findActiveByEnrollment', () =>
+        findActiveInvoiceByEnrollment(deps, enrollmentId, companyId)),
   }
 }
+
+export default createInvoiceUsecase
