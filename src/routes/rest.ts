@@ -7,6 +7,7 @@ import enrollmentRouter from '@/modules/enrollment/enrollment.index'
 import invoiceRouter from '@/modules/invoice/invoice.index'
 import programRouter from '@/modules/program/program.index'
 import roleAndPermissionRouter from '@/modules/role_and_permission/role_and_permission.index'
+import storageRouter from '@/modules/storage/storage.index'
 import studentRouter from '@/modules/student/student.index'
 import teacherRouter from '@/modules/teacher/teacher.index'
 import templateRouter from '@/modules/template/template.index'
@@ -26,6 +27,7 @@ router.route('/enrollments', enrollmentRouter)
 router.route('/invoices', invoiceRouter)
 router.route('/users', userRouter)
 router.route('/role-and-permissions', roleAndPermissionRouter)
+router.route('/storage', storageRouter)
 router.route('/webhooks', webhookRouter)
 
 export default router

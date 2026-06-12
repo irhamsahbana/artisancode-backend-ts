@@ -63,5 +63,13 @@ export const env = {
     SECRET_KEY: process.env.DOKU_SECRET_KEY,
     PUBLIC_KEY: process.env.DOKU_PUBLIC_KEY,
   },
+  S3: {
+    BUCKET: process.env.S3_BUCKET || '',
+    REGION: process.env.S3_REGION || 'ap-southeast-1',
+    ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID || '',
+    SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY || '',
+    ENDPOINT: process.env.S3_ENDPOINT || undefined,
+    PUBLIC_BASE_URL: process.env.S3_PUBLIC_BASE_URL || '',
+  },
   API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3000/api',
 }

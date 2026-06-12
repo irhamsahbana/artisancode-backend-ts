@@ -1,6 +1,6 @@
 import { IBranchRepo } from '@/contracts/branch.contract'
 import { IEnrollmentRepo, IEnrollmentUsecase } from '@/contracts/enrollment.contract'
-import { ITransactor } from '@/contracts/integration'
+import { IStorageService, ITransactor } from '@/contracts/integration'
 import { IInvoiceUsecase } from '@/contracts/invoice.contract'
 import { IProgramRepo } from '@/contracts/program.contract'
 import { IStudentRepo } from '@/contracts/student.contract'
@@ -15,6 +15,7 @@ import { findEnrollmentById } from './enrollment.usecase/find-by-id'
 import { findEnrollmentList } from './enrollment.usecase/find-list'
 import { generateEnrollmentInvoice } from './enrollment.usecase/generate-invoice'
 import { updateEnrollment } from './enrollment.usecase/update'
+import { uploadPaymentProof } from './enrollment.usecase/upload-payment-proof'
 
 export interface EnrollmentUsecaseDeps {
   repo: IEnrollmentRepo
@@ -23,6 +24,7 @@ export interface EnrollmentUsecaseDeps {
   programRepo: IProgramRepo
   invoiceUsecase: IInvoiceUsecase
   transactor: ITransactor
+  storage: IStorageService
   checkScheduleConflict: (
     newProgram: Program,
     existingEnrollments: Entity.Enrollment[],
@@ -36,6 +38,7 @@ export function createEnrollmentUsecase(
   programRepo: IProgramRepo,
   invoiceUsecase: IInvoiceUsecase,
   transactor: ITransactor,
+  storage: IStorageService,
 ): IEnrollmentUsecase {
   const deps: EnrollmentUsecaseDeps = {
     repo,
@@ -44,6 +47,7 @@ export function createEnrollmentUsecase(
     programRepo,
     invoiceUsecase,
     transactor,
+    storage,
     checkScheduleConflict: (newProgram, existingEnrollments) =>
       checkScheduleConflict(deps, newProgram, existingEnrollments),
   }
@@ -65,6 +69,9 @@ export function createEnrollmentUsecase(
     findList: (req) =>
       withSpan('enrollment.usecase', 'EnrollmentUsecase.findList', () =>
         findEnrollmentList(deps, req)),
+    uploadPaymentProof: (req) =>
+      withSpan('enrollment.usecase', 'EnrollmentUsecase.uploadPaymentProof', () =>
+        uploadPaymentProof(deps, req)),
   }
 }
 

@@ -15,6 +15,7 @@ import {
   products,
   rolePermissions,
   roles,
+  storageFiles,
   students,
   teacherProducts,
   teachers,
@@ -208,4 +209,12 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   company: one(companies, { fields: [activityLogs.companyId], references: [companies.id] }),
   branch: one(branches, { fields: [activityLogs.branchId], references: [branches.id] }),
   user: one(users, { fields: [activityLogs.userId], references: [users.id] }),
+}))
+
+// ---------------------------------------------------------------------------
+// StorageFile
+// ---------------------------------------------------------------------------
+export const storageFilesRelations = relations(storageFiles, ({ one }) => ({
+  company: one(companies, { fields: [storageFiles.companyId], references: [companies.id] }),
+  creator: one(users, { fields: [storageFiles.createdBy], references: [users.id] }),
 }))

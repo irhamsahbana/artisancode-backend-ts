@@ -54,3 +54,10 @@ export const billingCycleEnum = pgEnum('billing_cycle', [
   'annually',
   'one_time',
 ])
+
+export const fileStatusEnum = pgEnum('file_status', [
+  'pending',
+  'attached',
+  'deleted',
+  'failed',
+])

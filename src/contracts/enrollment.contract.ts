@@ -29,4 +29,10 @@ export interface IEnrollmentUsecase {
   delete(id: string, companyId: string): Promise<void>
   findById(id: string, companyId: string): Promise<Entity.Enrollment | null>
   findList(req: Entity.GetEnrollmentReq): Promise<Entity.EnrollmentList>
+  uploadPaymentProof(req: {
+    id: string
+    company_id: string
+    file: Buffer
+    filename: string
+  }): Promise<Entity.Enrollment>
 }

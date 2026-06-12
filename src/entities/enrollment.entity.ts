@@ -33,6 +33,7 @@ export interface Enrollment {
   }
   pricing?: ProgramPricing
   latest_invoice?: Invoice
+  payment_proof_url?: string | null
 }
 
 export interface CreateEnrollmentReq {
@@ -64,6 +65,7 @@ export interface UpdateEnrollmentReq {
   billing_cycle?: string
   next_billing_date?: Date
   auto_renew?: boolean
+  payment_proof_url?: string
   user?: UserContext
 }
 
