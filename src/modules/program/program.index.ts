@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
-import BranchRepo from '@/modules/branch/branch.repo'
+import { createBranchRepo } from '@/modules/branch/branch.repo'
 import EnrollmentRepo from '@/modules/enrollment/enrollment.repo'
 
 import ProgramHandler from './program.handler'
@@ -11,7 +11,7 @@ import * as Schema from './program.schema'
 import ProgramUsecase from './program.usecase'
 
 const repo = new ProgramRepo()
-const branchRepo = new BranchRepo()
+const branchRepo = createBranchRepo()
 const enrollmentRepo = new EnrollmentRepo()
 const usecase = new ProgramUsecase(repo, branchRepo, enrollmentRepo)
 const handler = new ProgramHandler(usecase)

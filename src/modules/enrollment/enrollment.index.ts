@@ -4,7 +4,7 @@ import { transactor } from '@/common/executor'
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 import { createPaymentGateway } from '@/integrations'
-import BranchRepo from '@/modules/branch/branch.repo'
+import { createBranchRepo } from '@/modules/branch/branch.repo'
 import InvoiceRepo from '@/modules/invoice/invoice.repo'
 import InvoiceUsecase from '@/modules/invoice/invoice.usecase'
 import ProgramRepo from '@/modules/program/program.repo'
@@ -16,7 +16,7 @@ import * as Schema from './enrollment.schema'
 import EnrollmentUsecase from './enrollment.usecase'
 
 const repo = new EnrollmentRepo()
-const branchRepo = new BranchRepo()
+const branchRepo = createBranchRepo()
 const studentRepo = new StudentRepo()
 const programRepo = new ProgramRepo()
 

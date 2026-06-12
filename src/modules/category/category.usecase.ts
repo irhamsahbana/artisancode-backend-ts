@@ -1,53 +1,31 @@
-import { AppError } from '@/common/app_error'
-import * as Entity from '@/entities/category.entity'
+import { withSpan } from '@/telemetry'
 
 import { ICategoryRepo, ICategoryUsecase } from './category.contract'
+import { createCategory } from './category.usecase/create'
+import { deleteCategory } from './category.usecase/delete'
+import { findCategoryById } from './category.usecase/find-by-id'
+import { findCategoryList } from './category.usecase/find-list'
+import { updateCategory } from './category.usecase/update'
 
-export default class CategoryUsecase implements ICategoryUsecase {
-  constructor(private repo: ICategoryRepo) {}
+export interface CategoryUsecaseDeps {
+  repo: ICategoryRepo
+}
 
-  async create(req: Entity.CreateCategoryReq): Promise<Entity.Category> {
-    if (req.parent_id) {
-      const parent = await this.repo.findById(req.parent_id, req.company_id)
-      if (!parent) {
-        throw new AppError(404, 'Parent category not found')
-      }
-    }
-    return this.repo.create(req)
-  }
+export function createCategoryUsecase(repo: ICategoryRepo): ICategoryUsecase {
+  const deps: CategoryUsecaseDeps = { repo }
 
-  async update(req: Entity.UpdateCategoryReq): Promise<Entity.Category> {
-    const category = await this.repo.findById(req.id, req.company_id)
-    if (!category) {
-      throw new AppError(404, 'Category not found')
-    }
-
-    if (req.parent_id) {
-      if (req.parent_id === req.id) {
-        throw new AppError(400, 'Category cannot be its own parent')
-      }
-      const parent = await this.repo.findById(req.parent_id, req.company_id)
-      if (!parent) {
-        throw new AppError(404, 'Parent category not found')
-      }
-    }
-
-    return this.repo.update(req)
-  }
-
-  async delete(id: string, companyId: string): Promise<void> {
-    const category = await this.repo.findById(id, companyId)
-    if (!category) {
-      throw new AppError(404, 'Category not found')
-    }
-    return this.repo.delete(id, companyId)
-  }
-
-  async findById(id: string, companyId: string): Promise<Entity.Category | null> {
-    return this.repo.findById(id, companyId)
-  }
-
-  async findList(req: Entity.GetCategoryReq): Promise<Entity.CategoryList> {
-    return this.repo.findList(req)
+  return {
+    create: (req) =>
+      withSpan('category.usecase', 'CategoryUsecase.create', () => createCategory(deps, req)),
+    update: (req) =>
+      withSpan('category.usecase', 'CategoryUsecase.update', () => updateCategory(deps, req)),
+    delete: (id, companyId) =>
+      withSpan('category.usecase', 'CategoryUsecase.delete', () => deleteCategory(deps, id, companyId)),
+    findById: (id, companyId) =>
+      withSpan('category.usecase', 'CategoryUsecase.findById', () => findCategoryById(deps, id, companyId)),
+    findList: (req) =>
+      withSpan('category.usecase', 'CategoryUsecase.findList', () => findCategoryList(deps, req)),
   }
 }
+
+export default createCategoryUsecase

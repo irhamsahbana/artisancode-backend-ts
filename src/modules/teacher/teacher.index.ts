@@ -4,12 +4,12 @@ import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 
 import TeacherHandler from './teacher.handler'
-import TeacherRepo from './teacher.repo'
+import { createTeacherRepo } from './teacher.repo'
 import * as Schema from './teacher.schema'
-import TeacherUsecase from './teacher.usecase'
+import { createTeacherUsecase } from './teacher.usecase'
 
-const repo = new TeacherRepo()
-const usecase = new TeacherUsecase(repo)
+const repo = createTeacherRepo()
+const usecase = createTeacherUsecase(repo)
 const handler = new TeacherHandler(usecase)
 
 const router = new Hono()

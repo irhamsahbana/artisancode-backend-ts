@@ -4,12 +4,12 @@ import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 
 import BranchHandler from './branch.handler'
-import BranchRepo from './branch.repo'
+import { createBranchRepo } from './branch.repo'
 import * as Schema from './branch.schema'
-import BranchUsecase from './branch.usecase'
+import { createBranchUsecase } from './branch.usecase'
 
-const repo = new BranchRepo()
-const usecase = new BranchUsecase(repo)
+const repo = createBranchRepo()
+const usecase = createBranchUsecase(repo)
 const handler = new BranchHandler(usecase)
 
 const router = new Hono()

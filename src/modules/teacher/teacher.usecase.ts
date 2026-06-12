@@ -1,48 +1,37 @@
-import { AppError } from '@/common/app_error'
-import * as Entity from '@/entities/teacher.entity'
+import { withSpan } from '@/telemetry'
 
 import { ITeacherRepo, ITeacherUsecase } from './teacher.contract'
+import { createTeacher } from './teacher.usecase/create'
+import { deleteTeacher } from './teacher.usecase/delete'
+import { findTeacherById } from './teacher.usecase/find-by-id'
+import { findTeacherList } from './teacher.usecase/find-list'
+import { updateTeacher } from './teacher.usecase/update'
 
-export default class TeacherUsecase implements ITeacherUsecase {
-  constructor(private repo: ITeacherRepo) {}
+// ---------------------------------------------------------------------------
+// Shared dependencies for all usecase operations
+// ---------------------------------------------------------------------------
+export interface TeacherUsecaseDeps {
+  repo: ITeacherRepo
+}
 
-  async create(req: Entity.CreateTeacherReq): Promise<Entity.Teacher> {
-    const existing = await this.repo.findByEmail(req.email)
-    if (existing) {
-      throw new AppError(409, 'Teacher with this email already exists')
-    }
-    return this.repo.create(req)
-  }
+// ---------------------------------------------------------------------------
+// Factory — composes individual operations into the ITeacherUsecase interface
+// ---------------------------------------------------------------------------
+export function createTeacherUsecase(repo: ITeacherRepo): ITeacherUsecase {
+  const deps: TeacherUsecaseDeps = { repo }
 
-  async update(req: Entity.UpdateTeacherReq): Promise<Entity.Teacher> {
-    const teacher = await this.repo.findById(req.id, req.company_id)
-    if (!teacher) {
-      throw new AppError(404, 'Teacher not found')
-    }
-
-    if (req.email && req.email !== teacher.email) {
-      const existing = await this.repo.findByEmail(req.email)
-      if (existing) {
-        throw new AppError(409, 'Teacher with this email already exists')
-      }
-    }
-
-    return this.repo.update(req)
-  }
-
-  async delete(id: string, companyId: string): Promise<void> {
-    const teacher = await this.repo.findById(id, companyId)
-    if (!teacher) {
-      throw new AppError(404, 'Teacher not found')
-    }
-    return this.repo.delete(id, companyId)
-  }
-
-  async findById(id: string, companyId: string): Promise<Entity.Teacher | null> {
-    return this.repo.findById(id, companyId)
-  }
-
-  async findList(req: Entity.GetTeacherReq): Promise<Entity.TeacherList> {
-    return this.repo.findList(req)
+  return {
+    create: (req) =>
+      withSpan('teacher.usecase', 'TeacherUsecase.create', () => createTeacher(deps, req)),
+    update: (req) =>
+      withSpan('teacher.usecase', 'TeacherUsecase.update', () => updateTeacher(deps, req)),
+    delete: (id, companyId) =>
+      withSpan('teacher.usecase', 'TeacherUsecase.delete', () => deleteTeacher(deps, id, companyId)),
+    findById: (id, companyId) =>
+      withSpan('teacher.usecase', 'TeacherUsecase.findById', () => findTeacherById(deps, id, companyId)),
+    findList: (req) =>
+      withSpan('teacher.usecase', 'TeacherUsecase.findList', () => findTeacherList(deps, req)),
   }
 }
+
+export default createTeacherUsecase

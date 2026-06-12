@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
-import BranchRepo from '@/modules/branch/branch.repo'
+import { createBranchRepo } from '@/modules/branch/branch.repo'
 
 import StudentHandler from './student.handler'
 import StudentRepo from './student.repo'
@@ -10,7 +10,7 @@ import * as Schema from './student.schema'
 import StudentUsecase from './student.usecase'
 
 const repo = new StudentRepo()
-const branchRepo = new BranchRepo()
+const branchRepo = createBranchRepo()
 const usecase = new StudentUsecase(repo, branchRepo)
 const handler = new StudentHandler(usecase)
 

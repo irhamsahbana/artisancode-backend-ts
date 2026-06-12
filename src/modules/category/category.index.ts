@@ -4,12 +4,12 @@ import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 
 import CategoryHandler from './category.handler'
-import CategoryRepo from './category.repo'
+import { createCategoryRepo } from './category.repo'
 import * as Schema from './category.schema'
-import CategoryUsecase from './category.usecase'
+import { createCategoryUsecase } from './category.usecase'
 
-const repo = new CategoryRepo()
-const usecase = new CategoryUsecase(repo)
+const repo = createCategoryRepo()
+const usecase = createCategoryUsecase(repo)
 const handler = new CategoryHandler(usecase)
 
 const router = new Hono()
