@@ -17,6 +17,7 @@ export {
   rolePermissions,
   roles,
   softDelete,
+  storageFiles,
   students,
   teacherProducts,
   teachers,
