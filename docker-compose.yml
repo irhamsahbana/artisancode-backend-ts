@@ -4,7 +4,7 @@ services:
     container_name: sobatbisnis-db
     restart: unless-stopped
     ports:
-      - "6060:5432"
+      - "7070:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
