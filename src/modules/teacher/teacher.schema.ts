@@ -1,38 +1,34 @@
-import Joi from 'joi'
+import { z } from 'zod'
 
 import { TeacherStatuses } from '@/entities/teacher.entity'
 
-export const createTeacherSchema = Joi.object({
-  branch_id: Joi.string().uuid().optional().allow(null),
-  status: Joi.string()
-    .valid(...TeacherStatuses)
-    .optional(),
-  name: Joi.string().required().min(2).max(100),
-  email: Joi.string().email().required(),
-  phone: Joi.string().optional().allow('').max(20),
-  address: Joi.string().optional().allow('').max(255),
-  birth_date: Joi.string().optional().allow(''),
-  biography: Joi.string().optional().allow(''),
-  specialty: Joi.string().optional().allow('').max(100),
+export const createTeacherSchema = z.object({
+  branch_id: z.string().uuid().nullable().optional(),
+  status: z.enum(TeacherStatuses as [string, ...string[]]).optional(),
+  name: z.string().min(2).max(100),
+  email: z.string().email(),
+  phone: z.string().max(20).optional(),
+  address: z.string().max(255).optional(),
+  birth_date: z.string().optional(),
+  biography: z.string().optional(),
+  specialty: z.string().max(100).optional(),
 })
 
-export const updateTeacherSchema = Joi.object({
-  branch_id: Joi.string().uuid().optional().allow(null),
-  status: Joi.string()
-    .valid(...TeacherStatuses)
-    .optional(),
-  name: Joi.string().optional().min(2).max(100),
-  email: Joi.string().email().optional(),
-  phone: Joi.string().optional().allow('').max(20),
-  address: Joi.string().optional().allow('').max(255),
-  birth_date: Joi.string().optional().allow(''),
-  biography: Joi.string().optional().allow(''),
-  specialty: Joi.string().optional().allow('').max(100),
+export const updateTeacherSchema = z.object({
+  branch_id: z.string().uuid().nullable().optional(),
+  status: z.enum(TeacherStatuses as [string, ...string[]]).optional(),
+  name: z.string().min(2).max(100).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().max(20).optional(),
+  address: z.string().max(255).optional(),
+  birth_date: z.string().optional(),
+  biography: z.string().optional(),
+  specialty: z.string().max(100).optional(),
 })
 
-export const getTeacherListSchema = Joi.object({
-  page: Joi.number().integer().min(1).optional(),
-  limit: Joi.number().integer().min(1).max(100).optional(),
-  q: Joi.string().allow('').optional(),
-  branch_id: Joi.string().uuid().optional(),
+export const getTeacherListSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  q: z.string().optional(),
+  branch_id: z.string().uuid().optional(),
 })

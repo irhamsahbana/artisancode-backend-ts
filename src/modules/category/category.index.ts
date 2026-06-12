@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
@@ -12,7 +12,7 @@ const repo = new CategoryRepo()
 const usecase = new CategoryUsecase(repo)
 const handler = new CategoryHandler(usecase)
 
-const router = Router()
+const router = new Hono()
 
 router.post('/', authenticate, validate(Schema.createCategorySchema), handler.create)
 router.put('/:id', authenticate, validate(Schema.updateCategorySchema), handler.update)

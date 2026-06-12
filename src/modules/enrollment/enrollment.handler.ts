@@ -1,28 +1,19 @@
-import { Request, Response } from 'express'
+import { Context } from 'hono'
 
-import { AuthenticatedRequest } from '@/common/middlewares/auth.middleware'
 import { responseError, responseSuccess } from '@/common/rest_response'
+import { AppEnv } from '@/common/types'
 import * as Entity from '@/entities/enrollment.entity'
 import { withSpan } from '@/telemetry'
 
 import { IEnrollmentUsecase } from './enrollment.contract'
 
-export interface UserContext {
-  id: string
-  company_id: string
-  branch_id?: string
-  role_id: string
-  name: string
-  username: string
-}
-
 export default class EnrollmentHandler {
   constructor(private usecase: IEnrollmentUsecase) {}
 
-  create = async (req: Request, res: Response) => {
+  create = async (c: Context<AppEnv>) => {
     return withSpan('enrollment.handler', 'EnrollmentHandler.create', async () => {
-      const user = (req as AuthenticatedRequest).user
-      const body = req.body
+      const user = c.get('user')
+      const body = c.get('body')
       const payload: Entity.CreateEnrollmentReq = {
         ...body,
         company_id: user?.company_id || '',
@@ -31,15 +22,15 @@ export default class EnrollmentHandler {
       }
 
       const data = await this.usecase.create(payload)
-      res.status(201).json(responseSuccess(data, 'Enrollment created successfully'))
+      return c.json(responseSuccess(data, 'Enrollment created successfully'), 201)
     })
   }
 
-  update = async (req: Request, res: Response) => {
+  update = async (c: Context<AppEnv>) => {
     return withSpan('enrollment.handler', 'EnrollmentHandler.update', async () => {
-      const { id } = req.params
-      const user = (req as AuthenticatedRequest).user
-      const body = req.body
+      const id = c.req.param('id') ?? ''
+      const user = c.get('user')
+      const body = c.get('body')
 
       const payload: Entity.UpdateEnrollmentReq = {
         ...body,
@@ -50,14 +41,14 @@ export default class EnrollmentHandler {
       }
 
       const data = await this.usecase.update(payload)
-      res.status(200).json(responseSuccess(data, 'Enrollment updated successfully'))
+      return c.json(responseSuccess(data, 'Enrollment updated successfully'))
     })
   }
 
-  generateInvoice = async (req: Request, res: Response) => {
+  generateInvoice = async (c: Context<AppEnv>) => {
     return withSpan('enrollment.handler', 'EnrollmentHandler.generateInvoice', async () => {
-      const { id } = req.params
-      const user = (req as AuthenticatedRequest).user
+      const id = c.req.param('id') ?? ''
+      const user = c.get('user')
 
       const payload: Entity.GenerateEnrollmentInvoiceReq = {
         id,
@@ -66,43 +57,44 @@ export default class EnrollmentHandler {
       }
 
       const data = await this.usecase.generateInvoice(payload)
-      res.status(201).json(responseSuccess(data, 'Invoice generated successfully'))
+      return c.json(responseSuccess(data, 'Invoice generated successfully'), 201)
     })
   }
 
-  delete = async (req: Request, res: Response) => {
+  delete = async (c: Context<AppEnv>) => {
     return withSpan('enrollment.handler', 'EnrollmentHandler.delete', async () => {
-      const { id } = req.params
-      const user = (req as AuthenticatedRequest).user
+      const id = c.req.param('id') ?? ''
+      const user = c.get('user')
 
       await this.usecase.delete(id, user?.company_id || '')
-      res.status(200).json(responseSuccess(null, 'Enrollment deleted successfully'))
+      return c.json(responseSuccess(null, 'Enrollment deleted successfully'))
     })
   }
 
-  findById = async (req: Request, res: Response) => {
+  findById = async (c: Context<AppEnv>) => {
     return withSpan('enrollment.handler', 'EnrollmentHandler.findById', async () => {
-      const { id } = req.params
-      const user = (req as AuthenticatedRequest).user
+      const id = c.req.param('id') ?? ''
+      const user = c.get('user')
 
       const data = await this.usecase.findById(id, user?.company_id || '')
       if (!data) {
-        return res.status(404).json(responseError('Enrollment not found'))
+        return c.json(responseError('Enrollment not found'), 404)
       }
-      res.status(200).json(responseSuccess(data))
+      return c.json(responseSuccess(data))
     })
   }
 
-  findList = async (req: Request, res: Response) => {
+  findList = async (c: Context<AppEnv>) => {
     return withSpan('enrollment.handler', 'EnrollmentHandler.findList', async () => {
-      const { page, limit, branch_id, student_id, program_id } = req.query as unknown as {
+      const query = c.get('body')?._query || c.req.query()
+      const { page, limit, branch_id, student_id, program_id } = query as {
         page: number
         limit: number
         branch_id: string
         student_id: string
         program_id: string
       }
-      const user = (req as AuthenticatedRequest).user
+      const user = c.get('user')
 
       const payload: Entity.GetEnrollmentReq = {
         company_id: user?.company_id || '',
@@ -117,7 +109,7 @@ export default class EnrollmentHandler {
       }
 
       const data = await this.usecase.findList(payload)
-      res.status(200).json(responseSuccess(data))
+      return c.json(responseSuccess(data))
     })
   }
 }

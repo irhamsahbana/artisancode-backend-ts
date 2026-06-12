@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
@@ -12,7 +12,7 @@ const repo = new RoleAndPermissionRepo()
 const usecase = new RoleAndPermissionUsecase(repo)
 const handler = new RoleAndPermissionHandler(usecase)
 
-const router = Router()
+const router = new Hono()
 
 // Role Routes
 router.post('/roles', authenticate, validate(Schema.createRoleSchema), handler.createRole)

@@ -1,2 +1,2 @@
-pnpm run lint:fix
-pnpm run lint-staged
+bun run lint:fix
+bun run lint-staged

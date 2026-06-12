@@ -1,57 +1,46 @@
-import { NextFunction, Request, Response } from 'express'
-import Joi from 'joi'
+import { Context, Next } from 'hono'
+import { ZodError, ZodObject } from 'zod'
 
 import { responseError } from '@/common/rest_response'
+import { AppEnv } from '@/common/types'
 
-const formatJoiError = (error: Joi.ValidationError) => {
+const formatZodError = (error: ZodError) => {
   const errors: Record<string, string[]> = {}
-  error.details.forEach((detail) => {
-    const key = detail.path.join('.')
+  error.issues.forEach((issue) => {
+    const key = issue.path.join('.')
     if (!errors[key]) {
       errors[key] = []
     }
-    errors[key].push(detail.message)
+    errors[key].push(issue.message)
   })
   return errors
 }
 
-export const validate = (schema: Joi.ObjectSchema) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const { error, value } = schema.validate(req.body, {
-      abortEarly: false,
-      stripUnknown: true,
-    })
+export const validate = (schema: ZodObject) => {
+  return async (c: Context<AppEnv>, next: Next) => {
+    const body = await c.req.json()
+    const result = schema.safeParse(body)
 
-    if (error) {
-      return res.status(400).json(responseError('VALIDATION_ERROR', formatJoiError(error)))
+    if (!result.success) {
+      return c.json(responseError('VALIDATION_ERROR', formatZodError(result.error)), 400)
     }
 
-    req.body = value
-    next()
+    c.set('body', result.data)
+    await next()
   }
 }
 
-export const validateQuery = (schema: Joi.ObjectSchema) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const { error, value } = schema.validate(req.query, {
-      abortEarly: false,
-      stripUnknown: true,
-    })
+export const validateQuery = (schema: ZodObject) => {
+  return async (c: Context<AppEnv>, next: Next) => {
+    const query = c.req.query()
+    const result = schema.safeParse(query)
 
-    if (error) {
-      return res.status(400).json(responseError('VALIDATION_ERROR', formatJoiError(error)))
+    if (!result.success) {
+      return c.json(responseError('VALIDATION_ERROR', formatZodError(result.error)), 400)
     }
 
-    try {
-      req.query = value
-    } catch {
-      Object.defineProperty(req, 'query', {
-        value,
-        writable: true,
-        enumerable: true,
-        configurable: true,
-      })
-    }
-    next()
+    // Store validated query in body variable for handler access
+    c.set('body', { ...c.get('body'), _query: result.data })
+    await next()
   }
 }

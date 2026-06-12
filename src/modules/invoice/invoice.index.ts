@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate } from '@/common/middlewares/validation.middleware'
@@ -9,7 +9,7 @@ import InvoiceRepo from './invoice.repo'
 import { createInvoiceSchema } from './invoice.schema'
 import InvoiceUsecase from './invoice.usecase'
 
-const router = Router()
+const router = new Hono()
 
 const repo = new InvoiceRepo()
 const dokuProvider = new DokuProvider()

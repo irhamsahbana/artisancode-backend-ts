@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
@@ -12,7 +12,7 @@ const repo = new TeacherRepo()
 const usecase = new TeacherUsecase(repo)
 const handler = new TeacherHandler(usecase)
 
-const router = Router()
+const router = new Hono()
 
 router.post('/', authenticate, validate(Schema.createTeacherSchema), handler.create)
 router.put('/:id', authenticate, validate(Schema.updateTeacherSchema), handler.update)

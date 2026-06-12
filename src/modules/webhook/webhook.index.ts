@@ -1,8 +1,8 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 
 import { WebhookHandler } from './webhook.handler'
 
-const WebhookRouter = Router()
+const WebhookRouter = new Hono()
 const handler = new WebhookHandler()
 
 WebhookRouter.post('/doku', handler.doku)

@@ -1,7 +1,7 @@
-import { Request, Response } from 'express'
+import { Context } from 'hono'
 
-import { AuthenticatedRequest } from '@/common/middlewares/auth.middleware'
 import { responseSuccess } from '@/common/rest_response'
+import { AppEnv } from '@/common/types'
 import * as Entity from '@/entities/company.entity'
 
 import { ICompanyUsecase } from './company.contract'
@@ -9,28 +9,29 @@ import { ICompanyUsecase } from './company.contract'
 export default class CompanyHandler {
   constructor(private readonly usecase: ICompanyUsecase) {}
 
-  create = async (req: Request, res: Response) => {
-    const user = (req as AuthenticatedRequest).user
+  create = async (c: Context<AppEnv>) => {
+    const user = c.get('user')
+    const body = c.get('body')
     const payload: Entity.CreateCompanyReq = {
-      ...req.body,
+      ...body,
       user,
     }
     const data = await this.usecase.create(payload)
-    return res.status(201).json(responseSuccess(data, 'Company created successfully'))
+    return c.json(responseSuccess(data, 'Company created successfully'), 201)
   }
 
-  findList = async (req: Request, res: Response) => {
-    const { page, limit, q, ids } = req.query as unknown as {
+  findList = async (c: Context<AppEnv>) => {
+    const query = c.get('body')?._query || c.req.query()
+    const { page, limit, q, ids } = query as {
       page: number
       limit: number
       q: string
       ids?: string
     }
-    const user = (req as AuthenticatedRequest).user
+    const user = c.get('user')
     const companyId = user?.company_id || ''
 
     const payload: Entity.GetCompanyReq = {
-      id: req.params.id,
       ids: ids ? ids.split(',') : undefined,
       pagination: {
         page,
@@ -48,12 +49,12 @@ export default class CompanyHandler {
     }
 
     const data = await this.usecase.findList(payload)
-    return res.status(200).json(responseSuccess(data))
+    return c.json(responseSuccess(data))
   }
 
-  findById = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  findById = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id')
+    const user = c.get('user')
     const companyId = user?.company_id || ''
 
     const payload: Entity.GetCompanyReq = { id, user }
@@ -63,28 +64,29 @@ export default class CompanyHandler {
 
     const data = await this.usecase.findById(payload)
     if (!data) {
-      return res.status(404).json(responseSuccess(null, 'Company not found'))
+      return c.json(responseSuccess(null, 'Company not found'), 404)
     }
-    return res.status(200).json(responseSuccess(data))
+    return c.json(responseSuccess(data))
   }
 
-  update = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  update = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id')
+    const user = c.get('user')
     const companyId = user?.company_id || ''
+    const body = c.get('body')
 
-    const payload: Entity.UpdateCompanyReq = { ...req.body, id, user }
+    const payload: Entity.UpdateCompanyReq = { ...body, id, user }
     if (companyId) {
       payload.accessible_company_id = companyId
     }
 
     const data = await this.usecase.update(payload)
-    return res.status(200).json(responseSuccess(data, 'Company updated successfully'))
+    return c.json(responseSuccess(data, 'Company updated successfully'))
   }
 
-  delete = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  delete = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id')
+    const user = c.get('user')
     const companyId = user?.company_id || ''
 
     const payload: Entity.GetCompanyReq = { id, user }
@@ -93,6 +95,6 @@ export default class CompanyHandler {
     }
 
     await this.usecase.delete(payload)
-    return res.status(200).json(responseSuccess(null, 'Company deleted successfully'))
+    return c.json(responseSuccess(null, 'Company deleted successfully'))
   }
 }

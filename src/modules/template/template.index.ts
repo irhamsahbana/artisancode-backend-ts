@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 
 import TemplateHandler from './template.handler'
 import TemplateRepo from './template.repo'
@@ -8,7 +8,7 @@ const repo = new TemplateRepo()
 const usecase = new TemplateUsecase(repo)
 const handler = new TemplateHandler(usecase)
 
-const router = Router()
+const router = new Hono()
 
 router.get('/', handler.getSomething)
 

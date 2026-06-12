@@ -1,53 +1,49 @@
-import Joi from 'joi'
+import { z } from 'zod'
 
 import { StudentStatuses } from '@/entities/student.entity'
 
-export const createStudentSchema = Joi.object({
-  branch_id: Joi.string().uuid().required(),
-  first_name: Joi.string().required().min(2).max(100),
-  last_name: Joi.string().required().min(2).max(100),
-  gender: Joi.string().required().valid('Male', 'Female'),
-  date_of_birth: Joi.date().required(),
-  birth_place: Joi.string().optional().allow('').max(100),
-  email: Joi.string().email().optional().allow(''),
-  address: Joi.string().optional().allow('').max(500),
-  photo_url: Joi.string().optional().allow(''),
-  parent_name: Joi.string().optional().allow('').max(100),
-  parent_phone: Joi.string().optional().allow('').max(20),
-  parent_email: Joi.string().optional().allow('').email(),
-  emergency_contact_phone: Joi.string().optional().allow('').max(20),
-  blood_type: Joi.string().optional().allow(''),
-  medical_notes: Joi.string().optional().allow('').max(500),
-  status: Joi.string()
-    .optional()
-    .valid(...StudentStatuses),
+export const createStudentSchema = z.object({
+  branch_id: z.string().uuid(),
+  first_name: z.string().min(2).max(100),
+  last_name: z.string().min(2).max(100),
+  gender: z.enum(['Male', 'Female']),
+  date_of_birth: z.coerce.date(),
+  birth_place: z.string().max(100).optional(),
+  email: z.string().email().optional(),
+  address: z.string().max(500).optional(),
+  photo_url: z.string().optional(),
+  parent_name: z.string().max(100).optional(),
+  parent_phone: z.string().max(20).optional(),
+  parent_email: z.string().email().optional(),
+  emergency_contact_phone: z.string().max(20).optional(),
+  blood_type: z.string().optional(),
+  medical_notes: z.string().max(500).optional(),
+  status: z.enum(StudentStatuses as [string, ...string[]]).optional(),
 })
 
-export const updateStudentSchema = Joi.object({
-  branch_id: Joi.string().uuid().optional(),
-  first_name: Joi.string().optional().min(2).max(100),
-  last_name: Joi.string().optional().min(2).max(100),
-  gender: Joi.string().optional().valid('Male', 'Female'),
-  date_of_birth: Joi.date().optional(),
-  birth_place: Joi.string().optional().allow('').max(100),
-  email: Joi.string().email().optional(),
-  address: Joi.string().optional().allow('').max(500),
-  photo_url: Joi.string().optional().allow(''),
-  parent_name: Joi.string().optional().allow('').max(100),
-  parent_phone: Joi.string().optional().allow('').max(20),
-  parent_email: Joi.string().optional().allow('').email(),
-  emergency_contact_phone: Joi.string().optional().allow('').max(20),
-  blood_type: Joi.string().optional().allow(''),
-  medical_notes: Joi.string().optional().allow('').max(500),
-  status: Joi.string()
-    .optional()
-    .valid(...StudentStatuses),
+export const updateStudentSchema = z.object({
+  branch_id: z.string().uuid().optional(),
+  first_name: z.string().min(2).max(100).optional(),
+  last_name: z.string().min(2).max(100).optional(),
+  gender: z.enum(['Male', 'Female']).optional(),
+  date_of_birth: z.coerce.date().optional(),
+  birth_place: z.string().max(100).optional(),
+  email: z.string().email().optional(),
+  address: z.string().max(500).optional(),
+  photo_url: z.string().optional(),
+  parent_name: z.string().max(100).optional(),
+  parent_phone: z.string().max(20).optional(),
+  parent_email: z.string().email().optional(),
+  emergency_contact_phone: z.string().max(20).optional(),
+  blood_type: z.string().optional(),
+  medical_notes: z.string().max(500).optional(),
+  status: z.enum(StudentStatuses as [string, ...string[]]).optional(),
 })
 
-export const getStudentListSchema = Joi.object({
-  page: Joi.number().integer().min(1).optional(),
-  limit: Joi.number().integer().min(1).max(100).optional(),
-  q: Joi.string().allow('').optional(),
-  branch_id: Joi.string().uuid().optional(),
-  age: Joi.number().integer().min(0).optional(),
+export const getStudentListSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  q: z.string().optional(),
+  branch_id: z.string().uuid().optional(),
+  age: z.coerce.number().int().min(0).optional(),
 })

@@ -1,7 +1,7 @@
-import { Request, Response } from 'express'
+import { Context } from 'hono'
 
-import { AuthenticatedRequest } from '@/common/middlewares/auth.middleware'
 import { responseError, responseSuccess } from '@/common/rest_response'
+import { AppEnv } from '@/common/types'
 import * as Entity from '@/entities/student.entity'
 
 import { IStudentUsecase } from './student.contract'
@@ -9,57 +9,60 @@ import { IStudentUsecase } from './student.contract'
 export default class StudentHandler {
   constructor(private usecase: IStudentUsecase) {}
 
-  create = async (req: Request, res: Response) => {
-    const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.CreateStudentReq
+  create = async (c: Context<AppEnv>) => {
+    const user = c.get('user')
+    const body = c.get('body')
+    const payload = body as Entity.CreateStudentReq
     payload.company_id = user?.company_id || ''
     payload.user = user
 
     const data = await this.usecase.create(payload)
-    res.status(201).json(responseSuccess(data, 'Student created successfully'))
+    return c.json(responseSuccess(data, 'Student created successfully'), 201)
   }
 
-  update = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.UpdateStudentReq
+  update = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
+    const body = c.get('body')
+    const payload = body as Entity.UpdateStudentReq
 
     payload.id = id
     payload.company_id = user?.company_id || ''
     payload.user = user
 
     const data = await this.usecase.update(payload)
-    res.status(200).json(responseSuccess(data, 'Student updated successfully'))
+    return c.json(responseSuccess(data, 'Student updated successfully'))
   }
 
-  delete = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  delete = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
 
     await this.usecase.delete(id, user?.company_id || '')
-    res.status(200).json(responseSuccess(null, 'Student deleted successfully'))
+    return c.json(responseSuccess(null, 'Student deleted successfully'))
   }
 
-  findById = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  findById = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
 
     const data = await this.usecase.findById(id, user?.company_id || '')
     if (!data) {
-      return res.status(404).json(responseError('Student not found'))
+      return c.json(responseError('Student not found'), 404)
     }
-    res.status(200).json(responseSuccess(data))
+    return c.json(responseSuccess(data))
   }
 
-  findList = async (req: Request, res: Response) => {
-    const { page, limit, q, branch_id, age } = req.query as unknown as {
+  findList = async (c: Context<AppEnv>) => {
+    const query = c.get('body')?._query || c.req.query()
+    const { page, limit, q, branch_id, age } = query as {
       page: number
       limit: number
       q: string
       branch_id: string
       age: number
     }
-    const user = (req as AuthenticatedRequest).user
+    const user = c.get('user')
 
     const payload: Entity.GetStudentReq = {
       company_id: user?.company_id || '',
@@ -74,6 +77,6 @@ export default class StudentHandler {
     }
 
     const data = await this.usecase.findList(payload)
-    res.status(200).json(responseSuccess(data))
+    return c.json(responseSuccess(data))
   }
 }

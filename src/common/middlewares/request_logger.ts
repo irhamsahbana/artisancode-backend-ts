@@ -1,17 +1,10 @@
-import { NextFunction, Request, Response } from 'express'
+import { Context, Next } from 'hono'
 
 import logger from '../../config/logger'
 
-const requestLogger = (req: Request, res: Response, next: NextFunction) => {
-  const startTime = new Date()
-  res.on('finish', () => {
-    const endTime = new Date()
-    const duration = endTime.getTime() - startTime.getTime()
-    logger.info(
-      `${req.method} | ${req.originalUrl} | ${duration}ms | status code ${res.statusCode}`,
-    )
-  })
-  next()
+export const requestLogger = async (c: Context, next: Next) => {
+  const startTime = Date.now()
+  await next()
+  const duration = Date.now() - startTime
+  logger.info(`${c.req.method} | ${c.req.url} | ${duration}ms | status code ${c.res.status}`)
 }
-
-export default requestLogger

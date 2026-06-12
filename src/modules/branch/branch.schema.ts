@@ -1,40 +1,34 @@
-import Joi from 'joi'
+import { z } from 'zod'
 
 import { BranchStatuses } from '@/entities/branch.entity'
 
-export const createBranchSchema = Joi.object({
-  name: Joi.string().required().min(3).max(100),
-  city: Joi.string().required().min(2).max(100),
-  capacity: Joi.number().optional().integer().min(1),
-  description: Joi.string().optional().allow('').max(500),
-  address: Joi.string().optional().allow('').max(255),
-  phone: Joi.string().optional().allow('').max(20),
-  email: Joi.string().optional().allow('').email(),
-  head_coach: Joi.string().optional().allow('').max(100),
-  status: Joi.string()
-    .optional()
-    .valid(...BranchStatuses),
+export const createBranchSchema = z.object({
+  name: z.string().min(3).max(100),
+  city: z.string().min(2).max(100),
+  capacity: z.number().int().min(1).optional(),
+  description: z.string().max(500).optional(),
+  address: z.string().max(255).optional(),
+  phone: z.string().max(20).optional(),
+  email: z.string().email().optional(),
+  head_coach: z.string().max(100).optional(),
+  status: z.enum(BranchStatuses as [string, ...string[]]).optional(),
 })
 
-export const updateBranchSchema = Joi.object({
-  name: Joi.string().optional().min(3).max(100),
-  city: Joi.string().optional().min(2).max(100),
-  capacity: Joi.number().optional().integer().min(1),
-  description: Joi.string().optional().allow('').max(500),
-  address: Joi.string().optional().allow('').max(255),
-  phone: Joi.string().optional().allow('').max(20),
-  email: Joi.string().optional().allow('').email(),
-  head_coach: Joi.string().optional().allow('').max(100),
-  status: Joi.string()
-    .optional()
-    .valid(...BranchStatuses),
+export const updateBranchSchema = z.object({
+  name: z.string().min(3).max(100).optional(),
+  city: z.string().min(2).max(100).optional(),
+  capacity: z.number().int().min(1).optional(),
+  description: z.string().max(500).optional(),
+  address: z.string().max(255).optional(),
+  phone: z.string().max(20).optional(),
+  email: z.string().email().optional(),
+  head_coach: z.string().max(100).optional(),
+  status: z.enum(BranchStatuses as [string, ...string[]]).optional(),
 })
 
-export const getBranchListSchema = Joi.object({
-  page: Joi.number().integer().min(1).optional(),
-  limit: Joi.number().integer().min(1).max(100).optional(),
-  q: Joi.string().allow('').optional(),
-  status: Joi.string()
-    .optional()
-    .valid(...BranchStatuses),
+export const getBranchListSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  q: z.string().optional(),
+  status: z.enum(BranchStatuses as [string, ...string[]]).optional(),
 })

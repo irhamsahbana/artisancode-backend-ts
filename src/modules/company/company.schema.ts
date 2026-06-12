@@ -1,25 +1,21 @@
-import Joi from 'joi'
+import { z } from 'zod'
 
 import { CompanyStatuses } from '@/entities/company.entity'
 
-export const createCompanySchema = Joi.object({
-  name: Joi.string().required().min(3).max(100),
-  status: Joi.string()
-    .valid(...CompanyStatuses)
-    .optional(),
+export const createCompanySchema = z.object({
+  name: z.string().min(3).max(100),
+  status: z.enum(CompanyStatuses as [string, ...string[]]).optional(),
 })
 
-export const updateCompanySchema = Joi.object({
-  name: Joi.string().optional().min(3).max(100),
-  status: Joi.string()
-    .valid(...CompanyStatuses)
-    .optional(),
-  accessible_company_id: Joi.string().uuid().optional(),
+export const updateCompanySchema = z.object({
+  name: z.string().min(3).max(100).optional(),
+  status: z.enum(CompanyStatuses as [string, ...string[]]).optional(),
+  accessible_company_id: z.string().uuid().optional(),
 })
 
-export const getCompanyListSchema = Joi.object({
-  q: Joi.string().optional().allow(''),
-  page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(10),
-  ids: Joi.string().optional(),
+export const getCompanyListSchema = z.object({
+  q: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  ids: z.string().optional(),
 })

@@ -1,7 +1,7 @@
-import { Request, Response } from 'express'
+import { Context } from 'hono'
 
-import { AuthenticatedRequest } from '@/common/middlewares/auth.middleware'
 import { responseError, responseSuccess } from '@/common/rest_response'
+import { AppEnv } from '@/common/types'
 import * as Entity from '@/entities/program.entity'
 
 import { IProgramUsecase } from './program.contract'
@@ -9,84 +9,73 @@ import { IProgramUsecase } from './program.contract'
 export default class ProgramHandler {
   constructor(private usecase: IProgramUsecase) {}
 
-  create = async (req: Request, res: Response) => {
-    const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.CreateProgramReq
+  create = async (c: Context<AppEnv>) => {
+    const user = c.get('user')
+    const body = c.get('body')
+    const payload = body as Entity.CreateProgramReq
     payload.company_id = user?.company_id || ''
     payload.user = user
 
     const data = await this.usecase.create(payload)
-    res.status(201).json(responseSuccess(data, 'Program created successfully'))
+    return c.json(responseSuccess(data, 'Program created successfully'), 201)
   }
 
-  update = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.UpdateProgramReq
+  update = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
+    const body = c.get('body')
+    const payload = body as Entity.UpdateProgramReq
 
     payload.id = id
     payload.company_id = user?.company_id || ''
     payload.user = user
 
     const data = await this.usecase.update(payload)
-    res.status(200).json(responseSuccess(data, 'Program updated successfully'))
+    return c.json(responseSuccess(data, 'Program updated successfully'))
   }
 
-  updateAll = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.UpdateProgramAllReq
+  updateAll = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
+    const body = c.get('body')
+    const payload = body as Entity.UpdateProgramAllReq
 
     payload.id = id
     payload.company_id = user?.company_id || ''
     payload.user = user
 
     const data = await this.usecase.updateAll(payload)
-    res.status(200).json(responseSuccess(data, 'Program updated successfully'))
+    return c.json(responseSuccess(data, 'Program updated successfully'))
   }
 
-  delete = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
-
-    // Note: delete usecase signature in contract might just take id and company_id
-    // If we want to pass user context, we might need to update contract or pass it differently.
-    // For now, let's keep it as is or check if we can pass a payload object.
-    // Looking at contract (inferred): delete(id: string, company_id: string)
-    // To support user context, we should ideally change usecase signature to accept object.
-    // But for consistency with other updates, I'll stick to what's available or update if needed.
-    // Actually, other handlers used payload object. Program handler uses arguments.
-    // Let's check program.contract.ts if I can... or just assume I can't change it easily without refactoring usecase.
-    // Wait, the task is "Apply UserContext". If the usecase doesn't support it yet, I should probably update usecase signature too?
-    // User asked "kalau misal semua module pakai user context apakah bisa?".
-    // I should probably refactor usecase signature to take payload object like others.
-    // But that's a bigger change.
-    // For now, I will just pass it where payload object is used.
+  delete = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
 
     await this.usecase.delete(id, user?.company_id || '')
-    res.status(200).json(responseSuccess(null, 'Program deleted successfully'))
+    return c.json(responseSuccess(null, 'Program deleted successfully'))
   }
 
-  findById = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  findById = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
 
-    // Same here, findById(id, company_id)
     const data = await this.usecase.findById(id, user?.company_id || '')
     if (!data) {
-      return res.status(404).json(responseError('Program not found'))
+      return c.json(responseError('Program not found'), 404)
     }
-    res.status(200).json(responseSuccess(data))
+    return c.json(responseSuccess(data))
   }
 
-  findList = async (req: Request, res: Response) => {
-    const { page, limit, q, branch_id } = req.query as unknown as {
+  findList = async (c: Context<AppEnv>) => {
+    const query = c.get('body')?._query || c.req.query()
+    const { page, limit, q, branch_id } = query as {
       page: number
       limit: number
       q: string
       branch_id: string
     }
-    const user = (req as AuthenticatedRequest).user
+    const user = c.get('user')
 
     const payload: Entity.GetProgramReq = {
       company_id: user?.company_id || '',
@@ -100,52 +89,59 @@ export default class ProgramHandler {
     }
 
     const data = await this.usecase.findList(payload)
-    res.status(200).json(responseSuccess(data))
+    return c.json(responseSuccess(data))
   }
 
-  addSchedule = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.AddScheduleReq
+  addSchedule = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
+    const body = c.get('body')
+    const payload = body as Entity.AddScheduleReq
 
     payload.program_id = id
     payload.company_id = user?.company_id || ''
     payload.user = user
 
     const data = await this.usecase.addSchedule(payload)
-    res.status(201).json(responseSuccess(data, 'Schedule added successfully'))
+    return c.json(responseSuccess(data, 'Schedule added successfully'), 201)
   }
 
-  addPricing = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.AddPricingReq
+  addPricing = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
+    const body = c.get('body')
+    const payload = body as Entity.AddPricingReq
 
     payload.program_id = id
     payload.company_id = user?.company_id || ''
     payload.user = user
 
     const data = await this.usecase.addPricing(payload)
-    res.status(201).json(responseSuccess(data, 'Pricing added successfully'))
+    return c.json(responseSuccess(data, 'Pricing added successfully'), 201)
   }
 
-  addPrice = async (req: Request, res: Response) => {
-    const { id, pricingId } = req.params
-    const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.AddPriceReq
+  addPrice = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const pricingId = c.req.param('pricingId') ?? ''
+    const user = c.get('user')
+    const body = c.get('body')
+    const payload = body as Entity.AddPriceReq
 
     payload.program_id = id
     payload.pricing_id = pricingId
     payload.company_id = user?.company_id || ''
 
     const data = await this.usecase.addPrice(payload)
-    res.status(201).json(responseSuccess(data, 'Price added successfully'))
+    return c.json(responseSuccess(data, 'Price added successfully'), 201)
   }
 
-  updatePrice = async (req: Request, res: Response) => {
-    const { id, pricingId, priceId } = req.params
-    const user = (req as AuthenticatedRequest).user
-    const payload = req.body as Entity.UpdatePriceReq
+  updatePrice = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const pricingId = c.req.param('pricingId') ?? ''
+    const priceId = c.req.param('priceId') ?? ''
+    const user = c.get('user')
+    const body = c.get('body')
+    const payload = body as Entity.UpdatePriceReq
 
     payload.program_id = id
     payload.pricing_id = pricingId
@@ -153,22 +149,24 @@ export default class ProgramHandler {
     payload.company_id = user?.company_id || ''
 
     const data = await this.usecase.updatePrice(payload)
-    res.status(200).json(responseSuccess(data, 'Price updated successfully'))
+    return c.json(responseSuccess(data, 'Price updated successfully'))
   }
 
-  deleteSchedule = async (req: Request, res: Response) => {
-    const { id, scheduleId } = req.params
-    const user = (req as AuthenticatedRequest).user
+  deleteSchedule = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const scheduleId = c.req.param('scheduleId') ?? ''
+    const user = c.get('user')
 
     await this.usecase.deleteSchedule(id, scheduleId, user?.company_id || '')
-    res.status(200).json(responseSuccess(null, 'Schedule deleted successfully'))
+    return c.json(responseSuccess(null, 'Schedule deleted successfully'))
   }
 
-  deletePricing = async (req: Request, res: Response) => {
-    const { id, pricingId } = req.params
-    const user = (req as AuthenticatedRequest).user
+  deletePricing = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const pricingId = c.req.param('pricingId') ?? ''
+    const user = c.get('user')
 
     await this.usecase.deletePricing(id, pricingId, user?.company_id || '')
-    res.status(200).json(responseSuccess(null, 'Pricing deleted successfully'))
+    return c.json(responseSuccess(null, 'Pricing deleted successfully'))
   }
 }

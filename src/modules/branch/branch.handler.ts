@@ -1,7 +1,7 @@
-import { Request, Response } from 'express'
+import { Context } from 'hono'
 
-import { AuthenticatedRequest } from '@/common/middlewares/auth.middleware'
 import { responseError, responseSuccess } from '@/common/rest_response'
+import { AppEnv } from '@/common/types'
 import * as Entity from '@/entities/branch.entity'
 
 import { IBranchUsecase } from './branch.contract'
@@ -9,59 +9,62 @@ import { IBranchUsecase } from './branch.contract'
 export default class BranchHandler {
   constructor(private usecase: IBranchUsecase) {}
 
-  create = async (req: Request, res: Response) => {
-    const user = (req as AuthenticatedRequest).user
+  create = async (c: Context<AppEnv>) => {
+    const user = c.get('user')
     const companyId = user?.company_id || ''
+    const body = c.get('body')
     const payload: Entity.CreateBranchReq = {
-      ...req.body,
+      ...body,
       company_id: companyId,
       user,
     }
 
     const data = await this.usecase.create(payload)
-    res.status(201).json(responseSuccess(data, 'Branch created successfully'))
+    return c.json(responseSuccess(data, 'Branch created successfully'), 201)
   }
 
-  update = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  update = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
     const companyId = user?.company_id || ''
+    const body = c.get('body')
 
     const payload: Entity.UpdateBranchReq = {
-      ...req.body,
+      ...body,
       id,
       company_id: companyId,
       user,
     }
 
     const data = await this.usecase.update(payload)
-    res.status(200).json(responseSuccess(data, 'Branch updated successfully'))
+    return c.json(responseSuccess(data, 'Branch updated successfully'))
   }
 
-  delete = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  delete = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
     const companyId = user?.company_id || ''
 
     await this.usecase.delete(id, companyId)
-    res.status(200).json(responseSuccess(null, 'Branch deleted successfully'))
+    return c.json(responseSuccess(null, 'Branch deleted successfully'))
   }
 
-  findById = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  findById = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
     const companyId = user?.company_id || ''
 
     const data = await this.usecase.findById(id, companyId)
     if (!data) {
-      return res.status(404).json(responseError('Branch not found'))
+      return c.json(responseError('Branch not found'), 404)
     }
-    res.status(200).json(responseSuccess(data))
+    return c.json(responseSuccess(data))
   }
 
-  findList = async (req: Request, res: Response) => {
-    const { page, limit, q } = req.query as unknown as { page: number; limit: number; q: string }
-    const user = (req as AuthenticatedRequest).user
+  findList = async (c: Context<AppEnv>) => {
+    const query = c.get('body')?._query || c.req.query()
+    const { page, limit, q } = query as { page: number; limit: number; q: string }
+    const user = c.get('user')
     const companyId = user?.company_id || ''
 
     const payload: Entity.GetBranchReq = {
@@ -75,6 +78,6 @@ export default class BranchHandler {
     }
 
     const data = await this.usecase.findList(payload)
-    res.status(200).json(responseSuccess(data))
+    return c.json(responseSuccess(data))
   }
 }

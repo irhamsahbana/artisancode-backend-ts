@@ -1,36 +1,34 @@
-import Joi from 'joi'
+import { z } from 'zod'
 
 import { UserStatuses } from '@/entities/user.entity'
 
-export const createUserSchema = Joi.object({
-  name: Joi.string().required().min(3).max(100),
-  username: Joi.string().required().min(3).max(50),
-  password: Joi.string().required().min(6).max(100),
-  email: Joi.string().email().required(),
-  phone: Joi.string().required().max(20),
-  company_id: Joi.string().required().uuid(),
-  role_id: Joi.string().required().uuid(),
-  status: Joi.string()
-    .valid(...UserStatuses)
-    .optional(),
+export const createUserSchema = z.object({
+  name: z.string().min(3).max(100),
+  username: z.string().min(3).max(50),
+  password: z.string().min(6).max(100),
+  email: z.string().email(),
+  phone: z.string().max(20),
+  company_id: z.string().uuid(),
+  role_id: z.string().uuid(),
+  status: z.enum(UserStatuses as [string, ...string[]]).optional(),
 })
 
-export const registerSchema = Joi.object({
-  company_name: Joi.string().required().min(3).max(100),
-  name: Joi.string().required().min(3).max(100),
-  username: Joi.string().required().min(3).max(50),
-  email: Joi.string().email().required(),
-  password: Joi.string().required().min(6).max(100),
-  phone: Joi.string().required().max(20),
+export const registerSchema = z.object({
+  company_name: z.string().min(3).max(100),
+  name: z.string().min(3).max(100),
+  username: z.string().min(3).max(50),
+  email: z.string().email(),
+  password: z.string().min(6).max(100),
+  phone: z.string().max(20),
 })
 
-export const loginSchema = Joi.object({
-  username: Joi.string().required(),
-  password: Joi.string().required(),
+export const loginSchema = z.object({
+  username: z.string(),
+  password: z.string(),
 })
 
-export const getUserListSchema = Joi.object({
-  page: Joi.number().integer().min(1).optional(),
-  limit: Joi.number().integer().min(1).max(100).optional(),
-  q: Joi.string().allow('').optional(),
+export const getUserListSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  q: z.string().optional(),
 })

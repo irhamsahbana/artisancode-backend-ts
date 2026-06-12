@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
@@ -14,7 +14,7 @@ const branchRepo = new BranchRepo()
 const usecase = new StudentUsecase(repo, branchRepo)
 const handler = new StudentHandler(usecase)
 
-const router = Router()
+const router = new Hono()
 
 router.post('/', authenticate, validate(Schema.createStudentSchema), handler.create)
 router.put('/:id', authenticate, validate(Schema.updateStudentSchema), handler.update)

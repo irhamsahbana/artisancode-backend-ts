@@ -1,28 +1,28 @@
-import Joi from 'joi'
+import { z } from 'zod'
 
 // Role Schemas
-export const createRoleSchema = Joi.object({
-  name: Joi.string().required().min(3).max(100),
-  description: Joi.string().allow('').optional(),
-  permission_ids: Joi.array().items(Joi.string().uuid()).optional(),
+export const createRoleSchema = z.object({
+  name: z.string().min(3).max(100),
+  description: z.string().optional(),
+  permission_ids: z.array(z.string().uuid()).optional(),
 })
 
-export const updateRoleSchema = Joi.object({
-  name: Joi.string().min(3).max(100).optional(),
-  description: Joi.string().allow('').optional(),
-  permission_ids: Joi.array().items(Joi.string().uuid()).optional(),
+export const updateRoleSchema = z.object({
+  name: z.string().min(3).max(100).optional(),
+  description: z.string().optional(),
+  permission_ids: z.array(z.string().uuid()).optional(),
 })
 
-export const getRoleListSchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(10),
-  q: Joi.string().allow('').optional(),
-  ids: Joi.string().optional(),
+export const getRoleListSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  q: z.string().optional(),
+  ids: z.string().optional(),
 })
 
 // Permission Schemas
-export const getPermissionListSchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(10),
-  q: Joi.string().allow('').optional(),
+export const getPermissionListSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  q: z.string().optional(),
 })

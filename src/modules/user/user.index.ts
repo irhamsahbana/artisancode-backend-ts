@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
@@ -8,7 +8,7 @@ import UserRepo from './user.repo'
 import * as Schema from './user.schema'
 import UserUsecase from './user.usecase'
 
-const router = Router()
+const router = new Hono()
 const repo = new UserRepo()
 const usecase = new UserUsecase(repo)
 const handler = new UserHandler(usecase)

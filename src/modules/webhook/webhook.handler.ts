@@ -1,8 +1,9 @@
 import { Prisma } from '@prisma/client'
-import { NextFunction, Request, Response } from 'express'
+import { Context } from 'hono'
 
 import { prisma } from '../../common/prisma'
 import { responseSuccess } from '../../common/rest_response'
+import { AppEnv } from '../../common/types'
 import { generateInvoiceNumber } from '../../common/utils/invoice.util'
 import { selectValidPrice } from '../../common/utils/select_valid_price'
 import logger from '../../config/logger'
@@ -11,31 +12,28 @@ import { DokuProvider } from '../../providers/doku'
 const dokuProvider = new DokuProvider()
 
 export class WebhookHandler {
-  doku = async (req: Request, res: Response, next: NextFunction) => {
+  doku = async (c: Context<AppEnv>) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rawBody = (req as any).rawBody
-      const headers = req.headers
+      const rawBody = c.get('rawBody')
+      const headers = Object.fromEntries(c.req.raw.headers.entries())
+      const targetPath = c.req.url
 
-      // Use the path from the request URL as target path (e.g. /api/webhooks/doku)
-      // Note: req.originalUrl gives the full path including mount points
-      const targetPath = req.originalUrl
-
-      if (!dokuProvider.verifyNotificationSignature(headers, rawBody, targetPath)) {
-        logger.warn('Invalid DOKU Signature', { headers, body: req.body })
-        return res.status(401).json({ message: 'Invalid Signature' })
+      if (!dokuProvider.verifyNotificationSignature(headers, rawBody ?? '', targetPath ?? '')) {
+        logger.warn('Invalid DOKU Signature', { headers, body: c.req.json() })
+        return c.json({ message: 'Invalid Signature' }, 401)
       }
 
-      const service = req.body?.service || {}
-      const acquirer = req.body?.acquirer || {}
-      const channel = req.body?.channel || {}
-      const order = req.body?.order || {}
-      const transaction = req.body?.transaction || {}
-      const virtualAccountInfo = req.body?.virtual_account_info
-      const virtualAccountPayment = req.body?.virtual_account_payment
+      const body = await c.req.json()
+      const service = body?.service || {}
+      const acquirer = body?.acquirer || {}
+      const channel = body?.channel || {}
+      const order = body?.order || {}
+      const transaction = body?.transaction || {}
+      const virtualAccountInfo = body?.virtual_account_info
+      const virtualAccountPayment = body?.virtual_account_payment
       const creditCardPayment =
-        req.body?.credit_card_payment || req.body?.card_payment || req.body?.credit_card_info
-      const qrisInfo = req.body?.qris || req.body?.qris_info || req.body?.qris_payment
+        body?.credit_card_payment || body?.card_payment || body?.credit_card_info
+      const qrisInfo = body?.qris || body?.qris_info || body?.qris_payment
 
       const readablePayload = {
         service_id: service?.id,
@@ -58,8 +56,8 @@ export class WebhookHandler {
       const invoiceNumber = order?.invoice_number
 
       if (!invoiceNumber || typeof invoiceNumber !== 'string') {
-        logger.warn('Webhook received without invoice number', req.body)
-        return res.status(400).json({ message: 'Invalid payload' })
+        logger.warn('Webhook received without invoice number', body)
+        return c.json({ message: 'Invalid payload' }, 400)
       }
 
       const statusValue = String(transaction?.status || '')
@@ -72,7 +70,7 @@ export class WebhookHandler {
       const invoice = await this.getInvoiceByNumber(invoiceNumber)
       if (!invoice) {
         logger.error(`Invoice not found for webhook: ${invoiceNumber}`)
-        return res.status(404).json({ message: 'Invoice not found' })
+        return c.json({ message: 'Invoice not found' }, 404)
       }
 
       const handled = await this.handleDokuStatus({
@@ -80,15 +78,15 @@ export class WebhookHandler {
         invoiceNumber,
         invoice,
         transactionRequestId,
-        res,
+        c,
       })
       if (handled) return handled
 
       await this.updateTransactionRequestId(invoice, transactionRequestId)
-      return res.json(responseSuccess({ message: 'Webhook processed' }))
+      return c.json(responseSuccess({ message: 'Webhook processed' }))
     } catch (error) {
       logger.error('Webhook Error:', error)
-      next(error)
+      throw error
     }
   }
 
@@ -104,20 +102,20 @@ export class WebhookHandler {
     invoiceNumber,
     invoice,
     transactionRequestId,
-    res,
+    c,
   }: {
     normalizedStatus: string
     invoiceNumber: string
     invoice: InvoiceWithEnrollment
     transactionRequestId: string | null
-    res: Response
+    c: Context<AppEnv>
   }) {
     if (normalizedStatus === 'SUCCESS') {
       return this.handleSuccess({
         invoiceNumber,
         invoice,
         transactionRequestId,
-        res,
+        c,
       })
     }
 
@@ -126,7 +124,7 @@ export class WebhookHandler {
         invoiceNumber,
         invoice,
         transactionRequestId,
-        res,
+        c,
       })
     }
 
@@ -137,18 +135,18 @@ export class WebhookHandler {
     invoiceNumber,
     invoice,
     transactionRequestId,
-    res,
+    c,
   }: {
     invoiceNumber: string
     invoice: InvoiceWithEnrollment
     transactionRequestId: string | null
-    res: Response
+    c: Context<AppEnv>
   }) {
     logger.info(`Processing successful payment for ${invoiceNumber}`)
 
     if (invoice.status === 'paid') {
       logger.info(`Invoice ${invoiceNumber} already paid. Ignoring.`)
-      return res.json(responseSuccess({ message: 'Already paid' }))
+      return c.json(responseSuccess({ message: 'Already paid' }))
     }
 
     const paidAt = new Date()
@@ -182,25 +180,25 @@ export class WebhookHandler {
     }
 
     logger.info(`Payment processed successfully for ${invoiceNumber}`)
-    return res.json(responseSuccess({ message: 'Webhook processed' }))
+    return c.json(responseSuccess({ message: 'Webhook processed' }))
   }
 
   private async handleExpired({
     invoiceNumber,
     invoice,
     transactionRequestId,
-    res,
+    c,
   }: {
     invoiceNumber: string
     invoice: InvoiceWithEnrollment
     transactionRequestId: string | null
-    res: Response
+    c: Context<AppEnv>
   }) {
     logger.info(`Processing expired payment for ${invoiceNumber}`)
 
     if (invoice.status === 'paid') {
       logger.info(`Invoice ${invoiceNumber} already paid. Ignoring.`)
-      return res.json(responseSuccess({ message: 'Already paid' }))
+      return c.json(responseSuccess({ message: 'Already paid' }))
     }
 
     if (invoice.status !== 'expired') {
@@ -221,7 +219,7 @@ export class WebhookHandler {
     }
 
     logger.info(`Expired status recorded for ${invoiceNumber}`)
-    return res.json(responseSuccess({ message: 'Webhook processed' }))
+    return c.json(responseSuccess({ message: 'Webhook processed' }))
   }
 
   private async updateTransactionRequestId(

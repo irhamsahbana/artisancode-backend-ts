@@ -1,20 +1,16 @@
-import Joi from 'joi'
+import { z } from 'zod'
 
 import { InvoiceStatuses } from '@/entities/invoice.entity'
 
-export const createInvoiceSchema = Joi.object({
-  enrollment_id: Joi.string().required(),
-  amount: Joi.number().min(0).required(),
-  due_date: Joi.date().required(),
-  issued_date: Joi.date().optional(),
-  status: Joi.string()
-    .optional()
-    .valid(...InvoiceStatuses),
+export const createInvoiceSchema = z.object({
+  enrollment_id: z.string(),
+  amount: z.number().min(0),
+  due_date: z.coerce.date(),
+  issued_date: z.coerce.date().optional(),
+  status: z.enum(InvoiceStatuses as [string, ...string[]]).optional(),
 })
 
-export const updateInvoiceSchema = Joi.object({
-  status: Joi.string()
-    .optional()
-    .valid(...InvoiceStatuses),
-  paid_at: Joi.date().optional(),
+export const updateInvoiceSchema = z.object({
+  status: z.enum(InvoiceStatuses as [string, ...string[]]).optional(),
+  paid_at: z.coerce.date().optional(),
 })

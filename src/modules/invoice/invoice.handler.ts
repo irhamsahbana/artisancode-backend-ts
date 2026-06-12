@@ -1,7 +1,7 @@
-import { Request, Response } from 'express'
+import { Context } from 'hono'
 
-import { AuthenticatedRequest } from '@/common/middlewares/auth.middleware'
 import { responseSuccess } from '@/common/rest_response'
+import { AppEnv } from '@/common/types'
 import * as Entity from '@/entities/invoice.entity'
 import { withSpan } from '@/telemetry'
 
@@ -10,10 +10,10 @@ import { IInvoiceUsecase } from './invoice.contract'
 export default class InvoiceHandler {
   constructor(private usecase: IInvoiceUsecase) {}
 
-  create = async (req: Request, res: Response) => {
+  create = async (c: Context<AppEnv>) => {
     return withSpan('invoice.handler', 'InvoiceHandler.create', async () => {
-      const user = (req as AuthenticatedRequest).user
-      const body = req.body as Entity.CreateInvoiceReq
+      const user = c.get('user')
+      const body = c.get('body') as Entity.CreateInvoiceReq
 
       const payload: Entity.CreateInvoiceReq = {
         ...body,
@@ -26,27 +26,28 @@ export default class InvoiceHandler {
       }
 
       const result = await this.usecase.create(payload)
-      return res.json(responseSuccess(result))
+      return c.json(responseSuccess(result))
     })
   }
 
-  findById = async (req: Request, res: Response) => {
+  findById = async (c: Context<AppEnv>) => {
     return withSpan('invoice.handler', 'InvoiceHandler.findById', async () => {
-      const user = (req as AuthenticatedRequest).user
-      const result = await this.usecase.findById(req.params.id, user?.company_id || '')
-      return res.json(responseSuccess(result))
+      const user = c.get('user')
+      const result = await this.usecase.findById(c.req.param('id') ?? '', user?.company_id || '')
+      return c.json(responseSuccess(result))
     })
   }
 
-  findList = async (req: Request, res: Response) => {
+  findList = async (c: Context<AppEnv>) => {
     return withSpan('invoice.handler', 'InvoiceHandler.findList', async () => {
-      const { page, limit, enrollment_id, status } = req.query as unknown as {
+      const query = c.get('body')?._query || c.req.query()
+      const { page, limit, enrollment_id, status } = query as {
         page: number
         limit: number
         enrollment_id: string
         status: string
       }
-      const user = (req as AuthenticatedRequest).user
+      const user = c.get('user')
 
       const payload: Entity.GetInvoiceReq = {
         company_id: user?.company_id || '',
@@ -60,7 +61,7 @@ export default class InvoiceHandler {
       }
 
       const result = await this.usecase.findList(payload)
-      return res.json(responseSuccess(result))
+      return c.json(responseSuccess(result))
     })
   }
 }

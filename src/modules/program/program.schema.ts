@@ -1,72 +1,65 @@
-import Joi from 'joi'
+import { z } from 'zod'
 
 import { ProgramStatuses } from '@/entities/program.entity'
 
-const programScheduleSchema = Joi.object({
-  id: Joi.string().uuid().optional().allow(null),
-  day: Joi.string()
-    .optional()
-    .allow('')
-    .valid('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'),
-  start_time: Joi.string()
-    .optional()
-    .allow('')
-    .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/), // HH:mm
-  end_time: Joi.string()
-    .optional()
-    .allow('')
-    .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/), // HH:mm
+const programScheduleSchema = z.object({
+  id: z.string().uuid().nullable().optional(),
+  day: z
+    .enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
+    .optional(),
+  start_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/)
+    .optional(),
+  end_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/)
+    .optional(),
 })
 
-const programPriceSchema = Joi.object({
-  id: Joi.string().uuid().optional().allow(null),
-  currency: Joi.string().required().length(3), // ISO 4217
-  price: Joi.number().required().min(0), // Minor units
-  started_at: Joi.date().optional(),
-  ended_at: Joi.date().optional().allow(null),
+const programPriceSchema = z.object({
+  id: z.string().uuid().nullable().optional(),
+  currency: z.string().length(3),
+  price: z.number().min(0),
+  started_at: z.coerce.date().optional(),
+  ended_at: z.coerce.date().nullable().optional(),
 })
 
-const programPricingSchema = Joi.object({
-  id: Joi.string().uuid().optional().allow(null),
-  name: Joi.string().required(),
-  description: Joi.string().optional().allow(''),
-  prices: Joi.array().items(programPriceSchema).required().min(1),
+const programPricingSchema = z.object({
+  id: z.string().uuid().nullable().optional(),
+  name: z.string(),
+  description: z.string().optional(),
+  prices: z.array(programPriceSchema).min(1),
 })
 
-export const createProgramSchema = Joi.object({
-  branch_id: Joi.string().uuid().optional().allow(null),
-  name: Joi.string().required().min(2).max(100),
-  description: Joi.string().optional().allow('').max(500),
-  capacity: Joi.number().optional().min(0),
-  status: Joi.string()
-    .optional()
-    .valid(...ProgramStatuses),
-  schedules: Joi.array().items(programScheduleSchema).optional(),
-  pricings: Joi.array().items(programPricingSchema).optional(),
-  teachers: Joi.array().items(Joi.string().uuid()).optional(),
+export const createProgramSchema = z.object({
+  branch_id: z.string().uuid().nullable().optional(),
+  name: z.string().min(2).max(100),
+  description: z.string().max(500).optional(),
+  capacity: z.number().min(0).optional(),
+  status: z.enum(ProgramStatuses as [string, ...string[]]).optional(),
+  schedules: z.array(programScheduleSchema).optional(),
+  pricings: z.array(programPricingSchema).optional(),
+  teachers: z.array(z.string().uuid()).optional(),
 })
 
-export const updateProgramSchema = Joi.object({
-  branch_id: Joi.string().uuid().optional().allow(null),
-  name: Joi.string().optional().min(2).max(100),
-  description: Joi.string().optional().allow('').max(500),
-  capacity: Joi.number().optional().min(0),
-  status: Joi.string()
-    .optional()
-    .valid(...ProgramStatuses),
+export const updateProgramSchema = z.object({
+  branch_id: z.string().uuid().nullable().optional(),
+  name: z.string().min(2).max(100).optional(),
+  description: z.string().max(500).optional(),
+  capacity: z.number().min(0).optional(),
+  status: z.enum(ProgramStatuses as [string, ...string[]]).optional(),
 })
 
-export const updateProgramAllSchema = Joi.object({
-  branch_id: Joi.string().uuid().optional().allow(null),
-  name: Joi.string().optional().min(2).max(100),
-  description: Joi.string().optional().allow('').max(500),
-  capacity: Joi.number().optional().min(0),
-  status: Joi.string()
-    .optional()
-    .valid(...ProgramStatuses),
-  schedules: Joi.array().items(programScheduleSchema).optional(),
-  pricings: Joi.array().items(programPricingSchema).optional(),
-  teachers: Joi.array().items(Joi.string().uuid()).optional(),
+export const updateProgramAllSchema = z.object({
+  branch_id: z.string().uuid().nullable().optional(),
+  name: z.string().min(2).max(100).optional(),
+  description: z.string().max(500).optional(),
+  capacity: z.number().min(0).optional(),
+  status: z.enum(ProgramStatuses as [string, ...string[]]).optional(),
+  schedules: z.array(programScheduleSchema).optional(),
+  pricings: z.array(programPricingSchema).optional(),
+  teachers: z.array(z.string().uuid()).optional(),
 })
 
 export const addScheduleSchema = programScheduleSchema
@@ -75,15 +68,15 @@ export const addPricingSchema = programPricingSchema
 
 export const addPriceSchema = programPriceSchema
 
-export const updatePriceSchema = Joi.object({
-  price: Joi.number().optional().min(0), // Minor units
-  started_at: Joi.date().optional(),
-  ended_at: Joi.date().optional().allow(null),
+export const updatePriceSchema = z.object({
+  price: z.number().min(0).optional(),
+  started_at: z.coerce.date().optional(),
+  ended_at: z.coerce.date().nullable().optional(),
 })
 
-export const getProgramListSchema = Joi.object({
-  page: Joi.number().integer().min(1).optional(),
-  limit: Joi.number().integer().min(1).max(100).optional(),
-  q: Joi.string().allow('').optional(),
-  branch_id: Joi.string().uuid().optional(),
+export const getProgramListSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  q: z.string().optional(),
+  branch_id: z.string().uuid().optional(),
 })

@@ -1,46 +1,38 @@
-import Joi from 'joi'
+import { z } from 'zod'
 
 import { EnrollmentStatuses } from '@/entities/enrollment.entity'
 
-const validBillingTypes = ['one_time', 'monthly', 'quarterly', 'annually']
+const validBillingTypes = ['one_time', 'monthly', 'quarterly', 'annually'] as const
 
-export const createEnrollmentSchema = Joi.object({
-  branch_id: Joi.string().uuid().required(),
-  student_id: Joi.string().uuid().required(),
-  program_id: Joi.string().uuid().required(),
-  pricing_id: Joi.string().uuid().required(),
-  currency: Joi.string().optional(),
-  enrollment_date: Joi.date().optional(),
-  status: Joi.string()
-    .optional()
-    .valid(...EnrollmentStatuses),
-  billing_cycle: Joi.string()
-    .optional()
-    .valid(...validBillingTypes),
-  next_payment_date: Joi.date().optional().allow(null),
-  generate_invoice: Joi.boolean().default(false),
+export const createEnrollmentSchema = z.object({
+  branch_id: z.string().uuid(),
+  student_id: z.string().uuid(),
+  program_id: z.string().uuid(),
+  pricing_id: z.string().uuid(),
+  currency: z.string().optional(),
+  enrollment_date: z.coerce.date().optional(),
+  status: z.enum(EnrollmentStatuses as [string, ...string[]]).optional(),
+  billing_cycle: z.enum(validBillingTypes).optional(),
+  next_payment_date: z.coerce.date().nullable().optional(),
+  generate_invoice: z.boolean().default(false),
 })
 
-export const updateEnrollmentSchema = Joi.object({
-  branch_id: Joi.string().uuid().optional(),
-  student_id: Joi.string().uuid().optional(),
-  program_id: Joi.string().uuid().optional(),
-  pricing_id: Joi.string().uuid().optional(),
-  currency: Joi.string().optional(),
-  enrollment_date: Joi.date().optional(),
-  status: Joi.string()
-    .optional()
-    .valid(...EnrollmentStatuses),
-  billing_cycle: Joi.string()
-    .optional()
-    .valid(...validBillingTypes),
-  next_payment_date: Joi.date().optional().allow(null),
+export const updateEnrollmentSchema = z.object({
+  branch_id: z.string().uuid().optional(),
+  student_id: z.string().uuid().optional(),
+  program_id: z.string().uuid().optional(),
+  pricing_id: z.string().uuid().optional(),
+  currency: z.string().optional(),
+  enrollment_date: z.coerce.date().optional(),
+  status: z.enum(EnrollmentStatuses as [string, ...string[]]).optional(),
+  billing_cycle: z.enum(validBillingTypes).optional(),
+  next_payment_date: z.coerce.date().nullable().optional(),
 })
 
-export const getEnrollmentListSchema = Joi.object({
-  page: Joi.number().integer().min(1).optional(),
-  limit: Joi.number().integer().min(1).max(100).optional(),
-  branch_id: Joi.string().uuid().optional(),
-  student_id: Joi.string().uuid().optional(),
-  program_id: Joi.string().uuid().optional(),
+export const getEnrollmentListSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  branch_id: z.string().uuid().optional(),
+  student_id: z.string().uuid().optional(),
+  program_id: z.string().uuid().optional(),
 })

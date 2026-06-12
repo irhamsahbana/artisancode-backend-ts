@@ -1,13 +1,11 @@
-import http from 'http'
-
 import prisma from '@/common/prisma'
 import logger from '@/config/logger'
 import { shutdownTelemetry } from '@/telemetry'
 
-const shutdown = (server: http.Server) => {
+const shutdown = (server: ReturnType<typeof Bun.serve>) => {
   logger.info('Received kill signal, shutting down gracefully ...')
 
-  server.close(async () => {
+  server.stop(true).then(async () => {
     logger.info('HTTP server closed')
 
     // Here you will close other connections such as Database

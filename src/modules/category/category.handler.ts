@@ -1,7 +1,7 @@
-import { Request, Response } from 'express'
+import { Context } from 'hono'
 
-import { AuthenticatedRequest } from '@/common/middlewares/auth.middleware'
 import { responseError, responseSuccess } from '@/common/rest_response'
+import { AppEnv } from '@/common/types'
 import * as Entity from '@/entities/category.entity'
 
 import { ICategoryUsecase } from './category.contract'
@@ -9,64 +9,67 @@ import { ICategoryUsecase } from './category.contract'
 export default class CategoryHandler {
   constructor(private usecase: ICategoryUsecase) {}
 
-  create = async (req: Request, res: Response) => {
-    const user = (req as AuthenticatedRequest).user
+  create = async (c: Context<AppEnv>) => {
+    const user = c.get('user')
     const companyId = user?.company_id || ''
+    const body = c.get('body')
     const payload: Entity.CreateCategoryReq = {
-      ...req.body,
+      ...body,
       company_id: companyId,
       user,
     }
 
     const data = await this.usecase.create(payload)
-    res.status(201).json(responseSuccess(data, 'Category created successfully'))
+    return c.json(responseSuccess(data, 'Category created successfully'), 201)
   }
 
-  update = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  update = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
     const companyId = user?.company_id || ''
+    const body = c.get('body')
 
     const payload: Entity.UpdateCategoryReq = {
-      ...req.body,
+      ...body,
       id,
       company_id: companyId,
       user,
     }
 
     const data = await this.usecase.update(payload)
-    res.status(200).json(responseSuccess(data, 'Category updated successfully'))
+    return c.json(responseSuccess(data, 'Category updated successfully'))
   }
 
-  delete = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  delete = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
     const companyId = user?.company_id || ''
 
     await this.usecase.delete(id, companyId)
-    res.status(200).json(responseSuccess(null, 'Category deleted successfully'))
+    return c.json(responseSuccess(null, 'Category deleted successfully'))
   }
 
-  findById = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = (req as AuthenticatedRequest).user
+  findById = async (c: Context<AppEnv>) => {
+    const id = c.req.param('id') ?? ''
+    const user = c.get('user')
     const companyId = user?.company_id || ''
 
     const data = await this.usecase.findById(id, companyId)
     if (!data) {
-      return res.status(404).json(responseError('Category not found'))
+      return c.json(responseError('Category not found'), 404)
     }
-    res.status(200).json(responseSuccess(data))
+    return c.json(responseSuccess(data))
   }
 
-  findList = async (req: Request, res: Response) => {
-    const { page, limit, q, group } = req.query as unknown as {
+  findList = async (c: Context<AppEnv>) => {
+    const query = c.get('body')?._query || c.req.query()
+    const { page, limit, q, group } = query as {
       page: number
       limit: number
       q: string
       group: string
     }
-    const user = (req as AuthenticatedRequest).user
+    const user = c.get('user')
     const companyId = user?.company_id || ''
 
     const payload: Entity.GetCategoryReq = {
@@ -81,6 +84,6 @@ export default class CategoryHandler {
     }
 
     const data = await this.usecase.findList(payload)
-    res.status(200).json(responseSuccess(data))
+    return c.json(responseSuccess(data))
   }
 }

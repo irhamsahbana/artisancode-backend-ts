@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Hono } from 'hono'
 
 import branchRouter from '@/modules/branch/branch.index'
 import categoryRouter from '@/modules/category/category.index'
@@ -13,19 +13,19 @@ import templateRouter from '@/modules/template/template.index'
 import userRouter from '@/modules/user/user.index'
 import webhookRouter from '@/modules/webhook/webhook.index'
 
-const router = Router()
+const router = new Hono()
 
-router.use('/templates', templateRouter)
-router.use('/companies', companyRouter)
-router.use('/branches', branchRouter)
-router.use('/categories', categoryRouter)
-router.use('/programs', programRouter)
-router.use('/students', studentRouter)
-router.use('/teachers', teacherRouter)
-router.use('/enrollments', enrollmentRouter)
-router.use('/invoices', invoiceRouter)
-router.use('/users', userRouter)
-router.use('/role-and-permissions', roleAndPermissionRouter)
-router.use('/webhooks', webhookRouter)
+router.route('/templates', templateRouter)
+router.route('/companies', companyRouter)
+router.route('/branches', branchRouter)
+router.route('/categories', categoryRouter)
+router.route('/programs', programRouter)
+router.route('/students', studentRouter)
+router.route('/teachers', teacherRouter)
+router.route('/enrollments', enrollmentRouter)
+router.route('/invoices', invoiceRouter)
+router.route('/users', userRouter)
+router.route('/role-and-permissions', roleAndPermissionRouter)
+router.route('/webhooks', webhookRouter)
 
 export default router
