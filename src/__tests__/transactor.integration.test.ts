@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { eq, sql } from 'drizzle-orm'
 
 import { resetDb } from '@/common/db'
@@ -16,7 +16,7 @@ beforeAll(async () => {
   container = result.container
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   resetDb(result.db as any)
-}, 60_000)
+}, 120_000)
 
 afterAll(async () => {
   if (container) {
