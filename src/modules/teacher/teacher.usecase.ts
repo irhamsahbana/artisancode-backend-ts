@@ -1,6 +1,6 @@
+import { ITeacherRepo, ITeacherUsecase } from '@/contracts/teacher.contract'
 import { withSpan } from '@/telemetry'
 
-import { ITeacherRepo, ITeacherUsecase } from './teacher.contract'
 import { createTeacher } from './teacher.usecase/create'
 import { deleteTeacher } from './teacher.usecase/delete'
 import { findTeacherById } from './teacher.usecase/find-by-id'

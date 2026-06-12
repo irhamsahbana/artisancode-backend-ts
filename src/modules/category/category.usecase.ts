@@ -1,6 +1,6 @@
+import { ICategoryRepo, ICategoryUsecase } from '@/contracts/category.contract'
 import { withSpan } from '@/telemetry'
 
-import { ICategoryRepo, ICategoryUsecase } from './category.contract'
 import { createCategory } from './category.usecase/create'
 import { deleteCategory } from './category.usecase/delete'
 import { findCategoryById } from './category.usecase/find-by-id'

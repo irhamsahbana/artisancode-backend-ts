@@ -1,6 +1,5 @@
 import { AppError } from '@/common/app_error'
-
-import { StudentUsecaseDeps } from '../student.usecase'
+import { StudentUsecaseDeps } from '@/contracts/student.contract'
 
 export async function deleteStudent(
   deps: StudentUsecaseDeps,

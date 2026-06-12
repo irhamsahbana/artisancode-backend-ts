@@ -1,4 +1,5 @@
-import { IEnrollmentRepo } from './enrollment.contract'
+import { IEnrollmentRepo } from '@/contracts/enrollment.contract'
+
 import {
   findEnrollmentWithRelations,
   findEnrollmentsWithRelations,

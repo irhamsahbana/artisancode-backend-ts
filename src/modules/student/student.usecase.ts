@@ -1,17 +1,12 @@
-import { IBranchRepo } from '@/modules/branch/branch.contract'
+import { IBranchRepo } from '@/contracts/branch.contract'
+import { IStudentRepo, IStudentUsecase, StudentUsecaseDeps } from '@/contracts/student.contract'
 import { withSpan } from '@/telemetry'
 
-import { IStudentRepo, IStudentUsecase } from './student.contract'
 import { createStudent } from './student.usecase/create'
 import { deleteStudent } from './student.usecase/delete'
 import { findStudentById } from './student.usecase/find-by-id'
 import { findStudentList } from './student.usecase/find-list'
 import { updateStudent } from './student.usecase/update'
-
-export interface StudentUsecaseDeps {
-  repo: IStudentRepo
-  branchRepo: IBranchRepo
-}
 
 export function createStudentUsecase(
   repo: IStudentRepo,

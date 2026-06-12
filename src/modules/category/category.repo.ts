@@ -1,7 +1,7 @@
+import { ICategoryRepo } from '@/contracts/category.contract'
 import { categories } from '@/db/schema'
 import * as Entity from '@/entities/category.entity'
 
-import { ICategoryRepo } from './category.contract'
 import { createCategory } from './category.repo/create'
 import { deleteCategory } from './category.repo/delete'
 import { findCategoryById } from './category.repo/find-by-id'

@@ -4,13 +4,13 @@ import { z } from 'zod'
 export const createRoleSchema = z.object({
   name: z.string().min(3).max(100),
   description: z.string().optional(),
-  permission_ids: z.array(z.string().uuid()).optional(),
+  permission_ids: z.array(z.uuid()).optional(),
 })
 
 export const updateRoleSchema = z.object({
   name: z.string().min(3).max(100).optional(),
   description: z.string().optional(),
-  permission_ids: z.array(z.string().uuid()).optional(),
+  permission_ids: z.array(z.uuid()).optional(),
 })
 
 export const getRoleListSchema = z.object({

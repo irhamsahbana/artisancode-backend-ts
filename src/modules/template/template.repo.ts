@@ -1,6 +1,6 @@
+import { ItemplateRepo } from '@/contracts/template.contract'
 import { templateReq, templateResp } from '@/entities/template.entity'
 
-import { ItemplateRepo } from './template.contract'
 
 export default class TemplateRepo implements ItemplateRepo {
   async getSomething(req: templateReq): Promise<templateResp> {

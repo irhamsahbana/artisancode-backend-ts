@@ -4,7 +4,7 @@ import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 import { createBranchRepo } from '@/modules/branch/branch.repo'
 
-import StudentHandler from './student.handler'
+import { createStudentHandlerDeps } from './student.handler'
 import { createStudentRepo } from './student.repo'
 import * as Schema from './student.schema'
 import { createStudentUsecase } from './student.usecase'
@@ -12,7 +12,7 @@ import { createStudentUsecase } from './student.usecase'
 const repo = createStudentRepo()
 const branchRepo = createBranchRepo()
 const usecase = createStudentUsecase(repo, branchRepo)
-const handler = new StudentHandler(usecase)
+const handler = createStudentHandlerDeps(usecase)
 
 const router = new Hono()
 

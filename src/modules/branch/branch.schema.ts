@@ -9,7 +9,7 @@ export const createBranchSchema = z.object({
   description: z.string().max(500).optional(),
   address: z.string().max(255).optional(),
   phone: z.string().max(20).optional(),
-  email: z.string().email().optional(),
+  email: z.email().optional(),
   head_coach: z.string().max(100).optional(),
   status: z.enum(BranchStatuses as [string, ...string[]]).optional(),
 })
@@ -21,7 +21,7 @@ export const updateBranchSchema = z.object({
   description: z.string().max(500).optional(),
   address: z.string().max(255).optional(),
   phone: z.string().max(20).optional(),
-  email: z.string().email().optional(),
+  email: z.email().optional(),
   head_coach: z.string().max(100).optional(),
   status: z.enum(BranchStatuses as [string, ...string[]]).optional(),
 })

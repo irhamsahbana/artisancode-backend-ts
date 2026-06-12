@@ -1,6 +1,6 @@
+import { IBranchRepo, IBranchUsecase } from '@/contracts/branch.contract'
 import { withSpan } from '@/telemetry'
 
-import { IBranchRepo, IBranchUsecase } from './branch.contract'
 import { createBranch } from './branch.usecase/create'
 import { deleteBranch } from './branch.usecase/delete'
 import { findBranchById } from './branch.usecase/find-by-id'

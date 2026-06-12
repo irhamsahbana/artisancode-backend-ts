@@ -1,4 +1,5 @@
-import { ICompanyRepo } from './company.contract'
+import { ICompanyRepo } from '@/contracts/company.contract'
+
 import { createCompany } from './company.repo/create'
 import { deleteCompany } from './company.repo/delete'
 import { findCompanyById } from './company.repo/find-by-id'

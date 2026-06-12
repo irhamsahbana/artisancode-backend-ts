@@ -2,7 +2,7 @@ import { Context } from 'hono'
 
 import { responseSuccess } from '@/common/rest_response'
 import { AppEnv } from '@/common/types'
-import { ITemplateUsecase } from '@/modules/template/template.contract'
+import { ITemplateUsecase } from '@/contracts/template.contract'
 
 export default class TemplateHandler {
   constructor(private readonly usecase: ITemplateUsecase) {}

@@ -1,6 +1,6 @@
+import { IInvoiceRepo } from '@/contracts/invoice.contract'
 import { Invoice } from '@/entities/invoice.entity'
 
-import { IInvoiceRepo } from './invoice.contract'
 import { createInvoice } from './invoice.repo/create'
 import { findActiveInvoiceByEnrollment } from './invoice.repo/find-active-by-enrollment'
 import { findInvoiceById } from './invoice.repo/find-by-id'

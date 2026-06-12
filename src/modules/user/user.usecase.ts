@@ -1,6 +1,6 @@
+import { IUserRepo, IUserUsecase } from '@/contracts/user.contract'
 import { withSpan } from '@/telemetry'
 
-import { IUserRepo, IUserUsecase } from './user.contract'
 import { createUser } from './user.usecase/create'
 import { findUserById } from './user.usecase/find-by-id'
 import { findUserByUsername } from './user.usecase/find-by-username'

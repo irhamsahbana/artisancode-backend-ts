@@ -1,7 +1,7 @@
+import { IBranchRepo } from '@/contracts/branch.contract'
 import { branches } from '@/db/schema'
 import * as Entity from '@/entities/branch.entity'
 
-import { IBranchRepo } from './branch.contract'
 import { createBranch } from './branch.repo/create'
 import { deleteBranch } from './branch.repo/delete'
 import { findBranchById } from './branch.repo/find-by-id'

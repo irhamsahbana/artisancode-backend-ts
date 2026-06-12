@@ -1,9 +1,9 @@
 import { AppError } from '@/common/app_error'
-import { IBranchRepo } from '@/modules/branch/branch.contract'
-import { IEnrollmentRepo } from '@/modules/enrollment/enrollment.contract'
+import { IBranchRepo } from '@/contracts/branch.contract'
+import { IEnrollmentRepo } from '@/contracts/enrollment.contract'
+import { IProgramRepo, IProgramUsecase } from '@/contracts/program.contract'
 import { withSpan } from '@/telemetry'
 
-import { IProgramRepo, IProgramUsecase } from './program.contract'
 import { addPrice } from './program.usecase/add-price'
 import { addPricing } from './program.usecase/add-pricing'
 import { addSchedule } from './program.usecase/add-schedule'

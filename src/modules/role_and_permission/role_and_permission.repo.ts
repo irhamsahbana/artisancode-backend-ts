@@ -1,7 +1,7 @@
+import { IRoleAndPermissionRepo } from '@/contracts/role_and_permission.contract'
 import { permissions, roles } from '@/db/schema'
 import * as Entity from '@/entities/role.entity'
 
-import { IRoleAndPermissionRepo } from './role_and_permission.contract'
 import { createRole } from './role_and_permission.repo/create-role'
 import { deleteRole } from './role_and_permission.repo/delete-role'
 import { findRoleById } from './role_and_permission.repo/find-by-id'

@@ -4,7 +4,7 @@ import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate } from '@/common/middlewares/validation.middleware'
 import { createPaymentGateway } from '@/integrations'
 
-import InvoiceHandler from './invoice.handler'
+import { createInvoiceHandlerDeps } from './invoice.handler'
 import { createInvoiceRepo } from './invoice.repo'
 import { createInvoiceSchema } from './invoice.schema'
 import { createInvoiceUsecase } from './invoice.usecase'
@@ -14,7 +14,7 @@ const router = new Hono()
 const repo = createInvoiceRepo()
 const paymentGateway = createPaymentGateway()
 const usecase = createInvoiceUsecase(repo, paymentGateway)
-const handler = new InvoiceHandler(usecase)
+const handler = createInvoiceHandlerDeps(usecase)
 
 router.post('/', authenticate, validate(createInvoiceSchema), handler.create)
 router.get('/', authenticate, handler.findList)

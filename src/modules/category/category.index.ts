@@ -3,14 +3,14 @@ import { Hono } from 'hono'
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 
-import CategoryHandler from './category.handler'
+import { createCategoryHandlerDeps } from './category.handler'
 import { createCategoryRepo } from './category.repo'
 import * as Schema from './category.schema'
 import { createCategoryUsecase } from './category.usecase'
 
 const repo = createCategoryRepo()
 const usecase = createCategoryUsecase(repo)
-const handler = new CategoryHandler(usecase)
+const handler = createCategoryHandlerDeps(usecase)
 
 const router = new Hono()
 

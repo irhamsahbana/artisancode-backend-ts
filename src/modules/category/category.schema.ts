@@ -3,14 +3,14 @@ import { z } from 'zod'
 import { CategoryStatuses } from '@/entities/category.entity'
 
 export const createCategorySchema = z.object({
-  parent_id: z.string().uuid().nullable().optional(),
+  parent_id: z.uuid().nullable().optional(),
   group: z.string().optional(),
   name: z.string().min(2).max(100),
   status: z.enum(CategoryStatuses as [string, ...string[]]).optional(),
 })
 
 export const updateCategorySchema = z.object({
-  parent_id: z.string().uuid().nullable().optional(),
+  parent_id: z.uuid().nullable().optional(),
   group: z.string().optional(),
   name: z.string().min(2).max(100).optional(),
   status: z.enum(CategoryStatuses as [string, ...string[]]).optional(),

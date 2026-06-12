@@ -1,7 +1,7 @@
+import { IUserRepo } from '@/contracts/user.contract'
 import { users } from '@/db/schema'
 import * as Entity from '@/entities/user.entity'
 
-import { IUserRepo } from './user.contract'
 import { checkExistingUser } from './user.repo/check-existing-user'
 import { createUser } from './user.repo/create'
 import { findUserById } from './user.repo/find-by-id'

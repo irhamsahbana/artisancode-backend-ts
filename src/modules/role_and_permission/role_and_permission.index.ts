@@ -3,14 +3,14 @@ import { Hono } from 'hono'
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 
-import RoleAndPermissionHandler from './role_and_permission.handler'
+import { createRoleAndPermissionHandlerDeps } from './role_and_permission.handler'
 import { createRoleAndPermissionRepo } from './role_and_permission.repo'
 import * as Schema from './role_and_permission.schema'
 import { createRoleAndPermissionUsecase } from './role_and_permission.usecase'
 
 const repo = createRoleAndPermissionRepo()
 const usecase = createRoleAndPermissionUsecase(repo)
-const handler = new RoleAndPermissionHandler(usecase)
+const handler = createRoleAndPermissionHandlerDeps(usecase)
 
 const router = new Hono()
 

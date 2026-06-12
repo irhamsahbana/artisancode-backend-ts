@@ -2,6 +2,7 @@ import { eq, and, inArray, isNull } from 'drizzle-orm'
 
 import { db } from '@/common/db'
 import { getExecutor } from '@/common/executor'
+import { IProgramRepo } from '@/contracts/program.contract'
 import {
   productPrices as productPricesTable,
   productPricings as productPricingsTable,
@@ -12,7 +13,6 @@ import {
 } from '@/db/schema'
 import * as Entity from '@/entities/program.entity'
 
-import { IProgramRepo } from './program.contract'
 import { toProgramEntity, type ProductWithRelations } from './program.mapper'
 import { addPrice } from './program.repo/add-price'
 import { addPricing } from './program.repo/add-pricing'

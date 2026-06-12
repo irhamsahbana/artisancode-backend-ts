@@ -1,4 +1,5 @@
 import { CheckStatusRes, IPaymentGateway } from '@/contracts/integration'
+import { IInvoiceRepo, IInvoiceUsecase } from '@/contracts/invoice.contract'
 import {
   ActiveInvoiceStatuses,
   Invoice,
@@ -6,7 +7,6 @@ import {
 } from '@/entities/invoice.entity'
 import { withSpan } from '@/telemetry'
 
-import { IInvoiceRepo, IInvoiceUsecase } from './invoice.contract'
 import { createInvoice } from './invoice.usecase/create'
 import { findActiveInvoiceByEnrollment } from './invoice.usecase/find-active-by-enrollment'
 import { findInvoiceById } from './invoice.usecase/find-by-id'

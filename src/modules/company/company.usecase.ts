@@ -1,6 +1,6 @@
+import { ICompanyRepo, ICompanyUsecase } from '@/contracts/company.contract'
 import { withSpan } from '@/telemetry'
 
-import { ICompanyRepo, ICompanyUsecase } from './company.contract'
 import { createCompany } from './company.usecase/create'
 import { deleteCompany } from './company.usecase/delete'
 import { findCompanyById } from './company.usecase/find-by-id'

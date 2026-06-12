@@ -1,3 +1,4 @@
+import { IBranchRepo } from '@/contracts/branch.contract'
 import * as Entity from '@/entities/student.entity'
 
 export interface IStudentRepo {
@@ -15,4 +16,9 @@ export interface IStudentUsecase {
   delete(id: string, companyId: string): Promise<void>
   findById(id: string, companyId: string): Promise<Entity.Student | null>
   findList(req: Entity.GetStudentReq): Promise<Entity.StudentList>
+}
+
+export interface StudentUsecaseDeps {
+  repo: IStudentRepo
+  branchRepo: IBranchRepo
 }

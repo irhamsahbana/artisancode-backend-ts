@@ -1,0 +1,21 @@
+import { Context } from 'hono'
+
+import { responseError, responseSuccess } from '@/common/rest_response'
+import { AppEnv } from '@/common/types'
+import { IEnrollmentUsecase } from '@/contracts/enrollment.contract'
+import { withSpan } from '@/telemetry'
+
+export function findEnrollmentByIdHandler(usecase: IEnrollmentUsecase) {
+  return async (c: Context<AppEnv>) => {
+    return withSpan('enrollment.handler', 'EnrollmentHandler.findById', async () => {
+      const id = c.req.param('id') ?? ''
+      const user = c.get('user')
+
+      const data = await usecase.findById(id, user?.company_id || '')
+      if (!data) {
+        return c.json(responseError('Enrollment not found'), 404)
+      }
+      return c.json(responseSuccess(data))
+    })
+  }
+}

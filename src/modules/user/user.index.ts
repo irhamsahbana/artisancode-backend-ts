@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 
-import UserHandler from './user.handler'
+import { createUserHandlerDeps } from './user.handler'
 import { createUserRepo } from './user.repo'
 import * as Schema from './user.schema'
 import { createUserUsecase } from './user.usecase'
@@ -11,7 +11,7 @@ import { createUserUsecase } from './user.usecase'
 const router = new Hono()
 const repo = createUserRepo()
 const usecase = createUserUsecase(repo)
-const handler = new UserHandler(usecase)
+const handler = createUserHandlerDeps(usecase)
 
 router.post('/register', validate(Schema.registerSchema), handler.register)
 

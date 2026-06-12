@@ -5,7 +5,7 @@ import { validate, validateQuery } from '@/common/middlewares/validation.middlew
 import { createBranchRepo } from '@/modules/branch/branch.repo'
 import { createEnrollmentRepo } from '@/modules/enrollment/enrollment.repo'
 
-import ProgramHandler from './program.handler'
+import { createProgramHandlerDeps } from './program.handler'
 import { createProgramRepo } from './program.repo'
 import * as Schema from './program.schema'
 import { createProgramUsecase } from './program.usecase'
@@ -14,7 +14,7 @@ const repo = createProgramRepo()
 const branchRepo = createBranchRepo()
 const enrollmentRepo = createEnrollmentRepo()
 const usecase = createProgramUsecase(repo, branchRepo, enrollmentRepo)
-const handler = new ProgramHandler(usecase)
+const handler = createProgramHandlerDeps(usecase)
 
 const router = new Hono()
 

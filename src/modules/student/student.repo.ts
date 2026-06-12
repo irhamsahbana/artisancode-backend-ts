@@ -1,7 +1,7 @@
+import { IStudentRepo } from '@/contracts/student.contract'
 import { students } from '@/db/schema'
 import * as Entity from '@/entities/student.entity'
 
-import { IStudentRepo } from './student.contract'
 import { createStudent } from './student.repo/create'
 import { deleteStudent } from './student.repo/delete'
 import { findStudentByEmail } from './student.repo/find-by-email'

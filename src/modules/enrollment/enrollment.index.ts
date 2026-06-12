@@ -10,7 +10,7 @@ import { createInvoiceUsecase } from '@/modules/invoice/invoice.usecase'
 import { createProgramRepo } from '@/modules/program/program.repo'
 import { createStudentRepo } from '@/modules/student/student.repo'
 
-import EnrollmentHandler from './enrollment.handler'
+import { createEnrollmentHandlerDeps } from './enrollment.handler'
 import { createEnrollmentRepo } from './enrollment.repo'
 import * as Schema from './enrollment.schema'
 import { createEnrollmentUsecase } from './enrollment.usecase'
@@ -32,7 +32,7 @@ const usecase = createEnrollmentUsecase(
   invoiceUsecase,
   transactor,
 )
-const handler = new EnrollmentHandler(usecase)
+const handler = createEnrollmentHandlerDeps(usecase)
 
 const router = new Hono()
 

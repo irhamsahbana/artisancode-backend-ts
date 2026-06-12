@@ -1,7 +1,7 @@
+import { ITeacherRepo } from '@/contracts/teacher.contract'
 import { teachers } from '@/db/schema'
 import * as Entity from '@/entities/teacher.entity'
 
-import { ITeacherRepo } from './teacher.contract'
 import { createTeacher } from './teacher.repo/create'
 import { deleteTeacher } from './teacher.repo/delete'
 import { findTeacherByEmail } from './teacher.repo/find-by-email'

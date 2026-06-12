@@ -1,4 +1,5 @@
-import { ItemplateRepo, ITemplateUsecase } from './template.contract'
+import { ItemplateRepo, ITemplateUsecase } from '@/contracts/template.contract'
+
 import { templateReq, templateResp } from '../../entities/template.entity'
 
 class TemplateUsecase implements ITemplateUsecase {

@@ -1,6 +1,6 @@
+import { IRoleAndPermissionRepo, IRoleAndPermissionUsecase } from '@/contracts/role_and_permission.contract'
 import { withSpan } from '@/telemetry'
 
-import { IRoleAndPermissionRepo, IRoleAndPermissionUsecase } from './role_and_permission.contract'
 import { createRole } from './role_and_permission.usecase/create-role'
 import { deleteRole } from './role_and_permission.usecase/delete-role'
 import { findRoleById } from './role_and_permission.usecase/find-by-id'

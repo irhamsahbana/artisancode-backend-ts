@@ -10,7 +10,7 @@ export const createCompanySchema = z.object({
 export const updateCompanySchema = z.object({
   name: z.string().min(3).max(100).optional(),
   status: z.enum(CompanyStatuses as [string, ...string[]]).optional(),
-  accessible_company_id: z.string().uuid().optional(),
+  accessible_company_id: z.uuid().optional(),
 })
 
 export const getCompanyListSchema = z.object({

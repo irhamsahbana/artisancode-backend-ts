@@ -1,7 +1,6 @@
 import { AppError } from '@/common/app_error'
+import { StudentUsecaseDeps } from '@/contracts/student.contract'
 import * as Entity from '@/entities/student.entity'
-
-import { StudentUsecaseDeps } from '../student.usecase'
 
 export async function createStudent(
   deps: StudentUsecaseDeps,
