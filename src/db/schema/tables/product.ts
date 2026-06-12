@@ -3,7 +3,7 @@ import { index, integer, pgTable, text, uuid } from 'drizzle-orm/pg-core'
 import { productStatusEnum } from '../enums'
 import { branches } from './branch'
 import { companies } from './company'
-import { defaultId,softDelete, timestamps } from './helpers'
+import { defaultId, softDelete, timestamps } from './helpers'
 
 // ---------------------------------------------------------------------------
 // Product

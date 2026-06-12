@@ -5,16 +5,11 @@ import { db } from '@/common/db'
 import { generateInvoiceNumber } from '@/common/utils/invoice.util'
 import { selectValidPrice } from '@/common/utils/select_valid_price'
 import logger from '@/config/logger'
-import {
-  enrollments,
-  invoices,
-  productPrices,
-  productPricings,
-  students,
-} from '@/db/schema'
-import { DokuProvider } from '@/providers/doku'
+import { enrollments, invoices, productPrices, productPricings, students } from '@/db/schema'
+import { createEmailService, createPaymentGateway } from '@/integrations'
 
-const dokuProvider = new DokuProvider()
+const paymentGateway = createPaymentGateway()
+const emailService = createEmailService()
 
 export const startInvoiceGeneratorJob = () => {
   // Run daily at 01:00 AM
@@ -106,7 +101,7 @@ export const startInvoiceGeneratorJob = () => {
             .returning()
 
           // Generate DOKU Link
-          const paymentLink = await dokuProvider.generatePaymentLink({
+          const paymentLink = await paymentGateway.generatePaymentLink({
             invoice_number: invoiceNumber,
             amount,
             customer_email: enrollment.studentEmail,
@@ -132,10 +127,12 @@ export const startInvoiceGeneratorJob = () => {
             })
             .where(eq(invoices.id, invoice.id))
 
-          // Send Email (Mock)
-          logger.info(
-            `Invoice generated and sent to ${enrollment.studentEmail} for amount ${amount}`,
-          )
+          // Send invoice email
+          await emailService.send({
+            to: enrollment.studentEmail,
+            subject: `New Invoice: ${invoiceNumber}`,
+            html: `<p>A new invoice <strong>${invoiceNumber}</strong> has been generated for amount IDR ${amount.toLocaleString('id-ID')}.</p>`,
+          })
         } catch (err) {
           logger.error(`Failed to process enrollment ${enrollment.id}:`, err)
         }

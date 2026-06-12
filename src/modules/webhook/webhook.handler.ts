@@ -14,9 +14,9 @@ import {
   productPrices as productPricesTable,
   students,
 } from '../../db/schema'
-import { DokuProvider } from '../../providers/doku'
+import { createPaymentGateway } from '../../integrations'
 
-const dokuProvider = new DokuProvider()
+const paymentGateway = createPaymentGateway()
 
 type InvoiceWithEnrollment = typeof invoices.$inferSelect & {
   enrollment: typeof enrollments.$inferSelect | null
@@ -29,7 +29,7 @@ export class WebhookHandler {
       const headers = Object.fromEntries(c.req.raw.headers.entries())
       const targetPath = c.req.url
 
-      if (!dokuProvider.verifyNotificationSignature(headers, rawBody ?? '', targetPath ?? '')) {
+      if (!paymentGateway.verifyNotificationSignature(headers, rawBody ?? '', targetPath ?? '')) {
         logger.warn('Invalid DOKU Signature', { headers, body: c.req.json() })
         return c.json({ message: 'Invalid Signature' }, 401)
       }
@@ -388,7 +388,7 @@ export class WebhookHandler {
       })
       .returning()
 
-    const paymentLink = await dokuProvider.generatePaymentLink({
+    const paymentLink = await paymentGateway.generatePaymentLink({
       invoice_number: invoiceNumber,
       amount,
       customer_email: student.email,

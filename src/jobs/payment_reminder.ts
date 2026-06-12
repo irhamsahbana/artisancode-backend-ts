@@ -4,6 +4,9 @@ import cron from 'node-cron'
 import { db } from '@/common/db'
 import logger from '@/config/logger'
 import { enrollments, invoices, students } from '@/db/schema'
+import { createEmailService } from '@/integrations'
+
+const emailService = createEmailService()
 
 export const startPaymentReminderJob = () => {
   // Run daily at 08:00 AM
@@ -39,10 +42,11 @@ export const startPaymentReminderJob = () => {
       logger.info(`Found ${invoiceRows.length} pending invoices for reminder.`)
 
       for (const invoice of invoiceRows) {
-        // Send Email (Mock)
-        logger.info(
-          `Sending reminder to ${invoice.studentEmail} for invoice ${invoice.invoiceNumber}`,
-        )
+        await emailService.send({
+          to: invoice.studentEmail,
+          subject: `Payment Reminder: Invoice ${invoice.invoiceNumber}`,
+          html: `<p>This is a reminder that your invoice <strong>${invoice.invoiceNumber}</strong> is pending payment.</p>`,
+        })
       }
     } catch (error) {
       logger.error('Error in Payment Reminder Job:', error)

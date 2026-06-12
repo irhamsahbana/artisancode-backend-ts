@@ -38,3 +38,4 @@ The technical details and guidelines for this project have been moved to the `do
 ## Quick Summary
 
 - **Architecture**: Modular Clean Architecture (`src/modules/[module_name]`)
+- **Integrations**: Contract interfaces in `src/contracts/integration/`, implementations in `src/integrations/`. Always depend on contracts, never concrete classes.

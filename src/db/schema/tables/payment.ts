@@ -1,7 +1,7 @@
 import { decimal, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import { branches } from './branch'
-import { companies,  } from './company'
+import { companies } from './company'
 import { defaultId, softDelete, timestamps } from './helpers'
 import { invoices } from './invoice'
 

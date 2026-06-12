@@ -1,20 +1,20 @@
 import { env } from '../src/config/env'
 import logger from '../src/config/logger'
-import { DokuProvider } from '../src/providers/doku'
+import { createPaymentGateway } from '../src/integrations'
 
 const main = async () => {
   // Dynamic import for ESM module compatibility
   const { faker } = await import('@faker-js/faker')
 
-  console.log('--- Testing DokuProvider ---')
+  console.log('--- Testing DokuIntegration ---')
   console.log('Environment:', env.APP_ENV)
   console.log('Is Production:', env.IS_PRODUCTION)
   console.log('Client ID:', env.DOKU.CLIENT_ID ? 'Set' : 'Not Set')
-  
+
   // Initialize logger to avoid unused import error if needed, or just use it
   logger.info('Starting Doku Test Script')
 
-  const dokuProvider = new DokuProvider()
+  const paymentGateway = createPaymentGateway()
 
   const invoiceNumber = `INV-TEST-${Date.now()}`
   const amount = faker.number.int({ min: 10000, max: 1000000 })
@@ -38,7 +38,7 @@ const main = async () => {
   console.log('Generating payment link for:', req)
 
   try {
-    const res = await dokuProvider.generatePaymentLink(req)
+    const res = await paymentGateway.generatePaymentLink(req)
     console.log('--- Success ---')
     console.log('Invoice ID:', res.invoice_id)
     console.log('Payment URL:', res.payment_url)

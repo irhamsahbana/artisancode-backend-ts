@@ -1,4 +1,5 @@
 import { AppError } from '@/common/app_error'
+import { CheckStatusRes, IPaymentGateway } from '@/contracts/integration'
 import {
   ActiveInvoiceStatuses,
   CreateInvoiceReq,
@@ -7,7 +8,6 @@ import {
   InvoiceList,
   InvoiceStatus,
 } from '@/entities/invoice.entity'
-import { DokuCheckStatusRes, DokuProvider } from '@/providers/doku'
 import { withSpan } from '@/telemetry'
 
 import { IInvoiceRepo, IInvoiceUsecase } from './invoice.contract'
@@ -15,7 +15,7 @@ import { IInvoiceRepo, IInvoiceUsecase } from './invoice.contract'
 export default class InvoiceUsecase implements IInvoiceUsecase {
   constructor(
     private repo: IInvoiceRepo,
-    private dokuProvider: DokuProvider,
+    private paymentGateway: IPaymentGateway,
   ) {}
 
   async create(data: CreateInvoiceReq): Promise<Invoice> {
@@ -69,9 +69,9 @@ export default class InvoiceUsecase implements IInvoiceUsecase {
       }
 
       if (invoice.payment_url) {
-        let statusPayload: DokuCheckStatusRes
+        let statusPayload: CheckStatusRes
         try {
-          statusPayload = await this.dokuProvider.checkStatus(invoice.invoice_number)
+          statusPayload = await this.paymentGateway.checkStatus(invoice.invoice_number)
         } catch (error) {
           throw new AppError(502, 'DOKU status check failed', error)
         }
@@ -116,7 +116,7 @@ export default class InvoiceUsecase implements IInvoiceUsecase {
         })
       }
 
-      const paymentLink = await this.dokuProvider.generatePaymentLink({
+      const paymentLink = await this.paymentGateway.generatePaymentLink({
         invoice_number: invoice.invoice_number,
         amount: invoice.amount,
         customer_email:
@@ -152,7 +152,7 @@ export default class InvoiceUsecase implements IInvoiceUsecase {
     })
   }
 
-  private async resolveDokuStatus(payload: DokuCheckStatusRes): Promise<InvoiceStatus | null> {
+  private async resolveDokuStatus(payload: CheckStatusRes): Promise<InvoiceStatus | null> {
     return withSpan('invoice.usecase', 'InvoiceUsecase.resolveDokuStatus', async () => {
       const transactionStatus = String(payload.transaction?.status ?? '').toUpperCase()
       const orderStatus = String(payload.order?.status ?? '').toUpperCase()

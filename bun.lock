@@ -32,7 +32,7 @@
         "postgres": "^3.4.9",
         "uuid": "^11.1.0",
         "winston": "^3.17.0",
-        "zod": "^4.0.10",
+        "zod": "^4.0.10"
       },
       "devDependencies": {
         "@babel/preset-env": "^7.28.0",
@@ -64,13 +64,13 @@
         "ts-node-dev": "^2.0.0",
         "tsc-alias": "^1.8.16",
         "typescript": "^5.8.3",
-        "typescript-eslint": "^8.38.0",
+        "typescript-eslint": "^8.38.0"
       },
     },
   },
   "trustedDependencies": [
     "unrs-resolver",
-    "protobufjs",
+    "protobufjs"
   ],
   "packages": {
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
