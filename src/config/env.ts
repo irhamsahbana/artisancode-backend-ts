@@ -53,10 +53,10 @@ export const env = {
         ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
         TRACES_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
         LOGS_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT,
+        HEADERS: process.env.OTEL_EXPORTER_OTLP_HEADERS,
       },
     },
     DIAG_LOG_LEVEL: process.env.OTEL_DIAG_LOG_LEVEL,
-    ALLOW_BUN: parseBoolean(process.env.OTEL_ALLOW_BUN, false),
   },
   DOKU: {
     CLIENT_ID: process.env.DOKU_CLIENT_ID,

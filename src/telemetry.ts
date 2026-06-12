@@ -8,7 +8,6 @@ import {
   SpanStatusCode,
   trace,
 } from '@opentelemetry/api'
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston'
@@ -21,8 +20,18 @@ import { env } from '@/config/env'
 
 let sdk: NodeSDK | null = null
 
-const isBun =
-  typeof (process as unknown as { versions?: { bun?: string } }).versions?.bun === 'string'
+const parseHeaders = (raw: string | undefined): Record<string, string> | undefined => {
+  if (!raw?.trim()) return undefined
+  const headers: Record<string, string> = {}
+  for (const pair of raw.split(',')) {
+    const idx = pair.indexOf('=')
+    if (idx === -1) continue
+    const key = pair.slice(0, idx).trim()
+    const value = pair.slice(idx + 1).trim()
+    if (key) headers[key] = value
+  }
+  return Object.keys(headers).length > 0 ? headers : undefined
+}
 
 const getDiagLogLevel = (value: string | undefined) => {
   if (!value) return undefined
@@ -47,10 +56,6 @@ export const startTelemetry = () => {
 
   if (!env.OTEL.ENABLED) return
 
-  if (isBun) {
-    if (!env.OTEL.ALLOW_BUN) return
-  }
-
   const serviceName = env.OTEL.SERVICE_NAME || env.APP_NAME || 'api'
   const serviceVersion = env.OTEL.SERVICE_VERSION || env.APP_VERSION || '0.0.0'
 
@@ -71,28 +76,27 @@ export const startTelemetry = () => {
       ? `${env.OTEL.EXPORTER.OTLP.ENDPOINT.replace(/\/$/, '')}/v1/logs`
       : undefined)
 
+  const otlpHeaders = parseHeaders(env.OTEL.EXPORTER.OTLP.HEADERS)
+
   const traceExporter = new OTLPTraceExporter(
     traceExporterUrl
       ? {
           url: traceExporterUrl,
+          headers: otlpHeaders,
         }
       : undefined,
   )
 
-  const logExporter = logExporterUrl ? new OTLPLogExporter({ url: logExporterUrl }) : null
+  const logExporter = logExporterUrl
+    ? new OTLPLogExporter({ url: logExporterUrl, headers: otlpHeaders })
+    : null
 
   sdk = new NodeSDK({
     resource,
     traceExporter,
     instrumentations: [
-      getNodeAutoInstrumentations({
-        '@opentelemetry/instrumentation-runtime-node': {
-          enabled: !isBun,
-        },
-      }),
       new WinstonInstrumentation({
         disableLogSending: false,
-
         logHook: (_span, record) => {
           const activeSpan = trace.getSpan(context.active())
           const spanContext = activeSpan?.spanContext()
