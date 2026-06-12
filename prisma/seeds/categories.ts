@@ -1,15 +1,18 @@
-import { PrismaClient } from '@prisma/client'
+import { db } from '../../src/common/db'
+import { categories } from '../../src/db/schema'
 
-export async function seedCategories(prisma: PrismaClient, companyId: string) {
+export async function seedCategories(companyId: string) {
   console.log('Creating Categories...')
-  const category = await prisma.category.create({
-    data: {
+  const [category] = await db
+    .insert(categories)
+    .values({
       name: 'Kids',
       group: 'Age',
-      companyId: companyId,
-      status: 'active'
-    }
-  })
+      companyId,
+      status: 'active',
+    })
+    .returning()
+
   console.log('Categories created')
   return category
 }

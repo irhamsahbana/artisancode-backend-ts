@@ -1,53 +1,46 @@
-import { PrismaClient } from '@prisma/client'
-
+import { db } from '../../src/common/db'
 import { hashPassword } from '../../src/common/encryption'
+import { users } from '../../src/db/schema'
 
 export async function seedUsers(
-  prisma: PrismaClient,
   companyId: string,
-  roles: { ownerRoleId: string, superAdminRoleId: string, adminRoleId: string }
+  roles: { ownerRoleId: string; superAdminRoleId: string; adminRoleId: string },
 ) {
   console.log('Creating Users...')
   const password = await hashPassword('password123')
 
-  await prisma.user.create({
-    data: {
+  await db.insert(users).values([
+    {
       name: 'Owner User',
       username: 'owner',
       email: 'owner@tola.solutions',
-      password: password,
+      password,
       roleId: roles.ownerRoleId,
-      companyId: companyId,
+      companyId,
       status: 'active',
-      phone: '081234567890'
-    }
-  })
-
-  await prisma.user.create({
-    data: {
+      phone: '081234567890',
+    },
+    {
       name: 'Super Admin User',
       username: 'superadmin',
       email: 'superadmin@tola.solutions',
-      password: password,
+      password,
       roleId: roles.superAdminRoleId,
-      companyId: companyId,
+      companyId,
       status: 'active',
-      phone: '081234567891'
-    }
-  })
-
-  await prisma.user.create({
-    data: {
+      phone: '081234567891',
+    },
+    {
       name: 'Branch Admin User',
       username: 'admin',
       email: 'admin@tola.solutions',
-      password: password,
+      password,
       roleId: roles.adminRoleId,
-      companyId: companyId,
+      companyId,
       status: 'active',
-      phone: '081234567892'
-    }
-  })
+      phone: '081234567892',
+    },
+  ])
 
   console.log('Users created')
 }

@@ -1,10 +1,10 @@
 # Tech Stack
 
-- **Runtime**: Node.js 24.x / Bun (for development/execution)
-- **Package Manager**: pnpm
+- **Runtime**: Bun (for development/execution)
+- **Package Manager**: bun
 - **Language**: TypeScript
-- **Framework**: Express.js 5.x
-- **Database**: PostgreSQL 18.x
-- **ORM**: Prisma 7.x
-- **Validation**: Joi
+- **Framework**: Hono
+- **Database**: PostgreSQL
+- **ORM**: Drizzle ORM
+- **Validation**: Zod
 - **Logging**: Winston

@@ -1,21 +1,27 @@
 import {
-  Product,
-  ProductPrice,
-  ProductPricing,
-  ProductSchedule,
-  Teacher,
-  TeacherProduct,
-} from '@prisma/client'
-
+  productPrices as productPricesTable,
+  productPricings as productPricingsTable,
+  productSchedules as productSchedulesTable,
+  products as productsTable,
+  teacherProducts as teacherProductsTable,
+  teachers as teachersTable,
+} from '@/db/schema'
 import * as Entity from '@/entities/program.entity'
 
-export type ProductWithRelations = Product & {
-  productSchedules: ProductSchedule[]
-  pricings: (ProductPricing & {
-    prices: ProductPrice[]
+type ProductRow = typeof productsTable.$inferSelect
+type ProductScheduleRow = typeof productSchedulesTable.$inferSelect
+type ProductPricingRow = typeof productPricingsTable.$inferSelect
+type ProductPriceRow = typeof productPricesTable.$inferSelect
+type TeacherProductRow = typeof teacherProductsTable.$inferSelect
+type TeacherRow = typeof teachersTable.$inferSelect
+
+export type ProductWithRelations = ProductRow & {
+  productSchedules: ProductScheduleRow[]
+  pricings: (ProductPricingRow & {
+    prices: ProductPriceRow[]
   })[]
-  teacherProducts: (TeacherProduct & {
-    teacher: Teacher
+  teacherProducts: (TeacherProductRow & {
+    teacher: TeacherRow
   })[]
 }
 
@@ -51,7 +57,7 @@ export const toProgramEntity = (data: ProductWithRelations): Entity.Program => (
       id: price.id,
       pricing_id: price.productPricingId,
       currency: price.currency,
-      price: price.price.toNumber(),
+      price: Number(price.price),
       started_at: price.startedAt,
       ended_at: price.endedAt,
       created_at: price.createdAt,

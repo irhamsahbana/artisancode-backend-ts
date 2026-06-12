@@ -1,20 +1,18 @@
-import { Prisma } from '@prisma/client'
+import { and, eq, isNull } from 'drizzle-orm'
 
+import { db } from '@/common/db'
+import { enrollments, productPricings, productPrices, products, students } from '@/db/schema'
 import * as Entity from '@/entities/enrollment.entity'
 
-export const enrollmentIncludes = {
-  student: true,
-  product: true,
-  productPricing: {
-    include: {
-      prices: true,
-    },
-  },
-} satisfies Prisma.EnrollmentInclude
+type EnrollmentRow = typeof enrollments.$inferSelect
 
-export type EnrollmentWithRelations = Prisma.EnrollmentGetPayload<{
-  include: typeof enrollmentIncludes
-}>
+type EnrollmentWithRelations = EnrollmentRow & {
+  student?: typeof students.$inferSelect | null
+  product?: typeof products.$inferSelect | null
+  productPricing?:
+    | (typeof productPricings.$inferSelect & { prices?: (typeof productPrices.$inferSelect)[] })
+    | null
+}
 
 export const toEnrollmentEntity = (data: EnrollmentWithRelations): Entity.Enrollment => ({
   id: data.id,
@@ -79,11 +77,11 @@ export const toEnrollmentEntity = (data: EnrollmentWithRelations): Entity.Enroll
         is_active: data.productPricing.isActive,
         created_at: data.productPricing.createdAt,
         updated_at: data.productPricing.updatedAt,
-        prices: data.productPricing.prices.map((p) => ({
+        prices: (data.productPricing.prices || []).map((p) => ({
           id: p.id,
           pricing_id: p.productPricingId,
           currency: p.currency,
-          price: p.price.toNumber(),
+          price: Number(p.price),
           started_at: p.startedAt,
           ended_at: p.endedAt,
           created_at: p.createdAt,
@@ -91,3 +89,122 @@ export const toEnrollmentEntity = (data: EnrollmentWithRelations): Entity.Enroll
       }
     : undefined,
 })
+
+/**
+ * Fetch a single enrollment with all relations by ID
+ */
+export async function findEnrollmentWithRelations(
+  enrollmentId: string,
+  companyId?: string,
+): Promise<EnrollmentWithRelations | null> {
+  const conditions = [eq(enrollments.id, enrollmentId), isNull(enrollments.deletedAt)]
+  if (companyId) {
+    conditions.push(eq(enrollments.companyId, companyId))
+  }
+
+  const [enrollment] = await db
+    .select()
+    .from(enrollments)
+    .where(and(...conditions))
+    .limit(1)
+  if (!enrollment) return null
+
+  const [student, product, pricing] = await Promise.all([
+    enrollment.studentId
+      ? db
+          .select()
+          .from(students)
+          .where(eq(students.id, enrollment.studentId))
+          .then((r) => r[0] ?? null)
+      : null,
+    enrollment.productId
+      ? db
+          .select()
+          .from(products)
+          .where(eq(products.id, enrollment.productId))
+          .then((r) => r[0] ?? null)
+      : null,
+    enrollment.productPricingId
+      ? db
+          .select()
+          .from(productPricings)
+          .where(eq(productPricings.id, enrollment.productPricingId))
+          .then((r) => r[0] ?? null)
+      : null,
+  ])
+
+  let prices: (typeof productPrices.$inferSelect)[] = []
+  if (pricing) {
+    prices = await db
+      .select()
+      .from(productPrices)
+      .where(eq(productPrices.productPricingId, pricing.id))
+  }
+
+  return {
+    ...enrollment,
+    student: student ?? undefined,
+    product: product ?? undefined,
+    productPricing: pricing ? { ...pricing, prices } : undefined,
+  }
+}
+
+/**
+ * Fetch multiple enrollments with relations by conditions
+ */
+export async function findEnrollmentsWithRelations(
+  where: ReturnType<typeof and>,
+  options?: { orderBy?: unknown; limit?: number; offset?: number },
+): Promise<EnrollmentWithRelations[]> {
+  const items = await db
+    .select()
+    .from(enrollments)
+    .where(where)
+    .limit(options?.limit ?? 100)
+    .offset(options?.offset ?? 0)
+
+  const result: EnrollmentWithRelations[] = []
+
+  for (const enrollment of items) {
+    const [student, product, pricing] = await Promise.all([
+      enrollment.studentId
+        ? db
+            .select()
+            .from(students)
+            .where(eq(students.id, enrollment.studentId))
+            .then((r) => r[0] ?? null)
+        : null,
+      enrollment.productId
+        ? db
+            .select()
+            .from(products)
+            .where(eq(products.id, enrollment.productId))
+            .then((r) => r[0] ?? null)
+        : null,
+      enrollment.productPricingId
+        ? db
+            .select()
+            .from(productPricings)
+            .where(eq(productPricings.id, enrollment.productPricingId))
+            .then((r) => r[0] ?? null)
+        : null,
+    ])
+
+    let prices: (typeof productPrices.$inferSelect)[] = []
+    if (pricing) {
+      prices = await db
+        .select()
+        .from(productPrices)
+        .where(eq(productPrices.productPricingId, pricing.id))
+    }
+
+    result.push({
+      ...enrollment,
+      student: student ?? undefined,
+      product: product ?? undefined,
+      productPricing: pricing ? { ...pricing, prices } : undefined,
+    })
+  }
+
+  return result
+}

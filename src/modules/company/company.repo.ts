@@ -1,6 +1,7 @@
-import { Prisma } from '@prisma/client'
+import { eq, and, ilike, inArray, isNull, sql } from 'drizzle-orm'
 
-import prisma from '@/common/prisma'
+import { db } from '@/common/db'
+import { companies } from '@/db/schema'
 import * as Entity from '@/entities/company.entity'
 
 import { ICompanyRepo } from './company.contract'
@@ -8,54 +9,45 @@ import { ICompanyRepo } from './company.contract'
 export default class CompanyRepo implements ICompanyRepo {
   async create(req: Entity.CreateCompanyReq): Promise<Entity.Company> {
     const status = req.status === 'inactive' ? 'inactive' : 'active'
-    return await prisma.company.create({
-      data: {
-        name: req.name,
-        status: status,
-      },
-    })
+    const [row] = await db.insert(companies).values({ name: req.name, status }).returning()
+    return row as Entity.Company
   }
 
   async findList(req: Entity.GetCompanyReq): Promise<Entity.CompanyList> {
     const { pagination = {}, q, accessible_company_id, ids, id } = req
     const { page = 1, per_page = 10 } = pagination
-    const skip = (page - 1) * per_page
-    const take = per_page
+    const offset = (page - 1) * per_page
 
-    const where: Prisma.CompanyWhereInput = {
-      deletedAt: null,
-    }
+    const conditions = [isNull(companies.deletedAt)]
+
     if (id) {
-      where.id = id
+      conditions.push(eq(companies.id, id))
     }
 
     if (q) {
-      where.name = {
-        contains: q,
-        mode: 'insensitive',
-      }
+      conditions.push(ilike(companies.name, `%${q}%`))
     }
 
     if (accessible_company_id) {
-      where.id = accessible_company_id
-    } else if (ids) {
-      where.id = {
-        in: ids,
-      }
+      conditions.push(eq(companies.id, accessible_company_id))
+    } else if (ids && ids.length > 0) {
+      conditions.push(inArray(companies.id, ids))
     }
 
-    const [items, total] = await Promise.all([
-      prisma.company.findMany({
-        where,
-        skip,
-        take,
-      }),
-      prisma.company.count({
-        where,
-      }),
+    const where = and(...conditions)
+
+    const [items, countResult] = await Promise.all([
+      db.select().from(companies).where(where).limit(per_page).offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(companies)
+        .where(where),
     ])
+
+    const total = countResult[0]?.count ?? 0
+
     return {
-      items,
+      items: items as Entity.Company[],
       pagination: {
         total,
         page,
@@ -66,53 +58,50 @@ export default class CompanyRepo implements ICompanyRepo {
   }
 
   async findById(req: Entity.GetCompanyReq): Promise<Entity.Company | null> {
-    const where: Prisma.CompanyWhereInput = {
-      id: req.id,
-      deletedAt: null,
-    }
+    const conditions = [eq(companies.id, req.id ?? ''), isNull(companies.deletedAt)]
 
     if (req.accessible_company_id) {
-      where.id = req.accessible_company_id
-      // If req.id is also provided, it must match. But if accessible_company_id is set, it overrides or must be equal.
-      // If they are different, result is null (not found).
       if (req.id && req.id !== req.accessible_company_id) {
         return null
       }
+      conditions[0] = eq(companies.id, req.accessible_company_id)
     }
 
-    return await prisma.company.findFirst({
-      where,
-    })
+    const [row] = await db
+      .select()
+      .from(companies)
+      .where(and(...conditions))
+      .limit(1)
+    return (row as Entity.Company) ?? null
   }
 
   async update(req: Entity.UpdateCompanyReq): Promise<Entity.Company> {
     const status = req.status === 'inactive' ? 'inactive' : 'active'
 
-    // Check access
-    if (req.accessible_company_id && req.id !== req.accessible_company_id) {
-      throw new Error('Company not found') // Or access denied
-    }
-
-    return await prisma.company.update({
-      where: { id: req.id },
-      data: {
-        ...req,
-        status: req.status ? status : undefined,
-      },
-    })
-  }
-
-  async delete(req: Entity.GetCompanyReq): Promise<void> {
-    // Check access
     if (req.accessible_company_id && req.id !== req.accessible_company_id) {
       throw new Error('Company not found')
     }
 
-    await prisma.company.update({
-      where: { id: req.id },
-      data: {
-        deletedAt: new Date(),
-      },
-    })
+    const [row] = await db
+      .update(companies)
+      .set({
+        ...req,
+        status: req.status ? status : undefined,
+      })
+      .where(eq(companies.id, req.id))
+      .returning()
+
+    return row as Entity.Company
+  }
+
+  async delete(req: Entity.GetCompanyReq): Promise<void> {
+    if (req.accessible_company_id && req.id !== req.accessible_company_id) {
+      throw new Error('Company not found')
+    }
+
+    await db
+      .update(companies)
+      .set({ deletedAt: new Date() })
+      .where(eq(companies.id, req.id ?? ''))
   }
 }

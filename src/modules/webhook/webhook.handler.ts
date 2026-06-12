@@ -1,15 +1,26 @@
-import { Prisma } from '@prisma/client'
+import { and, eq, gte, lte, isNull } from 'drizzle-orm'
 import { Context } from 'hono'
 
-import { prisma } from '../../common/prisma'
+import { db } from '../../common/db'
 import { responseSuccess } from '../../common/rest_response'
 import { AppEnv } from '../../common/types'
 import { generateInvoiceNumber } from '../../common/utils/invoice.util'
 import { selectValidPrice } from '../../common/utils/select_valid_price'
 import logger from '../../config/logger'
+import {
+  enrollments,
+  invoices,
+  payments,
+  productPrices as productPricesTable,
+  students,
+} from '../../db/schema'
 import { DokuProvider } from '../../providers/doku'
 
 const dokuProvider = new DokuProvider()
+
+type InvoiceWithEnrollment = typeof invoices.$inferSelect & {
+  enrollment: typeof enrollments.$inferSelect | null
+}
 
 export class WebhookHandler {
   doku = async (c: Context<AppEnv>) => {
@@ -90,11 +101,22 @@ export class WebhookHandler {
     }
   }
 
-  private async getInvoiceByNumber(invoiceNumber: string) {
-    return prisma.invoice.findFirst({
-      where: { invoiceNumber },
-      include: { enrollment: true },
-    })
+  private async getInvoiceByNumber(invoiceNumber: string): Promise<InvoiceWithEnrollment | null> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.invoiceNumber, invoiceNumber))
+      .limit(1)
+
+    if (!invoice) return null
+
+    const [enrollment] = await db
+      .select()
+      .from(enrollments)
+      .where(eq(enrollments.id, invoice.enrollmentId))
+      .limit(1)
+
+    return { ...invoice, enrollment: enrollment ?? null }
   }
 
   private async handleDokuStatus({
@@ -151,26 +173,26 @@ export class WebhookHandler {
 
     const paidAt = new Date()
 
-    await prisma.$transaction([
-      prisma.payment.create({
-        data: {
-          companyId: invoice.companyId,
-          branchId: invoice.branchId,
-          invoiceId: invoice.id,
-          amount: invoice.amount,
-          method: 'DOKU',
-          paymentDate: paidAt,
-        },
-      }),
-      prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
+    // Transaction: create payment + update invoice status
+    await db.transaction(async (tx) => {
+      await tx.insert(payments).values({
+        companyId: invoice.companyId,
+        branchId: invoice.branchId,
+        invoiceId: invoice.id,
+        amount: invoice.amount,
+        method: 'DOKU',
+        paymentDate: paidAt,
+      })
+
+      await tx
+        .update(invoices)
+        .set({
           status: 'paid',
           paidAt: paidAt,
           dokuRequestId: transactionRequestId || undefined,
-        },
-      }),
-    ])
+        })
+        .where(eq(invoices.id, invoice.id))
+    })
 
     const enrollment = invoice.enrollment
     const currentBillingDate = enrollment?.nextBillingDate
@@ -202,20 +224,18 @@ export class WebhookHandler {
     }
 
     if (invoice.status !== 'expired') {
-      await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
+      await db
+        .update(invoices)
+        .set({
           status: 'expired',
           dokuRequestId: transactionRequestId || undefined,
-        },
-      })
+        })
+        .where(eq(invoices.id, invoice.id))
     } else if (transactionRequestId) {
-      await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
-          dokuRequestId: transactionRequestId,
-        },
-      })
+      await db
+        .update(invoices)
+        .set({ dokuRequestId: transactionRequestId })
+        .where(eq(invoices.id, invoice.id))
     }
 
     logger.info(`Expired status recorded for ${invoiceNumber}`)
@@ -227,12 +247,10 @@ export class WebhookHandler {
     transactionRequestId: string | null,
   ) {
     if (!transactionRequestId || invoice.dokuRequestId === transactionRequestId) return
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        dokuRequestId: transactionRequestId,
-      },
-    })
+    await db
+      .update(invoices)
+      .set({ dokuRequestId: transactionRequestId })
+      .where(eq(invoices.id, invoice.id))
   }
 
   private async updateEnrollmentBilling(
@@ -255,12 +273,10 @@ export class WebhookHandler {
         break
     }
 
-    await prisma.enrollment.update({
-      where: { id: enrollment.id },
-      data: {
-        nextBillingDate: nextDate,
-      },
-    })
+    await db
+      .update(enrollments)
+      .set({ nextBillingDate: nextDate })
+      .where(eq(enrollments.id, enrollment.id))
 
     logger.info(`Updated enrollment ${enrollment.id} next billing date to ${nextDate}`)
 
@@ -278,49 +294,72 @@ export class WebhookHandler {
     enrollment: NonNullable<InvoiceWithEnrollment['enrollment']>,
     nextDate: Date,
   ) {
-    const enrollmentDetails = await prisma.enrollment.findFirst({
-      where: {
-        id: enrollment.id,
-        status: 'active',
-        deletedAt: null,
-      },
-      include: {
-        student: true,
-        productPricing: {
-          include: {
-            prices: true,
-          },
-        },
-      },
-    })
+    // Fetch enrollment details with student and pricing
+    const [enrollmentDetails] = await db
+      .select()
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.id, enrollment.id),
+          eq(enrollments.status, 'active'),
+          isNull(enrollments.deletedAt),
+        ),
+      )
+      .limit(1)
 
     if (!enrollmentDetails) {
       logger.warn(`Enrollment ${enrollment.id} not found for catch-up`)
       return
     }
 
+    const [student] = await db
+      .select()
+      .from(students)
+      .where(eq(students.id, enrollmentDetails.studentId))
+      .limit(1)
+
+    if (!student) {
+      logger.warn(`Student not found for enrollment ${enrollment.id}`)
+      return
+    }
+
+    // Fetch prices for the pricing
+    const prices = await db
+      .select({
+        id: productPricesTable.id,
+        productPricingId: productPricesTable.productPricingId,
+        price: productPricesTable.price,
+        currency: productPricesTable.currency,
+        startedAt: productPricesTable.startedAt,
+        endedAt: productPricesTable.endedAt,
+        createdAt: productPricesTable.createdAt,
+      })
+      .from(productPricesTable)
+      .where(eq(productPricesTable.productPricingId, enrollmentDetails.productPricingId))
+
     const startOfDay = new Date(nextDate)
     startOfDay.setHours(0, 0, 0, 0)
     const endOfDay = new Date(nextDate)
     endOfDay.setHours(23, 59, 59, 999)
 
-    const existingInvoice = await prisma.invoice.findFirst({
-      where: {
-        enrollmentId: enrollment.id,
-        dueDate: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-        deletedAt: null,
-      },
-    })
+    const [existingInvoice] = await db
+      .select()
+      .from(invoices)
+      .where(
+        and(
+          eq(invoices.enrollmentId, enrollment.id),
+          gte(invoices.dueDate, startOfDay),
+          lte(invoices.dueDate, endOfDay),
+          isNull(invoices.deletedAt),
+        ),
+      )
+      .limit(1)
 
     if (existingInvoice) {
       logger.info(`Catch-up skipped for enrollment ${enrollment.id}, invoice already exists`)
       return
     }
 
-    const prices = enrollmentDetails.productPricing?.prices || []
     const currency = enrollmentDetails.currency
     const priceCandidates = prices.filter((price) => price.currency === currency)
     const selectedPrice = selectValidPrice(priceCandidates, nextDate)
@@ -330,41 +369,40 @@ export class WebhookHandler {
       return
     }
 
-    const amount = selectedPrice.price.toNumber()
+    const amount = Number(selectedPrice.price)
     const invoiceNumber = generateInvoiceNumber()
 
-    const createdInvoice = await prisma.invoice.create({
-      data: {
+    const [createdInvoice] = await db
+      .insert(invoices)
+      .values({
         companyId: enrollmentDetails.companyId,
         branchId: enrollmentDetails.branchId,
         enrollmentId: enrollmentDetails.id,
         invoiceNumber,
-        amount,
+        amount: String(amount),
         dueDate: nextDate,
         issuedDate: new Date(),
         invoiceDate: new Date(),
         status: 'pending',
         currency: selectedPrice.currency,
-      },
-    })
+      })
+      .returning()
 
     const paymentLink = await dokuProvider.generatePaymentLink({
       invoice_number: invoiceNumber,
       amount,
-      customer_email: enrollmentDetails.student.email,
-      customer_name: `${enrollmentDetails.student.firstName} ${enrollmentDetails.student.lastName}`,
+      customer_email: student.email,
+      customer_name: `${student.firstName} ${student.lastName}`,
     })
 
-    await prisma.invoice.update({
-      where: { id: createdInvoice.id },
-      data: {
+    await db
+      .update(invoices)
+      .set({
         dokuInvoiceId: paymentLink.invoice_id,
         paymentUrl: paymentLink.payment_url,
-      },
-    })
+      })
+      .where(eq(invoices.id, createdInvoice.id))
 
     logger.info(`Catch-up invoice generated for enrollment ${enrollment.id} due ${nextDate}`)
   }
 }
-
-type InvoiceWithEnrollment = Prisma.InvoiceGetPayload<{ include: { enrollment: true } }>

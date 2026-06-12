@@ -1,20 +1,22 @@
-import { Prisma, User } from '@prisma/client'
+import { eq, and, or, isNull, sql } from 'drizzle-orm'
 
-import prisma from '@/common/prisma'
+import { db } from '@/common/db'
+import { companies, permissions, rolePermissions, roles, users } from '@/db/schema'
 import * as Entity from '@/entities/user.entity'
 
 import { IUserRepo } from './user.contract'
 
 export default class UserRepo implements IUserRepo {
-  private toEntity(data: User): Entity.User {
+  private toEntity(data: typeof users.$inferSelect): Entity.User {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...rest } = data
     return rest as unknown as Entity.User
   }
 
   async create(req: Entity.CreateUserReq): Promise<Entity.User> {
-    const data = await prisma.user.create({
-      data: {
+    const [row] = await db
+      .insert(users)
+      .values({
         name: req.name,
         username: req.username,
         email: req.email,
@@ -23,70 +25,56 @@ export default class UserRepo implements IUserRepo {
         companyId: req.company_id,
         roleId: req.role_id,
         status: req.status || 'active',
-      },
-    })
-    return this.toEntity(data)
+      })
+      .returning()
+    return this.toEntity(row)
   }
 
   async checkExistingUser(username: string, email: string): Promise<boolean> {
-    const count = await prisma.user.count({
-      where: {
-        OR: [{ username }, { email }],
-      },
-    })
-    return count > 0
+    const [result] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(users)
+      .where(or(eq(users.username, username), eq(users.email, email)))
+    return result.count > 0
   }
 
   async register(req: Entity.RegisterReq): Promise<Entity.RegisterRes> {
-    return await prisma.$transaction(async (tx) => {
+    return await db.transaction(async (tx) => {
       // 1. Create Company
-      const company = await tx.company.create({
-        data: {
-          name: req.company_name,
-          status: 'active',
-        },
-      })
+      const [company] = await tx
+        .insert(companies)
+        .values({ name: req.company_name, status: 'active' })
+        .returning()
 
       // 2. Create Roles
-      const ownerRole = await tx.role.create({
-        data: {
-          companyId: company.id,
-          name: 'Owner',
-          description: 'Company Owner',
-        },
-      })
+      const [ownerRole] = await tx
+        .insert(roles)
+        .values({ companyId: company.id, name: 'Owner', description: 'Company Owner' })
+        .returning()
 
-      const superadminRole = await tx.role.create({
-        data: {
-          companyId: company.id,
-          name: 'Superadmin',
-          description: 'Company Superadmin',
-        },
-      })
+      const [superadminRole] = await tx
+        .insert(roles)
+        .values({ companyId: company.id, name: 'Superadmin', description: 'Company Superadmin' })
+        .returning()
 
       // 3. Assign Permissions
-      const permissions = await tx.permission.findMany()
-      const permissionIds = permissions.map((p) => p.id)
+      const allPermissions = await tx.select().from(permissions)
+      const permissionIds = allPermissions.map((p) => p.id)
 
       if (permissionIds.length > 0) {
-        await tx.rolePermission.createMany({
-          data: permissionIds.map((pid) => ({
-            roleId: ownerRole.id,
-            permissionId: pid,
-          })),
-        })
+        await tx
+          .insert(rolePermissions)
+          .values(permissionIds.map((pid) => ({ roleId: ownerRole.id, permissionId: pid })))
 
-        await tx.rolePermission.createMany({
-          data: permissionIds.map((pid) => ({
-            roleId: superadminRole.id,
-            permissionId: pid,
-          })),
-        })
+        await tx
+          .insert(rolePermissions)
+          .values(permissionIds.map((pid) => ({ roleId: superadminRole.id, permissionId: pid })))
       }
 
       // 4. Create User
-      const user = await tx.user.create({
-        data: {
+      const [user] = await tx
+        .insert(users)
+        .values({
           companyId: company.id,
           roleId: ownerRole.id,
           name: req.name,
@@ -95,19 +83,12 @@ export default class UserRepo implements IUserRepo {
           password: req.password,
           phone: req.phone,
           status: 'active',
-        },
-      })
+        })
+        .returning()
 
       return {
-        company: {
-          id: company.id,
-          name: company.name,
-        },
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-        },
+        company: { id: company.id, name: company.name },
+        user: { id: user.id, username: user.username, email: user.email },
       }
     })
   }
@@ -115,25 +96,37 @@ export default class UserRepo implements IUserRepo {
   async findList(req: Entity.GetUserReq): Promise<Entity.UserList> {
     const { pagination = {}, ...rest } = req
     const { page = 1, per_page = 10 } = pagination
-    const skip = (page - 1) * per_page
-    const take = per_page
+    const offset = (page - 1) * per_page
 
-    const where: Prisma.UserWhereInput = {
-      deletedAt: null,
-      ...(rest.id && { id: rest.id }),
-      ...(rest.username && { username: rest.username }),
-      ...(rest.company_id && { companyId: rest.company_id }),
+    const conditions = [isNull(users.deletedAt)]
+
+    if (rest.id) {
+      conditions.push(eq(users.id, rest.id))
+    }
+    if (rest.username) {
+      conditions.push(eq(users.username, rest.username))
+    }
+    if (rest.company_id) {
+      conditions.push(eq(users.companyId, rest.company_id))
     }
 
-    const [items, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.user.count({ where }),
+    const where = and(...conditions)
+
+    const [items, countResult] = await Promise.all([
+      db
+        .select()
+        .from(users)
+        .where(where)
+        .orderBy(sql`${users.createdAt} desc`)
+        .limit(per_page)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(users)
+        .where(where),
     ])
+
+    const total = countResult[0]?.count ?? 0
 
     return {
       items: items.map((item) => this.toEntity(item)),
@@ -147,32 +140,36 @@ export default class UserRepo implements IUserRepo {
   }
 
   async findById(id: string, companyId?: string): Promise<Entity.User | null> {
-    const where: Prisma.UserWhereInput = { id, deletedAt: null }
+    const conditions = [eq(users.id, id), isNull(users.deletedAt)]
     if (companyId) {
-      where.companyId = companyId
+      conditions.push(eq(users.companyId, companyId))
     }
-    const data = await prisma.user.findFirst({
-      where,
-    })
-    if (!data) return null
-    return this.toEntity(data)
+
+    const [row] = await db
+      .select()
+      .from(users)
+      .where(and(...conditions))
+      .limit(1)
+    return row ? this.toEntity(row) : null
   }
 
   async findByUsername(username: string): Promise<Entity.User | null> {
-    const data = await prisma.user.findFirst({
-      where: { username, deletedAt: null },
-    })
-    if (!data) return null
-    return this.toEntity(data)
+    const [row] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.username, username), isNull(users.deletedAt)))
+      .limit(1)
+    return row ? this.toEntity(row) : null
   }
 
   async findByUsernameForLogin(
     username: string,
   ): Promise<(Entity.User & { password: string }) | null> {
-    const data = await prisma.user.findFirst({
-      where: { username, deletedAt: null },
-    })
-    if (!data) return null
-    return data as Entity.User & { password: string }
+    const [row] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.username, username), isNull(users.deletedAt)))
+      .limit(1)
+    return (row as Entity.User & { password: string }) ?? null
   }
 }

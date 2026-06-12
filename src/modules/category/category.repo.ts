@@ -1,12 +1,13 @@
-import { Category, Prisma, Status } from '@prisma/client'
+import { eq, and, ilike, isNull, sql } from 'drizzle-orm'
 
-import prisma from '@/common/prisma'
+import { db } from '@/common/db'
+import { categories } from '@/db/schema'
 import * as Entity from '@/entities/category.entity'
 
 import { ICategoryRepo } from './category.contract'
 
 export default class CategoryRepo implements ICategoryRepo {
-  private toEntity(data: Category): Entity.Category {
+  private toEntity(data: typeof categories.$inferSelect): Entity.Category {
     return {
       id: data.id,
       company_id: data.companyId || '',
@@ -21,88 +22,99 @@ export default class CategoryRepo implements ICategoryRepo {
   }
 
   async create(req: Entity.CreateCategoryReq): Promise<Entity.Category> {
-    const data = await prisma.category.create({
-      data: {
+    const [row] = await db
+      .insert(categories)
+      .values({
         companyId: req.company_id,
         parentId: req.parent_id,
         group: req.group || '',
         name: req.name,
-        status: req.status as Status,
-      },
-    })
-    return this.toEntity(data)
+        status: (req.status as 'active' | 'inactive') ?? 'active',
+      })
+      .returning()
+    return this.toEntity(row)
   }
 
   async update(req: Entity.UpdateCategoryReq): Promise<Entity.Category> {
-    const data = await prisma.category.update({
-      where: {
-        id: req.id,
-        companyId: req.company_id,
-        deletedAt: null,
-      },
-      data: {
+    const [row] = await db
+      .update(categories)
+      .set({
         parentId: req.parent_id,
         group: req.group,
         name: req.name,
-        status: req.status as Status,
-      },
-    })
-    return this.toEntity(data)
+        status: req.status as 'active' | 'inactive',
+      })
+      .where(
+        and(
+          eq(categories.id, req.id),
+          eq(categories.companyId, req.company_id),
+          isNull(categories.deletedAt),
+        ),
+      )
+      .returning()
+    return this.toEntity(row)
   }
 
   async delete(id: string, companyId: string): Promise<void> {
-    await prisma.category.update({
-      where: {
-        id,
-        companyId,
-        deletedAt: null,
-      },
-      data: {
-        deletedAt: new Date(),
-      },
-    })
+    await db
+      .update(categories)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(categories.id, id),
+          eq(categories.companyId, companyId),
+          isNull(categories.deletedAt),
+        ),
+      )
   }
 
   async findById(id: string, companyId: string): Promise<Entity.Category | null> {
-    const data = await prisma.category.findFirst({
-      where: {
-        id,
-        companyId,
-        deletedAt: null,
-      },
-    })
-    if (!data) return null
-    return this.toEntity(data)
+    const [row] = await db
+      .select()
+      .from(categories)
+      .where(
+        and(
+          eq(categories.id, id),
+          eq(categories.companyId, companyId),
+          isNull(categories.deletedAt),
+        ),
+      )
+      .limit(1)
+    return row ? this.toEntity(row) : null
   }
 
   async findList(req: Entity.GetCategoryReq): Promise<Entity.CategoryList> {
     const { pagination = {}, q, company_id, group } = req
     const { page = 1, per_page = 10 } = pagination
-    const skip = (page - 1) * per_page
-    const take = per_page
+    const offset = (page - 1) * per_page
 
-    const where: Prisma.CategoryWhereInput = {
-      companyId: company_id,
-      deletedAt: null,
-    }
+    const conditions = [eq(categories.companyId, company_id), isNull(categories.deletedAt)]
 
     if (q) {
-      where.name = { contains: q, mode: 'insensitive' }
+      conditions.push(ilike(categories.name, `%${q}%`))
     }
 
     if (group) {
-      where.group = group
+      conditions.push(eq(categories.group, group))
     }
 
-    const [items, total] = await Promise.all([
-      prisma.category.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.category.count({ where }),
+    const where = and(...conditions)
+
+    const [items, countResult] = await Promise.all([
+      db
+        .select()
+        .from(categories)
+        .where(where)
+        .orderBy(sql`${categories.createdAt} desc`)
+        .limit(per_page)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(categories)
+        .where(where),
     ])
+
+    const total = countResult[0]?.count ?? 0
 
     return {
       items: items.map((item) => this.toEntity(item)),

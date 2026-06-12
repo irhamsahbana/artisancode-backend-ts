@@ -1,4 +1,7 @@
-import { PrismaClient } from '@prisma/client'
+import { eq } from 'drizzle-orm'
+
+import { db } from '../../src/common/db'
+import { permissions } from '../../src/db/schema'
 
 export const PERMISSIONS = [
   // Dashboard
@@ -75,21 +78,32 @@ export const PERMISSIONS = [
   { name: 'report:academic', description: 'View academic reports' },
 ]
 
-export async function seedPermissions(prisma: PrismaClient) {
+export async function seedPermissions() {
   console.log('Seeding Permissions...')
 
   const createdPermissions = []
 
   for (const perm of PERMISSIONS) {
-    const p = await prisma.permission.upsert({
-      where: { name: perm.name },
-      update: { description: perm.description },
-      create: {
-        name: perm.name,
-        description: perm.description,
-      }
-    })
-    createdPermissions.push(p)
+    // Upsert: insert or update if name exists
+    const existing = await db
+      .select()
+      .from(permissions)
+      .where(eq(permissions.name, perm.name))
+      .limit(1)
+
+    if (existing.length > 0) {
+      await db
+        .update(permissions)
+        .set({ description: perm.description })
+        .where(eq(permissions.name, perm.name))
+      createdPermissions.push({ ...existing[0], description: perm.description })
+    } else {
+      const [created] = await db
+        .insert(permissions)
+        .values({ name: perm.name, description: perm.description })
+        .returning()
+      createdPermissions.push(created)
+    }
   }
 
   console.log(`Seeded ${createdPermissions.length} permissions`)

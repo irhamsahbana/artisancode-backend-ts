@@ -1,7 +1,9 @@
+import { and, eq, gte, isNull, lte } from 'drizzle-orm'
 import cron from 'node-cron'
 
-import { prisma } from '../common/prisma'
-import logger from '../config/logger'
+import { db } from '@/common/db'
+import logger from '@/config/logger'
+import { enrollments, invoices, students } from '@/db/schema'
 
 export const startPaymentReminderJob = () => {
   // Run daily at 08:00 AM
@@ -15,30 +17,31 @@ export const startPaymentReminderJob = () => {
       const startOfDay = new Date(threeDaysAgo.setHours(0, 0, 0, 0))
       const endOfDay = new Date(threeDaysAgo.setHours(23, 59, 59, 999))
 
-      const invoices = await prisma.invoice.findMany({
-        where: {
-          status: 'pending',
-          issuedDate: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-          deletedAt: null,
-        },
-        include: {
-          enrollment: {
-            include: {
-              student: true,
-            },
-          },
-        },
-      })
+      // Find pending invoices with enrollment and student data
+      const invoiceRows = await db
+        .select({
+          id: invoices.id,
+          invoiceNumber: invoices.invoiceNumber,
+          studentEmail: students.email,
+        })
+        .from(invoices)
+        .innerJoin(enrollments, eq(invoices.enrollmentId, enrollments.id))
+        .innerJoin(students, eq(enrollments.studentId, students.id))
+        .where(
+          and(
+            eq(invoices.status, 'pending'),
+            gte(invoices.issuedDate, startOfDay),
+            lte(invoices.issuedDate, endOfDay),
+            isNull(invoices.deletedAt),
+          ),
+        )
 
-      logger.info(`Found ${invoices.length} pending invoices for reminder.`)
+      logger.info(`Found ${invoiceRows.length} pending invoices for reminder.`)
 
-      for (const invoice of invoices) {
+      for (const invoice of invoiceRows) {
         // Send Email (Mock)
         logger.info(
-          `Sending reminder to ${invoice.enrollment.student.email} for invoice ${invoice.invoiceNumber}`,
+          `Sending reminder to ${invoice.studentEmail} for invoice ${invoice.invoiceNumber}`,
         )
       }
     } catch (error) {

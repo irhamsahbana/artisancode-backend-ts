@@ -1,19 +1,24 @@
-import { Prisma, Role, Permission } from '@prisma/client'
+import { eq, and, ilike, inArray, isNull, sql } from 'drizzle-orm'
 
-import prisma from '@/common/prisma'
+import { db } from '@/common/db'
+import { permissions, rolePermissions, roles } from '@/db/schema'
 import * as Entity from '@/entities/role.entity'
 
 import { IRoleAndPermissionRepo } from './role_and_permission.contract'
 
 export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
-  private toRoleEntity(data: Role & { permissions?: { permission: Permission }[] }): Entity.Role {
-    const permissions = data.permissions?.map((p) => ({
-      id: p.permission.id,
-      name: p.permission.name,
-      description: p.permission.description,
-      createdAt: p.permission.createdAt,
-      updatedAt: p.permission.updatedAt,
-      deletedAt: p.permission.deletedAt,
+  private toRoleEntity(
+    data: typeof roles.$inferSelect & {
+      rolePermissions?: { permission: typeof permissions.$inferSelect }[]
+    },
+  ): Entity.Role {
+    const permissionsList = data.rolePermissions?.map((rp) => ({
+      id: rp.permission.id,
+      name: rp.permission.name,
+      description: rp.permission.description,
+      createdAt: rp.permission.createdAt,
+      updatedAt: rp.permission.updatedAt,
+      deletedAt: rp.permission.deletedAt,
     }))
     return {
       id: data.id,
@@ -23,11 +28,11 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
       deletedAt: data.deletedAt,
-      permissions,
+      permissions: permissionsList,
     }
   }
 
-  private toPermissionEntity(data: Permission): Entity.Permission {
+  private toPermissionEntity(data: typeof permissions.$inferSelect): Entity.Permission {
     return {
       id: data.id,
       name: data.name,
@@ -43,71 +48,99 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
     if (!req.company_id) {
       throw new Error('Company ID is required to create a role')
     }
-    const data = await prisma.role.create({
-      data: {
+
+    // Create role
+    const [role] = await db
+      .insert(roles)
+      .values({
         name: req.name,
         description: req.description || '',
         companyId: req.company_id,
-        permissions: {
-          create: req.permission_ids?.map((id) => ({
-            permission: { connect: { id } },
-          })),
-        },
-      },
-      include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
-      },
-    })
-    return this.toRoleEntity(data)
+      })
+      .returning()
+
+    // Create role-permission associations
+    if (req.permission_ids && req.permission_ids.length > 0) {
+      await db.insert(rolePermissions).values(
+        req.permission_ids.map((permissionId) => ({
+          roleId: role.id,
+          permissionId,
+        })),
+      )
+    }
+
+    // Fetch with permissions
+    return this.findRoleById(role.id, req.company_id) as Promise<Entity.Role>
   }
 
   async findRoleList(req: Entity.GetRoleReq): Promise<Entity.RoleList> {
     const { pagination = {}, q } = req
     const { page = 1, per_page = 10 } = pagination
-    const skip = (page - 1) * per_page
-    const take = per_page
+    const offset = (page - 1) * per_page
 
-    const where: Prisma.RoleWhereInput = {
-      ...(req.company_id && { companyId: req.company_id }),
-      deletedAt: null,
+    const conditions = [isNull(roles.deletedAt)]
+
+    if (req.company_id) {
+      conditions.push(eq(roles.companyId, req.company_id))
     }
 
     if (q) {
-      where.name = {
-        contains: q,
-        mode: 'insensitive',
-      }
+      conditions.push(ilike(roles.name, `%${q}%`))
     }
 
-    if (req.ids) {
-      where.id = {
-        in: req.ids,
-      }
+    if (req.ids && req.ids.length > 0) {
+      conditions.push(inArray(roles.id, req.ids))
     }
 
-    const [items, total] = await Promise.all([
-      prisma.role.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          permissions: {
-            include: {
-              permission: true,
-            },
-          },
-        },
-      }),
-      prisma.role.count({ where }),
+    const where = and(...conditions)
+
+    // Fetch roles
+    const [items, countResult] = await Promise.all([
+      db
+        .select()
+        .from(roles)
+        .where(where)
+        .orderBy(sql`${roles.createdAt} desc`)
+        .limit(per_page)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(roles)
+        .where(where),
     ])
 
+    // Fetch permissions for each role
+    const roleIds = items.map((r) => r.id)
+    const allRolePermissions =
+      roleIds.length > 0
+        ? await db
+            .select()
+            .from(rolePermissions)
+            .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+            .where(inArray(rolePermissions.roleId, roleIds))
+        : []
+
+    const permissionsByRole = new Map<string, typeof allRolePermissions>()
+    for (const rp of allRolePermissions) {
+      const roleId = rp.role_permissions.roleId
+      const existing = permissionsByRole.get(roleId)
+      if (existing) {
+        existing.push(rp)
+      } else {
+        permissionsByRole.set(roleId, [rp])
+      }
+    }
+
+    const total = countResult[0]?.count ?? 0
+
     return {
-      items: items.map((item) => this.toRoleEntity(item)),
+      items: items.map((item) => {
+        const rps = permissionsByRole.get(item.id) || []
+        return this.toRoleEntity({
+          ...item,
+          rolePermissions: rps.map((rp) => ({ permission: rp.permissions })),
+        })
+      }),
       pagination: {
         total,
         page,
@@ -118,109 +151,106 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
   }
 
   async findRoleById(id: string, companyId?: string): Promise<Entity.Role | null> {
-    const where: Prisma.RoleWhereInput = { id, deletedAt: null }
+    const conditions = [eq(roles.id, id), isNull(roles.deletedAt)]
+
     if (companyId) {
-      where.companyId = companyId
+      conditions.push(eq(roles.companyId, companyId))
     }
-    const data = await prisma.role.findFirst({
-      where,
-      include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
-      },
+
+    const [role] = await db
+      .select()
+      .from(roles)
+      .where(and(...conditions))
+      .limit(1)
+    if (!role) return null
+
+    // Fetch permissions
+    const rps = await db
+      .select()
+      .from(rolePermissions)
+      .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+      .where(eq(rolePermissions.roleId, id))
+
+    return this.toRoleEntity({
+      ...role,
+      rolePermissions: rps.map((rp) => ({ permission: rp.permissions })),
     })
-    if (!data) return null
-    return this.toRoleEntity(data)
   }
 
   async updateRole(req: Entity.UpdateRoleReq): Promise<Entity.Role> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, permission_ids, company_id, user, ...rest } = req
-    // If permission_ids is provided, we need to handle the update of relations
-    // This is a "replace" strategy: delete existing and create new
+
+    // Replace permissions if provided
     if (permission_ids) {
-      // First, delete existing relations
-      await prisma.rolePermission.deleteMany({
-        where: { roleId: id },
-      })
+      await db.delete(rolePermissions).where(eq(rolePermissions.roleId, id))
+
+      if (permission_ids.length > 0) {
+        await db.insert(rolePermissions).values(
+          permission_ids.map((permissionId) => ({
+            roleId: id,
+            permissionId,
+          })),
+        )
+      }
     }
 
-    const where: Prisma.RoleWhereUniqueInput = { id }
+    // Update role
+    const whereConditions = [eq(roles.id, id)]
     if (company_id) {
-      where.companyId = company_id
+      whereConditions.push(eq(roles.companyId, company_id))
     }
 
-    const data = await prisma.role.update({
-      where,
-      data: {
-        ...rest,
-        permissions: permission_ids
-          ? {
-              create: permission_ids.map((pId) => ({
-                permission: { connect: { id: pId } },
-              })),
-            }
-          : undefined,
-      },
-      include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
-      },
-    })
-    return this.toRoleEntity(data)
+    await db
+      .update(roles)
+      .set(rest)
+      .where(and(...whereConditions))
+
+    // Return updated role with permissions
+    return this.findRoleById(id, company_id) as Promise<Entity.Role>
   }
 
   async deleteRole(id: string, companyId?: string): Promise<void> {
-    // Note: If companyId is provided, the usecase should have already verified ownership via findRoleById
-    // But for double safety in delete operation if needed, we could use deleteMany or verify again.
-    // Since usecase checks existence with companyId, simple delete by ID is safe enough for now as ID is unique.
-    // However, if we want strict atomic check:
     if (companyId) {
-      const count = await prisma.role.count({ where: { id, companyId, deletedAt: null } })
-      if (count === 0) return // Or throw, but usecase handles "Not Found"
+      const [existing] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(roles)
+        .where(and(eq(roles.id, id), eq(roles.companyId, companyId), isNull(roles.deletedAt)))
+      if (existing.count === 0) return
     }
 
-    await prisma.role.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-      },
-    })
+    await db.update(roles).set({ deletedAt: new Date() }).where(eq(roles.id, id))
   }
 
   // Permission Methods
   async findPermissionList(req: Entity.GetPermissionReq): Promise<Entity.PermissionList> {
     const { pagination = {}, q } = req
     const { page = 1, per_page = 10 } = pagination
-    const skip = (page - 1) * per_page
-    const take = per_page
+    const offset = (page - 1) * per_page
 
-    const where: Prisma.PermissionWhereInput = {
-      deletedAt: null,
-    }
+    const conditions = [isNull(permissions.deletedAt)]
 
     if (q) {
-      where.name = {
-        contains: q,
-        mode: 'insensitive',
-      }
+      conditions.push(ilike(permissions.name, `%${q}%`))
     }
 
-    const [items, total] = await Promise.all([
-      prisma.permission.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { name: 'asc' },
-      }),
-      prisma.permission.count({ where }),
+    const where = and(...conditions)
+
+    const [items, countResult] = await Promise.all([
+      db
+        .select()
+        .from(permissions)
+        .where(where)
+        .orderBy(permissions.name)
+        .limit(per_page)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(permissions)
+        .where(where),
     ])
+
+    const total = countResult[0]?.count ?? 0
 
     return {
       items: items.map((item) => this.toPermissionEntity(item)),

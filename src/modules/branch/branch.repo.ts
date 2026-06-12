@@ -1,12 +1,13 @@
-import { Branch, Prisma, Status } from '@prisma/client'
+import { eq, and, ilike, isNull, sql } from 'drizzle-orm'
 
-import prisma from '@/common/prisma'
+import { db } from '@/common/db'
+import { branches } from '@/db/schema'
 import * as Entity from '@/entities/branch.entity'
 
 import { IBranchRepo } from './branch.contract'
 
 export default class BranchRepo implements IBranchRepo {
-  private toEntity(data: Branch): Entity.Branch {
+  private toEntity(data: typeof branches.$inferSelect): Entity.Branch {
     return {
       id: data.id,
       company_id: data.companyId,
@@ -26,31 +27,28 @@ export default class BranchRepo implements IBranchRepo {
   }
 
   async create(req: Entity.CreateBranchReq): Promise<Entity.Branch> {
-    const data = await prisma.branch.create({
-      data: {
+    const [row] = await db
+      .insert(branches)
+      .values({
         companyId: req.company_id,
         name: req.name,
         city: req.city,
-        capacity: req.capacity,
-        description: req.description,
-        address: req.address,
-        phone: req.phone,
-        email: req.email,
-        headCoach: req.head_coach,
-        status: req.status as Status,
-      },
-    })
-    return this.toEntity(data)
+        capacity: req.capacity ?? 0,
+        description: req.description ?? '',
+        address: req.address ?? '',
+        phone: req.phone ?? '',
+        email: req.email ?? '',
+        headCoach: req.head_coach ?? '',
+        status: (req.status as 'active' | 'inactive') ?? 'active',
+      })
+      .returning()
+    return this.toEntity(row)
   }
 
   async update(req: Entity.UpdateBranchReq): Promise<Entity.Branch> {
-    const data = await prisma.branch.update({
-      where: {
-        id: req.id,
-        companyId: req.company_id,
-        deletedAt: null,
-      },
-      data: {
+    const [row] = await db
+      .update(branches)
+      .set({
         name: req.name,
         city: req.city,
         capacity: req.capacity,
@@ -59,64 +57,67 @@ export default class BranchRepo implements IBranchRepo {
         phone: req.phone,
         email: req.email,
         headCoach: req.head_coach,
-        status: req.status as Status,
-      },
-    })
-    return this.toEntity(data)
+        status: req.status as 'active' | 'inactive',
+      })
+      .where(
+        and(
+          eq(branches.id, req.id),
+          eq(branches.companyId, req.company_id),
+          isNull(branches.deletedAt),
+        ),
+      )
+      .returning()
+    return this.toEntity(row)
   }
 
   async delete(id: string, companyId: string): Promise<void> {
-    await prisma.branch.update({
-      where: {
-        id,
-        companyId,
-        deletedAt: null,
-      },
-      data: {
-        deletedAt: new Date(),
-      },
-    })
+    await db
+      .update(branches)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(eq(branches.id, id), eq(branches.companyId, companyId), isNull(branches.deletedAt)),
+      )
   }
 
   async findById(id: string, companyId: string): Promise<Entity.Branch | null> {
-    const data = await prisma.branch.findFirst({
-      where: {
-        id,
-        companyId,
-        deletedAt: null,
-      },
-    })
-    if (!data) return null
-    return this.toEntity(data)
+    const [row] = await db
+      .select()
+      .from(branches)
+      .where(
+        and(eq(branches.id, id), eq(branches.companyId, companyId), isNull(branches.deletedAt)),
+      )
+      .limit(1)
+    return row ? this.toEntity(row) : null
   }
 
   async findList(req: Entity.GetBranchReq): Promise<Entity.BranchList> {
     const { pagination = {}, q, company_id } = req
     const { page = 1, per_page = 10 } = pagination
-    const skip = (page - 1) * per_page
-    const take = per_page
+    const offset = (page - 1) * per_page
 
-    const where: Prisma.BranchWhereInput = {
-      companyId: company_id,
-      deletedAt: null,
-    }
+    const conditions = [eq(branches.companyId, company_id), isNull(branches.deletedAt)]
 
     if (q) {
-      where.OR = [
-        { name: { contains: q, mode: 'insensitive' } },
-        { city: { contains: q, mode: 'insensitive' } },
-      ]
+      conditions.push(ilike(branches.name, `%${q}%`))
     }
 
-    const [items, total] = await Promise.all([
-      prisma.branch.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.branch.count({ where }),
+    const where = and(...conditions)
+
+    const [items, countResult] = await Promise.all([
+      db
+        .select()
+        .from(branches)
+        .where(where)
+        .orderBy(sql`${branches.createdAt} desc`)
+        .limit(per_page)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(branches)
+        .where(where),
     ])
+
+    const total = countResult[0]?.count ?? 0
 
     return {
       items: items.map((item) => this.toEntity(item)),

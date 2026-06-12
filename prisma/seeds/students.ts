@@ -1,18 +1,16 @@
-import { PrismaClient } from '@prisma/client'
+import { db } from '../../src/common/db'
+import { students } from '../../src/db/schema'
 
-export async function seedStudents(
-  prisma: PrismaClient,
-  companyId: string,
-  branchId: string
-) {
+export async function seedStudents(companyId: string, branchId: string) {
   console.log('Creating Students...')
-  await prisma.student.create({
-    data: {
+
+  await db.insert(students).values([
+    {
       firstName: 'Budi',
       lastName: 'Santoso',
       email: 'budi.santoso@example.com',
-      companyId: companyId,
-      branchId: branchId,
+      companyId,
+      branchId,
       gender: 'Male',
       dateOfBirth: new Date('2015-05-20'),
       birthPlace: 'Jakarta',
@@ -22,17 +20,14 @@ export async function seedStudents(
       parentPhone: '081234567892',
       parentEmail: 'agus.santoso@example.com',
       emergencyContactPhone: '081234567892',
-      status: 'active'
-    }
-  })
-
-  await prisma.student.create({
-    data: {
+      status: 'active',
+    },
+    {
       firstName: 'Siti',
       lastName: 'Aminah',
       email: 'siti.aminah@example.com',
-      companyId: companyId,
-      branchId: branchId,
+      companyId,
+      branchId,
       gender: 'Female',
       dateOfBirth: new Date('2016-08-15'),
       birthPlace: 'Bandung',
@@ -42,8 +37,9 @@ export async function seedStudents(
       parentPhone: '081234567893',
       parentEmail: 'rina.aminah@example.com',
       emergencyContactPhone: '081234567893',
-      status: 'active'
-    }
-  })
+      status: 'active',
+    },
+  ])
+
   console.log('Students created')
 }

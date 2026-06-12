@@ -1,12 +1,13 @@
-import { Prisma, Student, Status } from '@prisma/client'
+import { eq, and, or, ilike, isNull, gt, lte, sql } from 'drizzle-orm'
 
-import prisma from '@/common/prisma'
+import { db } from '@/common/db'
+import { students } from '@/db/schema'
 import * as Entity from '@/entities/student.entity'
 
 import { IStudentRepo } from './student.contract'
 
 export default class StudentRepo implements IStudentRepo {
-  private toEntity(data: Student): Entity.Student {
+  private toEntity(data: typeof students.$inferSelect): Entity.Student {
     return {
       id: data.id,
       company_id: data.companyId,
@@ -33,8 +34,9 @@ export default class StudentRepo implements IStudentRepo {
   }
 
   async create(req: Entity.CreateStudentReq): Promise<Entity.Student> {
-    const data = await prisma.student.create({
-      data: {
+    const [row] = await db
+      .insert(students)
+      .values({
         companyId: req.company_id,
         branchId: req.branch_id,
         firstName: req.first_name,
@@ -51,20 +53,16 @@ export default class StudentRepo implements IStudentRepo {
         emergencyContactPhone: req.emergency_contact_phone || '',
         bloodType: req.blood_type || '',
         medicalNotes: req.medical_notes || '',
-        status: (req.status as Status) || 'active',
-      },
-    })
-    return this.toEntity(data)
+        status: (req.status as Entity.StudentStatus) || 'active',
+      })
+      .returning()
+    return this.toEntity(row)
   }
 
   async update(req: Entity.UpdateStudentReq): Promise<Entity.Student> {
-    const data = await prisma.student.update({
-      where: {
-        id: req.id,
-        companyId: req.company_id,
-        deletedAt: null,
-      },
-      data: {
+    const [row] = await db
+      .update(students)
+      .set({
         branchId: req.branch_id,
         firstName: req.first_name,
         lastName: req.last_name,
@@ -80,91 +78,96 @@ export default class StudentRepo implements IStudentRepo {
         emergencyContactPhone: req.emergency_contact_phone,
         bloodType: req.blood_type,
         medicalNotes: req.medical_notes,
-        status: req.status as Status,
-      },
-    })
-    return this.toEntity(data)
+        status: req.status as Entity.StudentStatus,
+      })
+      .where(
+        and(
+          eq(students.id, req.id),
+          eq(students.companyId, req.company_id),
+          isNull(students.deletedAt),
+        ),
+      )
+      .returning()
+    return this.toEntity(row)
   }
 
   async delete(id: string, companyId: string): Promise<void> {
-    await prisma.student.update({
-      where: {
-        id,
-        companyId,
-        deletedAt: null,
-      },
-      data: {
-        deletedAt: new Date(),
-      },
-    })
+    await db
+      .update(students)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(eq(students.id, id), eq(students.companyId, companyId), isNull(students.deletedAt)),
+      )
   }
 
   async findById(id: string, companyId: string): Promise<Entity.Student | null> {
-    const data = await prisma.student.findFirst({
-      where: {
-        id,
-        companyId,
-        deletedAt: null,
-      },
-    })
-    if (!data) return null
-    return this.toEntity(data)
+    const [row] = await db
+      .select()
+      .from(students)
+      .where(
+        and(eq(students.id, id), eq(students.companyId, companyId), isNull(students.deletedAt)),
+      )
+      .limit(1)
+    return row ? this.toEntity(row) : null
   }
 
   async findByEmail(email: string): Promise<Entity.Student | null> {
-    const data = await prisma.student.findFirst({
-      where: {
-        email,
-        deletedAt: null,
-      },
-    })
-    if (!data) return null
-    return this.toEntity(data)
+    const [row] = await db
+      .select()
+      .from(students)
+      .where(and(eq(students.email, email), isNull(students.deletedAt)))
+      .limit(1)
+    return row ? this.toEntity(row) : null
   }
 
   async findList(req: Entity.GetStudentReq): Promise<Entity.StudentList> {
     const { pagination = {}, q, company_id, branch_id, age } = req
     const { page = 1, per_page = 10 } = pagination
-    const skip = (page - 1) * per_page
-    const take = per_page
+    const offset = (page - 1) * per_page
 
-    const where: Prisma.StudentWhereInput = {
-      companyId: company_id,
-      deletedAt: null,
-    }
+    const conditions = [eq(students.companyId, company_id), isNull(students.deletedAt)]
 
     if (q) {
-      where.OR = [
-        { firstName: { contains: q, mode: 'insensitive' } },
-        { lastName: { contains: q, mode: 'insensitive' } },
-        { email: { contains: q, mode: 'insensitive' } },
-      ]
+      const qCondition = or(
+        ilike(students.firstName, `%${q}%`),
+        ilike(students.lastName, `%${q}%`),
+        ilike(students.email, `%${q}%`),
+      )
+      if (qCondition) conditions.push(qCondition)
     }
 
     if (branch_id) {
-      where.branchId = branch_id
+      conditions.push(eq(students.branchId, branch_id))
     }
 
     if (age !== undefined) {
       const today = new Date()
       const maxDate = new Date(today.getFullYear() - age, today.getMonth(), today.getDate())
       const minDate = new Date(today.getFullYear() - age - 1, today.getMonth(), today.getDate())
-
-      where.dateOfBirth = {
-        gt: minDate,
-        lte: maxDate,
-      }
+      const ageCondition = and(
+        gt(students.dateOfBirth, minDate),
+        lte(students.dateOfBirth, maxDate),
+      )
+      if (ageCondition) conditions.push(ageCondition)
     }
 
-    const [items, total] = await Promise.all([
-      prisma.student.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.student.count({ where }),
+    const where = and(...conditions)
+
+    const [items, countResult] = await Promise.all([
+      db
+        .select()
+        .from(students)
+        .where(where)
+        .orderBy(sql`${students.createdAt} desc`)
+        .limit(per_page)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(students)
+        .where(where),
     ])
+
+    const total = countResult[0]?.count ?? 0
 
     return {
       items: items.map((item) => this.toEntity(item)),

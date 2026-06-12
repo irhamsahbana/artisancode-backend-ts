@@ -1,4 +1,4 @@
-import prisma from '@/common/prisma'
+import { disconnect } from '@/common/db'
 import logger from '@/config/logger'
 import { shutdownTelemetry } from '@/telemetry'
 
@@ -9,9 +9,9 @@ const shutdown = (server: ReturnType<typeof Bun.serve>) => {
     logger.info('HTTP server closed')
 
     // Here you will close other connections such as Database
-    logger.info('Disconnecting from Prisma ...')
-    await prisma.$disconnect()
-    logger.info('Prisma disconnected')
+    logger.info('Disconnecting from database ...')
+    await disconnect()
+    logger.info('Database disconnected')
 
     logger.info('Shutting down telemetry ...')
     await shutdownTelemetry()

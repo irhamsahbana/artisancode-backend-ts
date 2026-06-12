@@ -1,0 +1,25 @@
+// Re-export all tables from the tables directory
+// This file is kept for backward compatibility
+export {
+  activityLogs,
+  branches,
+  categories,
+  companies,
+  defaultId,
+  enrollments,
+  invoices,
+  payments,
+  permissions,
+  productPrices,
+  productPricings,
+  productSchedules,
+  products,
+  rolePermissions,
+  roles,
+  softDelete,
+  students,
+  teacherProducts,
+  teachers,
+  timestamps,
+  users,
+} from './tables/index'
