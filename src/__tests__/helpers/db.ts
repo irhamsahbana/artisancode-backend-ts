@@ -33,9 +33,9 @@ export async function createTestDb(): Promise<{
   const client = postgres(uri)
   const testDb = drizzle(client, { schema })
 
-  // Push schema via node to avoid bun compatibility issues
+  // Run migrations via node to avoid bun compatibility issues
   execSync(
-    `node -e "require('child_process').execSync('DATABASE_URL=\\"${uri}\\" npx drizzle-kit push --force', { cwd: '${process.cwd()}', stdio: 'pipe' })"`,
+    `node -e "require('child_process').execSync('DATABASE_URL=\\"${uri}\\" npx drizzle-kit migrate', { cwd: '${process.cwd()}', stdio: 'pipe' })"`,
     { encoding: 'utf-8', timeout: 30_000 },
   )
 

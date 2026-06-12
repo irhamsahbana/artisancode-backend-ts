@@ -113,3 +113,45 @@ export const users = pgTable(
     company: one(companies, { fields: [users.companyId], references: [companies.id] }),
   }))
   ```
+
+## Migration Workflow
+
+Use `drizzle-kit generate` + `drizzle-kit migrate` (NOT `push`) to track schema changes.
+
+### Commands
+
+```bash
+# Generate migration file from schema changes
+bun run drizzle:generate
+
+# Apply pending migrations to database
+bun run drizzle:migrate
+
+# Push schema directly (dev only, no migration file created)
+bun run drizzle:push
+```
+
+### When to use what
+
+| Command | Use Case | Creates Migration File |
+|---|---|---|
+| `drizzle:generate` + `drizzle:migrate` | Production, CI/CD, version control | Yes |
+| `drizzle:push` | Quick prototyping, local dev | No |
+
+### Workflow
+
+1. Make changes to schema files (`src/db/schema/tables/*.ts`, `enums.ts`, `relations.ts`)
+2. Run `bun run drizzle:generate` to generate SQL migration
+3. Review the generated SQL in `drizzle/migrations/`
+4. Run `bun run drizzle:migrate` to apply to database
+
+### Generated files
+
+```text
+drizzle/
+  migrations/
+    0000_migration_name.sql    ← SQL migration file
+    meta/
+      _journal.json            ← Migration journal (order + checksums)
+      0000_snapshot.json       ← Schema snapshot
+```
