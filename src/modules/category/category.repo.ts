@@ -1,6 +1,6 @@
 import { eq, and, ilike, isNull, sql } from 'drizzle-orm'
 
-import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import { categories } from '@/db/schema'
 import * as Entity from '@/entities/category.entity'
 
@@ -22,7 +22,7 @@ export default class CategoryRepo implements ICategoryRepo {
   }
 
   async create(req: Entity.CreateCategoryReq): Promise<Entity.Category> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .insert(categories)
       .values({
         companyId: req.company_id,
@@ -36,7 +36,7 @@ export default class CategoryRepo implements ICategoryRepo {
   }
 
   async update(req: Entity.UpdateCategoryReq): Promise<Entity.Category> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .update(categories)
       .set({
         parentId: req.parent_id,
@@ -56,7 +56,7 @@ export default class CategoryRepo implements ICategoryRepo {
   }
 
   async delete(id: string, companyId: string): Promise<void> {
-    await db
+    await getExecutor()
       .update(categories)
       .set({ deletedAt: new Date() })
       .where(
@@ -69,7 +69,7 @@ export default class CategoryRepo implements ICategoryRepo {
   }
 
   async findById(id: string, companyId: string): Promise<Entity.Category | null> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .select()
       .from(categories)
       .where(
@@ -100,15 +100,16 @@ export default class CategoryRepo implements ICategoryRepo {
 
     const where = and(...conditions)
 
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
-      db
+      exec
         .select()
         .from(categories)
         .where(where)
         .orderBy(sql`${categories.createdAt} desc`)
         .limit(per_page)
         .offset(offset),
-      db
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(categories)
         .where(where),

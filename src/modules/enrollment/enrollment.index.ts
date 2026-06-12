@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 
+import { transactor } from '@/common/executor'
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
 import { createPaymentGateway } from '@/integrations'
@@ -23,7 +24,14 @@ const invoiceRepo = new InvoiceRepo()
 const paymentGateway = createPaymentGateway()
 const invoiceUsecase = new InvoiceUsecase(invoiceRepo, paymentGateway)
 
-const usecase = new EnrollmentUsecase(repo, branchRepo, studentRepo, programRepo, invoiceUsecase)
+const usecase = new EnrollmentUsecase(
+  repo,
+  branchRepo,
+  studentRepo,
+  programRepo,
+  invoiceUsecase,
+  transactor,
+)
 const handler = new EnrollmentHandler(usecase)
 
 const router = new Hono()

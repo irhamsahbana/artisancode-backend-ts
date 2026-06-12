@@ -1,6 +1,6 @@
 import { eq, and, ilike, inArray, isNull, sql } from 'drizzle-orm'
 
-import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import { companies } from '@/db/schema'
 import * as Entity from '@/entities/company.entity'
 
@@ -9,7 +9,7 @@ import { ICompanyRepo } from './company.contract'
 export default class CompanyRepo implements ICompanyRepo {
   async create(req: Entity.CreateCompanyReq): Promise<Entity.Company> {
     const status = req.status === 'inactive' ? 'inactive' : 'active'
-    const [row] = await db.insert(companies).values({ name: req.name, status }).returning()
+    const [row] = await getExecutor().insert(companies).values({ name: req.name, status }).returning()
     return row as Entity.Company
   }
 
@@ -36,9 +36,10 @@ export default class CompanyRepo implements ICompanyRepo {
 
     const where = and(...conditions)
 
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
-      db.select().from(companies).where(where).limit(per_page).offset(offset),
-      db
+      exec.select().from(companies).where(where).limit(per_page).offset(offset),
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(companies)
         .where(where),
@@ -67,7 +68,8 @@ export default class CompanyRepo implements ICompanyRepo {
       conditions[0] = eq(companies.id, req.accessible_company_id)
     }
 
-    const [row] = await db
+    const exec = getExecutor()
+    const [row] = await exec
       .select()
       .from(companies)
       .where(and(...conditions))
@@ -82,7 +84,8 @@ export default class CompanyRepo implements ICompanyRepo {
       throw new Error('Company not found')
     }
 
-    const [row] = await db
+    const exec = getExecutor()
+    const [row] = await exec
       .update(companies)
       .set({
         ...req,
@@ -99,7 +102,8 @@ export default class CompanyRepo implements ICompanyRepo {
       throw new Error('Company not found')
     }
 
-    await db
+    const exec = getExecutor()
+    await exec
       .update(companies)
       .set({ deletedAt: new Date() })
       .where(eq(companies.id, req.id ?? ''))

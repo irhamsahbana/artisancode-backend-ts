@@ -1,7 +1,7 @@
 import { eq, and, or, ilike, isNull, sql } from 'drizzle-orm'
 import { v7 as uuidv7 } from 'uuid'
 
-import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import { branches, teachers } from '@/db/schema'
 import * as Entity from '@/entities/teacher.entity'
 
@@ -36,7 +36,7 @@ export default class TeacherRepo implements ITeacherRepo {
 
   async create(req: Entity.CreateTeacherReq): Promise<Entity.Teacher> {
     const id = req.id || uuidv7()
-    const [row] = await db
+    const [row] = await getExecutor()
       .insert(teachers)
       .values({
         id,
@@ -54,7 +54,7 @@ export default class TeacherRepo implements ITeacherRepo {
       .returning()
 
     // Fetch with branch
-    const [withBranch] = await db
+    const [withBranch] = await getExecutor()
       .select({
         id: teachers.id,
         companyId: teachers.companyId,
@@ -84,7 +84,7 @@ export default class TeacherRepo implements ITeacherRepo {
   }
 
   async update(req: Entity.UpdateTeacherReq): Promise<Entity.Teacher> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .update(teachers)
       .set({
         branchId: req.branch_id,
@@ -107,7 +107,7 @@ export default class TeacherRepo implements ITeacherRepo {
       .returning()
 
     // Fetch with branch
-    const [withBranch] = await db
+    const [withBranch] = await getExecutor()
       .select({
         id: teachers.id,
         companyId: teachers.companyId,
@@ -137,7 +137,7 @@ export default class TeacherRepo implements ITeacherRepo {
   }
 
   async delete(id: string, companyId: string): Promise<void> {
-    await db
+    await getExecutor()
       .update(teachers)
       .set({ deletedAt: new Date() })
       .where(
@@ -146,7 +146,7 @@ export default class TeacherRepo implements ITeacherRepo {
   }
 
   async findById(id: string, companyId: string): Promise<Entity.Teacher | null> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .select({
         id: teachers.id,
         companyId: teachers.companyId,
@@ -177,7 +177,7 @@ export default class TeacherRepo implements ITeacherRepo {
   }
 
   async findByEmail(email: string): Promise<Entity.Teacher | null> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .select()
       .from(teachers)
       .where(and(eq(teachers.email, email), isNull(teachers.deletedAt)))
@@ -207,8 +207,9 @@ export default class TeacherRepo implements ITeacherRepo {
 
     const where = and(...conditions)
 
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
-      db
+      exec
         .select({
           id: teachers.id,
           companyId: teachers.companyId,
@@ -235,7 +236,7 @@ export default class TeacherRepo implements ITeacherRepo {
         .orderBy(sql`${teachers.createdAt} desc`)
         .limit(per_page)
         .offset(offset),
-      db
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(teachers)
         .where(where),

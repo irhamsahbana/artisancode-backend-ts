@@ -1,6 +1,6 @@
 import { eq, and, ilike, inArray, isNull, sql } from 'drizzle-orm'
 
-import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import { permissions, rolePermissions, roles } from '@/db/schema'
 import * as Entity from '@/entities/role.entity'
 
@@ -50,7 +50,7 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
     }
 
     // Create role
-    const [role] = await db
+    const [role] = await getExecutor()
       .insert(roles)
       .values({
         name: req.name,
@@ -61,7 +61,7 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
 
     // Create role-permission associations
     if (req.permission_ids && req.permission_ids.length > 0) {
-      await db.insert(rolePermissions).values(
+      await getExecutor().insert(rolePermissions).values(
         req.permission_ids.map((permissionId) => ({
           roleId: role.id,
           permissionId,
@@ -95,15 +95,16 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
     const where = and(...conditions)
 
     // Fetch roles
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
-      db
+      exec
         .select()
         .from(roles)
         .where(where)
         .orderBy(sql`${roles.createdAt} desc`)
         .limit(per_page)
         .offset(offset),
-      db
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(roles)
         .where(where),
@@ -113,7 +114,7 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
     const roleIds = items.map((r) => r.id)
     const allRolePermissions =
       roleIds.length > 0
-        ? await db
+        ? await getExecutor()
             .select()
             .from(rolePermissions)
             .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
@@ -157,7 +158,7 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
       conditions.push(eq(roles.companyId, companyId))
     }
 
-    const [role] = await db
+    const [role] = await getExecutor()
       .select()
       .from(roles)
       .where(and(...conditions))
@@ -165,7 +166,7 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
     if (!role) return null
 
     // Fetch permissions
-    const rps = await db
+    const rps = await getExecutor()
       .select()
       .from(rolePermissions)
       .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
@@ -183,10 +184,10 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
 
     // Replace permissions if provided
     if (permission_ids) {
-      await db.delete(rolePermissions).where(eq(rolePermissions.roleId, id))
+      await getExecutor().delete(rolePermissions).where(eq(rolePermissions.roleId, id))
 
       if (permission_ids.length > 0) {
-        await db.insert(rolePermissions).values(
+        await getExecutor().insert(rolePermissions).values(
           permission_ids.map((permissionId) => ({
             roleId: id,
             permissionId,
@@ -201,7 +202,7 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
       whereConditions.push(eq(roles.companyId, company_id))
     }
 
-    await db
+    await getExecutor()
       .update(roles)
       .set(rest)
       .where(and(...whereConditions))
@@ -212,14 +213,14 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
 
   async deleteRole(id: string, companyId?: string): Promise<void> {
     if (companyId) {
-      const [existing] = await db
+      const [existing] = await getExecutor()
         .select({ count: sql<number>`count(*)::int` })
         .from(roles)
         .where(and(eq(roles.id, id), eq(roles.companyId, companyId), isNull(roles.deletedAt)))
       if (existing.count === 0) return
     }
 
-    await db.update(roles).set({ deletedAt: new Date() }).where(eq(roles.id, id))
+    await getExecutor().update(roles).set({ deletedAt: new Date() }).where(eq(roles.id, id))
   }
 
   // Permission Methods
@@ -236,15 +237,16 @@ export default class RoleAndPermissionRepo implements IRoleAndPermissionRepo {
 
     const where = and(...conditions)
 
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
-      db
+      exec
         .select()
         .from(permissions)
         .where(where)
         .orderBy(permissions.name)
         .limit(per_page)
         .offset(offset),
-      db
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(permissions)
         .where(where),

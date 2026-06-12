@@ -1,5 +1,6 @@
 import { AppError } from '@/common/app_error'
 import { selectValidPrice } from '@/common/utils/select_valid_price'
+import { ITransactor } from '@/contracts/integration'
 import * as Entity from '@/entities/enrollment.entity'
 import { Invoice } from '@/entities/invoice.entity'
 import { Program, ProgramStatuses } from '@/entities/program.entity'
@@ -19,6 +20,7 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
     private studentRepo: IStudentRepo,
     private programRepo: IProgramRepo,
     private invoiceUsecase: IInvoiceUsecase,
+    private transactor: ITransactor,
   ) {}
 
   async create(req: Entity.CreateEnrollmentReq): Promise<Entity.Enrollment> {
@@ -132,26 +134,31 @@ export default class EnrollmentUsecase implements IEnrollmentUsecase {
         await this.checkScheduleConflict(program, activeEnrollments)
       }
 
-      const enrollment = await this.repo.create(req)
+      // Wrap mutations in a transaction — enrollment + invoice are created atomically
+      const result = await this.transactor.withinTransaction(async () => {
+        const enrollment = await this.repo.create(req)
 
-      let invoice = undefined
-      if (req.generate_invoice && selectedPrice) {
-        const amount = selectedPrice.price
-        const invoiceData = await this.invoiceUsecase.create({
-          company_id: req.company_id,
-          branch_id: req.branch_id,
-          enrollment_id: enrollment.id,
-          amount,
-          currency: req.currency || 'IDR',
-          due_date: req.next_billing_date || req.enrollment_date || new Date(),
-          issued_date: new Date(),
-          status: 'pending',
-          user: req.user,
-        })
-        invoice = await this.invoiceUsecase.generatePaymentLink(invoiceData.id, req.company_id)
-      }
+        let invoice = undefined
+        if (req.generate_invoice && selectedPrice) {
+          const amount = selectedPrice.price
+          const invoiceData = await this.invoiceUsecase.create({
+            company_id: req.company_id,
+            branch_id: req.branch_id,
+            enrollment_id: enrollment.id,
+            amount,
+            currency: req.currency || 'IDR',
+            due_date: req.next_billing_date || req.enrollment_date || new Date(),
+            issued_date: new Date(),
+            status: 'pending',
+            user: req.user,
+          })
+          invoice = await this.invoiceUsecase.generatePaymentLink(invoiceData.id, req.company_id)
+        }
 
-      return { ...enrollment, latest_invoice: invoice }
+        return { ...enrollment, latest_invoice: invoice }
+      })
+
+      return result
     })
   }
 

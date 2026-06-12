@@ -25,7 +25,15 @@ const client = postgres(env.DATABASE.URL ?? '', connectionConfig)
 // ---------------------------------------------------------------------------
 // Drizzle ORM instance with schema for type-safe relational queries
 // ---------------------------------------------------------------------------
-export const db = drizzle(client, { schema })
+export let db = drizzle(client, { schema })
+
+/**
+ * Replace the global db singleton (used by integration tests to swap in a
+ * Testcontainers-backed database).
+ */
+export const resetDb = (newDb: typeof db): void => {
+  db = newDb
+}
 
 // Graceful shutdown helper
 export const disconnect = async (): Promise<void> => {

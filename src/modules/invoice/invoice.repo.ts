@@ -1,6 +1,6 @@
 import { eq, and, inArray, isNull, sql } from 'drizzle-orm'
 
-import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import { generateInvoiceNumber } from '@/common/utils/invoice.util'
 import { enrollments, invoices, productPricings, products, students } from '@/db/schema'
 import {
@@ -16,7 +16,8 @@ import { IInvoiceRepo } from './invoice.contract'
 
 export default class InvoiceRepo implements IInvoiceRepo {
   async create(data: CreateInvoiceReq): Promise<Invoice> {
-    const [row] = await db
+    const exec = getExecutor()
+    const [row] = await exec
       .insert(invoices)
       .values({
         companyId: data.company_id,
@@ -35,7 +36,8 @@ export default class InvoiceRepo implements IInvoiceRepo {
   }
 
   async findById(id: string, companyId: string): Promise<Invoice | null> {
-    const [row] = await db
+    const exec = getExecutor()
+    const [row] = await exec
       .select()
       .from(invoices)
       .where(
@@ -45,7 +47,7 @@ export default class InvoiceRepo implements IInvoiceRepo {
     if (!row) return null
 
     // Fetch enrollment with relations
-    const [enrollment] = await db
+    const [enrollment] = await exec
       .select()
       .from(enrollments)
       .where(eq(enrollments.id, row.enrollmentId))
@@ -58,21 +60,21 @@ export default class InvoiceRepo implements IInvoiceRepo {
     if (enrollment) {
       ;[student, product, pricing] = await Promise.all([
         enrollment.studentId
-          ? db
+          ? exec
               .select()
               .from(students)
               .where(eq(students.id, enrollment.studentId))
               .then((r) => r[0] ?? null)
           : null,
         enrollment.productId
-          ? db
+          ? exec
               .select()
               .from(products)
               .where(eq(products.id, enrollment.productId))
               .then((r) => r[0] ?? null)
           : null,
         enrollment.productPricingId
-          ? db
+          ? exec
               .select()
               .from(productPricings)
               .where(eq(productPricings.id, enrollment.productPricingId))
@@ -95,7 +97,8 @@ export default class InvoiceRepo implements IInvoiceRepo {
   }
 
   async findByInvoiceNumber(invoiceNumber: string, companyId: string): Promise<Invoice | null> {
-    const [row] = await db
+    const exec = getExecutor()
+    const [row] = await exec
       .select()
       .from(invoices)
       .where(
@@ -110,7 +113,8 @@ export default class InvoiceRepo implements IInvoiceRepo {
   }
 
   async findActiveByEnrollment(enrollmentId: string, companyId: string): Promise<Invoice | null> {
-    const [row] = await db
+    const exec = getExecutor()
+    const [row] = await exec
       .select()
       .from(invoices)
       .where(
@@ -141,15 +145,16 @@ export default class InvoiceRepo implements IInvoiceRepo {
 
     const where = and(...conditions)
 
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
-      db
+      exec
         .select()
         .from(invoices)
         .where(where)
         .orderBy(sql`${invoices.createdAt} desc`)
         .limit(per_page)
         .offset(offset),
-      db
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(invoices)
         .where(where),
@@ -176,7 +181,8 @@ export default class InvoiceRepo implements IInvoiceRepo {
     if (data.doku_request_id) updateData.dokuRequestId = data.doku_request_id
     if (data.payment_url) updateData.paymentUrl = data.payment_url
 
-    const [row] = await db
+    const exec = getExecutor()
+    const [row] = await exec
       .update(invoices)
       .set(updateData)
       .where(eq(invoices.id, data.id))

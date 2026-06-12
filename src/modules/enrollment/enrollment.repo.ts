@@ -1,6 +1,6 @@
 import { eq, and, isNull, sql } from 'drizzle-orm'
 
-import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import { enrollments, students } from '@/db/schema'
 import * as Entity from '@/entities/enrollment.entity'
 
@@ -13,7 +13,8 @@ import {
 
 export default class EnrollmentRepo implements IEnrollmentRepo {
   async create(req: Entity.CreateEnrollmentReq): Promise<Entity.Enrollment> {
-    const [row] = await db
+    const exec = getExecutor()
+    const [row] = await exec
       .insert(enrollments)
       .values({
         companyId: req.company_id,
@@ -37,7 +38,8 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
   }
 
   async update(req: Entity.UpdateEnrollmentReq): Promise<Entity.Enrollment> {
-    const [row] = await db
+    const exec = getExecutor()
+    const [row] = await exec
       .update(enrollments)
       .set({
         branchId: req.branch_id,
@@ -62,7 +64,8 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
   }
 
   async delete(id: string, companyId: string): Promise<void> {
-    await db
+    const exec = getExecutor()
+    await exec
       .update(enrollments)
       .set({ deletedAt: new Date() })
       .where(
@@ -86,7 +89,8 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
     companyId: string,
   ): Promise<Entity.Enrollment | null> {
     // First check if student has active/on_leave status
-    const [student] = await db
+    const exec = getExecutor()
+    const [student] = await exec
       .select()
       .from(students)
       .where(
@@ -179,9 +183,10 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
 
     const where = and(...conditions)
 
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
       findEnrollmentsWithRelations(where, { limit: per_page, offset }),
-      db
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(enrollments)
         .where(where),
@@ -201,7 +206,8 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
   }
 
   async countActiveByProgram(programId: string, companyId: string): Promise<number> {
-    const [result] = await db
+    const exec = getExecutor()
+    const [result] = await exec
       .select({ count: sql<number>`count(*)::int` })
       .from(enrollments)
       .where(
@@ -216,7 +222,8 @@ export default class EnrollmentRepo implements IEnrollmentRepo {
   }
 
   async countActiveByPricing(pricingId: string, companyId: string): Promise<number> {
-    const [result] = await db
+    const exec = getExecutor()
+    const [result] = await exec
       .select({ count: sql<number>`count(*)::int` })
       .from(enrollments)
       .where(

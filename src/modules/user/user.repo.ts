@@ -1,6 +1,7 @@
 import { eq, and, or, isNull, sql } from 'drizzle-orm'
 
 import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import { companies, permissions, rolePermissions, roles, users } from '@/db/schema'
 import * as Entity from '@/entities/user.entity'
 
@@ -14,7 +15,7 @@ export default class UserRepo implements IUserRepo {
   }
 
   async create(req: Entity.CreateUserReq): Promise<Entity.User> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .insert(users)
       .values({
         name: req.name,
@@ -31,7 +32,7 @@ export default class UserRepo implements IUserRepo {
   }
 
   async checkExistingUser(username: string, email: string): Promise<boolean> {
-    const [result] = await db
+    const [result] = await getExecutor()
       .select({ count: sql<number>`count(*)::int` })
       .from(users)
       .where(or(eq(users.username, username), eq(users.email, email)))
@@ -112,15 +113,16 @@ export default class UserRepo implements IUserRepo {
 
     const where = and(...conditions)
 
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
-      db
+      exec
         .select()
         .from(users)
         .where(where)
         .orderBy(sql`${users.createdAt} desc`)
         .limit(per_page)
         .offset(offset),
-      db
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(users)
         .where(where),
@@ -145,7 +147,7 @@ export default class UserRepo implements IUserRepo {
       conditions.push(eq(users.companyId, companyId))
     }
 
-    const [row] = await db
+    const [row] = await getExecutor()
       .select()
       .from(users)
       .where(and(...conditions))
@@ -154,7 +156,7 @@ export default class UserRepo implements IUserRepo {
   }
 
   async findByUsername(username: string): Promise<Entity.User | null> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .select()
       .from(users)
       .where(and(eq(users.username, username), isNull(users.deletedAt)))
@@ -165,7 +167,7 @@ export default class UserRepo implements IUserRepo {
   async findByUsernameForLogin(
     username: string,
   ): Promise<(Entity.User & { password: string }) | null> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .select()
       .from(users)
       .where(and(eq(users.username, username), isNull(users.deletedAt)))

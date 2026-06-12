@@ -1,6 +1,6 @@
 import { eq, and, ilike, isNull, sql } from 'drizzle-orm'
 
-import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import { branches } from '@/db/schema'
 import * as Entity from '@/entities/branch.entity'
 
@@ -27,7 +27,7 @@ export default class BranchRepo implements IBranchRepo {
   }
 
   async create(req: Entity.CreateBranchReq): Promise<Entity.Branch> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .insert(branches)
       .values({
         companyId: req.company_id,
@@ -46,7 +46,7 @@ export default class BranchRepo implements IBranchRepo {
   }
 
   async update(req: Entity.UpdateBranchReq): Promise<Entity.Branch> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .update(branches)
       .set({
         name: req.name,
@@ -71,7 +71,7 @@ export default class BranchRepo implements IBranchRepo {
   }
 
   async delete(id: string, companyId: string): Promise<void> {
-    await db
+    await getExecutor()
       .update(branches)
       .set({ deletedAt: new Date() })
       .where(
@@ -80,7 +80,7 @@ export default class BranchRepo implements IBranchRepo {
   }
 
   async findById(id: string, companyId: string): Promise<Entity.Branch | null> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .select()
       .from(branches)
       .where(
@@ -103,15 +103,16 @@ export default class BranchRepo implements IBranchRepo {
 
     const where = and(...conditions)
 
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
-      db
+      exec
         .select()
         .from(branches)
         .where(where)
         .orderBy(sql`${branches.createdAt} desc`)
         .limit(per_page)
         .offset(offset),
-      db
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(branches)
         .where(where),

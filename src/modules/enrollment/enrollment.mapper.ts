@@ -1,6 +1,6 @@
 import { and, eq, isNull } from 'drizzle-orm'
 
-import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import { enrollments, productPricings, productPrices, products, students } from '@/db/schema'
 import * as Entity from '@/entities/enrollment.entity'
 
@@ -102,7 +102,8 @@ export async function findEnrollmentWithRelations(
     conditions.push(eq(enrollments.companyId, companyId))
   }
 
-  const [enrollment] = await db
+  const exec = getExecutor()
+  const [enrollment] = await exec
     .select()
     .from(enrollments)
     .where(and(...conditions))
@@ -111,21 +112,21 @@ export async function findEnrollmentWithRelations(
 
   const [student, product, pricing] = await Promise.all([
     enrollment.studentId
-      ? db
+      ? exec
           .select()
           .from(students)
           .where(eq(students.id, enrollment.studentId))
           .then((r) => r[0] ?? null)
       : null,
     enrollment.productId
-      ? db
+      ? exec
           .select()
           .from(products)
           .where(eq(products.id, enrollment.productId))
           .then((r) => r[0] ?? null)
       : null,
     enrollment.productPricingId
-      ? db
+      ? exec
           .select()
           .from(productPricings)
           .where(eq(productPricings.id, enrollment.productPricingId))
@@ -135,7 +136,7 @@ export async function findEnrollmentWithRelations(
 
   let prices: (typeof productPrices.$inferSelect)[] = []
   if (pricing) {
-    prices = await db
+    prices = await exec
       .select()
       .from(productPrices)
       .where(eq(productPrices.productPricingId, pricing.id))
@@ -156,7 +157,8 @@ export async function findEnrollmentsWithRelations(
   where: ReturnType<typeof and>,
   options?: { orderBy?: unknown; limit?: number; offset?: number },
 ): Promise<EnrollmentWithRelations[]> {
-  const items = await db
+  const exec = getExecutor()
+  const items = await exec
     .select()
     .from(enrollments)
     .where(where)
@@ -168,21 +170,21 @@ export async function findEnrollmentsWithRelations(
   for (const enrollment of items) {
     const [student, product, pricing] = await Promise.all([
       enrollment.studentId
-        ? db
+        ? exec
             .select()
             .from(students)
             .where(eq(students.id, enrollment.studentId))
             .then((r) => r[0] ?? null)
         : null,
       enrollment.productId
-        ? db
+        ? exec
             .select()
             .from(products)
             .where(eq(products.id, enrollment.productId))
             .then((r) => r[0] ?? null)
         : null,
       enrollment.productPricingId
-        ? db
+        ? exec
             .select()
             .from(productPricings)
             .where(eq(productPricings.id, enrollment.productPricingId))
@@ -192,7 +194,7 @@ export async function findEnrollmentsWithRelations(
 
     let prices: (typeof productPrices.$inferSelect)[] = []
     if (pricing) {
-      prices = await db
+      prices = await exec
         .select()
         .from(productPrices)
         .where(eq(productPrices.productPricingId, pricing.id))

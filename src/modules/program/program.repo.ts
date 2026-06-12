@@ -1,6 +1,7 @@
 import { eq, and, inArray, isNull, ilike, sql } from 'drizzle-orm'
 
 import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import {
   productPrices as productPricesTable,
   productPricings as productPricingsTable,
@@ -16,7 +17,7 @@ import { toProgramEntity, type ProductWithRelations } from './program.mapper'
 
 export default class ProgramRepo implements IProgramRepo {
   private async fetchProductWithRelations(productId: string): Promise<ProductWithRelations> {
-    const [product] = await db
+    const [product] = await getExecutor()
       .select()
       .from(productsTable)
       .where(eq(productsTable.id, productId))
@@ -44,7 +45,7 @@ export default class ProgramRepo implements IProgramRepo {
     const pricingIds = pricings.map((p) => p.id)
     const allPrices =
       pricingIds.length > 0
-        ? await db
+        ? await getExecutor()
             .select()
             .from(productPricesTable)
             .where(inArray(productPricesTable.productPricingId, pricingIds))
@@ -144,7 +145,7 @@ export default class ProgramRepo implements IProgramRepo {
 
   async update(req: Entity.UpdateProgramReq): Promise<Entity.Program> {
     const { id, company_id, ...rest } = req
-    await db
+    await getExecutor()
       .update(productsTable)
       .set({
         branchId: rest.branch_id,
@@ -346,7 +347,7 @@ export default class ProgramRepo implements IProgramRepo {
   }
 
   async delete(id: string, companyId: string): Promise<void> {
-    await db
+    await getExecutor()
       .update(productsTable)
       .set({ deletedAt: new Date() })
       .where(
@@ -359,7 +360,7 @@ export default class ProgramRepo implements IProgramRepo {
   }
 
   async findById(id: string, companyId: string): Promise<Entity.Program | null> {
-    const [product] = await db
+    const [product] = await getExecutor()
       .select()
       .from(productsTable)
       .where(
@@ -393,7 +394,7 @@ export default class ProgramRepo implements IProgramRepo {
       }
     }
 
-    const [product] = await db
+    const [product] = await getExecutor()
       .select()
       .from(productsTable)
       .where(and(...conditions))
@@ -421,15 +422,16 @@ export default class ProgramRepo implements IProgramRepo {
 
     const where = and(...conditions)
 
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
-      db
+      exec
         .select()
         .from(productsTable)
         .where(where)
         .orderBy(sql`${productsTable.createdAt} desc`)
         .limit(per_page)
         .offset(offset),
-      db
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(productsTable)
         .where(where),
@@ -454,7 +456,7 @@ export default class ProgramRepo implements IProgramRepo {
   }
 
   async addSchedule(req: Entity.AddScheduleReq): Promise<Entity.ProgramSchedule> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .insert(productSchedulesTable)
       .values({
         productId: req.program_id,
@@ -526,7 +528,7 @@ export default class ProgramRepo implements IProgramRepo {
   }
 
   async addPrice(req: Entity.AddPriceReq): Promise<Entity.ProgramPrice> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .insert(productPricesTable)
       .values({
         productPricingId: req.pricing_id,
@@ -550,7 +552,7 @@ export default class ProgramRepo implements IProgramRepo {
 
   async updatePrice(req: Entity.UpdatePriceReq): Promise<Entity.ProgramPrice> {
     // Verify ownership via joins
-    const [existing] = await db
+    const [existing] = await getExecutor()
       .select({ id: productPricesTable.id })
       .from(productPricesTable)
       .innerJoin(
@@ -570,7 +572,7 @@ export default class ProgramRepo implements IProgramRepo {
 
     if (!existing) throw new Error('Price not found')
 
-    const [row] = await db
+    const [row] = await getExecutor()
       .update(productPricesTable)
       .set({
         price: req.price !== undefined ? String(req.price) : undefined,
@@ -593,7 +595,7 @@ export default class ProgramRepo implements IProgramRepo {
 
   async deleteSchedule(programId: string, scheduleId: string, companyId: string): Promise<void> {
     // Verify ownership and delete
-    const [existing] = await db
+    const [existing] = await getExecutor()
       .select({ id: productSchedulesTable.id })
       .from(productSchedulesTable)
       .innerJoin(productsTable, eq(productSchedulesTable.productId, productsTable.id))
@@ -607,13 +609,13 @@ export default class ProgramRepo implements IProgramRepo {
       .limit(1)
 
     if (existing) {
-      await db.delete(productSchedulesTable).where(eq(productSchedulesTable.id, scheduleId))
+      await getExecutor().delete(productSchedulesTable).where(eq(productSchedulesTable.id, scheduleId))
     }
   }
 
   async deletePricing(programId: string, pricingId: string, companyId: string): Promise<void> {
     // Verify ownership and soft delete
-    const [existing] = await db
+    const [existing] = await getExecutor()
       .select({ id: productPricingsTable.id })
       .from(productPricingsTable)
       .innerJoin(productsTable, eq(productPricingsTable.productId, productsTable.id))
@@ -628,7 +630,7 @@ export default class ProgramRepo implements IProgramRepo {
       .limit(1)
 
     if (existing) {
-      await db
+      await getExecutor()
         .update(productPricingsTable)
         .set({ deletedAt: new Date() })
         .where(eq(productPricingsTable.id, pricingId))

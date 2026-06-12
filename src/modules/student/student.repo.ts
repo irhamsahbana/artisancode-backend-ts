@@ -1,6 +1,6 @@
 import { eq, and, or, ilike, isNull, gt, lte, sql } from 'drizzle-orm'
 
-import { db } from '@/common/db'
+import { getExecutor } from '@/common/executor'
 import { students } from '@/db/schema'
 import * as Entity from '@/entities/student.entity'
 
@@ -34,7 +34,7 @@ export default class StudentRepo implements IStudentRepo {
   }
 
   async create(req: Entity.CreateStudentReq): Promise<Entity.Student> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .insert(students)
       .values({
         companyId: req.company_id,
@@ -60,7 +60,7 @@ export default class StudentRepo implements IStudentRepo {
   }
 
   async update(req: Entity.UpdateStudentReq): Promise<Entity.Student> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .update(students)
       .set({
         branchId: req.branch_id,
@@ -92,7 +92,7 @@ export default class StudentRepo implements IStudentRepo {
   }
 
   async delete(id: string, companyId: string): Promise<void> {
-    await db
+    await getExecutor()
       .update(students)
       .set({ deletedAt: new Date() })
       .where(
@@ -101,7 +101,7 @@ export default class StudentRepo implements IStudentRepo {
   }
 
   async findById(id: string, companyId: string): Promise<Entity.Student | null> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .select()
       .from(students)
       .where(
@@ -112,7 +112,7 @@ export default class StudentRepo implements IStudentRepo {
   }
 
   async findByEmail(email: string): Promise<Entity.Student | null> {
-    const [row] = await db
+    const [row] = await getExecutor()
       .select()
       .from(students)
       .where(and(eq(students.email, email), isNull(students.deletedAt)))
@@ -153,15 +153,16 @@ export default class StudentRepo implements IStudentRepo {
 
     const where = and(...conditions)
 
+    const exec = getExecutor()
     const [items, countResult] = await Promise.all([
-      db
+      exec
         .select()
         .from(students)
         .where(where)
         .orderBy(sql`${students.createdAt} desc`)
         .limit(per_page)
         .offset(offset),
-      db
+      exec
         .select({ count: sql<number>`count(*)::int` })
         .from(students)
         .where(where),
