@@ -133,10 +133,45 @@ bun run drizzle:push
 
 ### When to use what
 
-| Command | Use Case | Creates Migration File |
-|---|---|---|
-| `drizzle:generate` + `drizzle:migrate` | Production, CI/CD, version control | Yes |
-| `drizzle:push` | Quick prototyping, local dev | No |
+| Command | Use Case | Creates Migration File | Safe for Production |
+|---|---|---|---|
+| `drizzle:generate` + `drizzle:migrate` | Production, CI/CD, version control | Yes | ✅ Yes |
+| `drizzle:push` | Quick prototyping, local dev | No | ❌ **No** |
+
+### ⚠️ Warning: Why `drizzle:push` is Dangerous in Production
+
+`drizzle:push` **should NEVER be used in production or on databases with important data**.
+
+**Risks:**
+
+1. **No migration history** - Changes are not tracked, making audits impossible
+2. **No rollback capability** - Cannot undo changes if something goes wrong
+3. **Data loss risk** - Removing columns or tables deletes data permanently
+4. **Team collaboration issues** - Other developers won't know about schema changes
+5. **CI/CD problems** - Cannot be integrated into automated deployment workflows
+
+**Safe usage:**
+
+- ✅ Local development (when iterating quickly)
+- ✅ Test databases (setup/teardown)
+- ✅ Prototyping (exploring schema designs)
+
+**Never use for:**
+
+- ❌ Production databases
+- ❌ Staging environments
+- ❌ Any database with important data
+
+**Best practice:**
+
+```bash
+# Always backup before production changes
+pg_dump your_database > backup_$(date +%Y%m%d).sql
+
+# Then use proper migration workflow
+bun run drizzle:generate
+bun run drizzle:migrate
+```
 
 ### Workflow
 
