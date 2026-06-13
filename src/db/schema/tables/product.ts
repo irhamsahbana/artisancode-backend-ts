@@ -1,8 +1,6 @@
 import { index, integer, pgTable, text, uuid } from 'drizzle-orm/pg-core'
 
 import { productStatusEnum } from '../enums'
-import { branches } from './branch'
-import { companies } from './company'
 import { defaultId, softDelete, timestamps } from './helpers'
 
 // ---------------------------------------------------------------------------
@@ -12,10 +10,8 @@ export const products = pgTable(
   'products',
   {
     id: defaultId,
-    companyId: uuid('company_id')
-      .notNull()
-      .references(() => companies.id),
-    branchId: uuid('branch_id').references(() => branches.id),
+    companyId: uuid('company_id').notNull(),
+    branchId: uuid('branch_id'),
     name: text('name').notNull().default(''),
     description: text('description').notNull().default(''),
     capacity: integer('capacity').default(0),

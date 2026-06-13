@@ -23,7 +23,7 @@ import {
 } from './tables'
 
 // ---------------------------------------------------------------------------
-// Company
+// Company (root — no FK references, kept for clarity)
 // ---------------------------------------------------------------------------
 export const companiesRelations = relations(companies, ({ many }) => ({
   branches: many(branches),
@@ -40,10 +40,9 @@ export const companiesRelations = relations(companies, ({ many }) => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Branch
+// Branch (FK to company removed — no cross-module one() relation)
 // ---------------------------------------------------------------------------
-export const branchesRelations = relations(branches, ({ one, many }) => ({
-  company: one(companies, { fields: [branches.companyId], references: [companies.id] }),
+export const branchesRelations = relations(branches, ({ many }) => ({
   users: many(users),
   products: many(products),
   teachers: many(teachers),
@@ -55,10 +54,9 @@ export const branchesRelations = relations(branches, ({ one, many }) => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Role
+// Role (FK to company removed)
 // ---------------------------------------------------------------------------
-export const rolesRelations = relations(roles, ({ one, many }) => ({
-  company: one(companies, { fields: [roles.companyId], references: [companies.id] }),
+export const rolesRelations = relations(roles, ({ many }) => ({
   users: many(users),
   rolePermissions: many(rolePermissions),
 }))
@@ -71,7 +69,7 @@ export const permissionsRelations = relations(permissions, ({ many }) => ({
 }))
 
 // ---------------------------------------------------------------------------
-// RolePermission
+// RolePermission (intra-module — kept)
 // ---------------------------------------------------------------------------
 export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => ({
   role: one(roles, { fields: [rolePermissions.roleId], references: [roles.id] }),
@@ -82,47 +80,37 @@ export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => 
 }))
 
 // ---------------------------------------------------------------------------
-// User
+// User (FKs to company, branch, role removed)
 // ---------------------------------------------------------------------------
-export const usersRelations = relations(users, ({ one, many }) => ({
-  company: one(companies, { fields: [users.companyId], references: [companies.id] }),
-  branch: one(branches, { fields: [users.branchId], references: [branches.id] }),
-  role: one(roles, { fields: [users.roleId], references: [roles.id] }),
+export const usersRelations = relations(users, ({ many }) => ({
   activityLogs: many(activityLogs),
 }))
 
 // ---------------------------------------------------------------------------
-// Student
+// Student (FKs to company, branch removed)
 // ---------------------------------------------------------------------------
-export const studentsRelations = relations(students, ({ one, many }) => ({
-  company: one(companies, { fields: [students.companyId], references: [companies.id] }),
-  branch: one(branches, { fields: [students.branchId], references: [branches.id] }),
+export const studentsRelations = relations(students, ({ many }) => ({
   enrollments: many(enrollments),
 }))
 
 // ---------------------------------------------------------------------------
-// Teacher
+// Teacher (FKs to company, branch removed)
 // ---------------------------------------------------------------------------
-export const teachersRelations = relations(teachers, ({ one, many }) => ({
-  company: one(companies, { fields: [teachers.companyId], references: [companies.id] }),
-  branch: one(branches, { fields: [teachers.branchId], references: [branches.id] }),
+export const teachersRelations = relations(teachers, ({ many }) => ({
   teacherProducts: many(teacherProducts),
 }))
 
 // ---------------------------------------------------------------------------
-// TeacherProduct
+// TeacherProduct (teacher FK removed — only product remains intra-module)
 // ---------------------------------------------------------------------------
 export const teacherProductsRelations = relations(teacherProducts, ({ one }) => ({
-  teacher: one(teachers, { fields: [teacherProducts.teacherId], references: [teachers.id] }),
   product: one(products, { fields: [teacherProducts.productId], references: [products.id] }),
 }))
 
 // ---------------------------------------------------------------------------
-// Product
+// Product (FKs to company, branch removed)
 // ---------------------------------------------------------------------------
-export const productsRelations = relations(products, ({ one, many }) => ({
-  company: one(companies, { fields: [products.companyId], references: [companies.id] }),
-  branch: one(branches, { fields: [products.branchId], references: [branches.id] }),
+export const productsRelations = relations(products, ({ many }) => ({
   pricings: many(productPricings),
   enrollments: many(enrollments),
   productSchedules: many(productSchedules),
@@ -130,7 +118,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
 }))
 
 // ---------------------------------------------------------------------------
-// ProductPricing
+// ProductPricing (intra-module — kept)
 // ---------------------------------------------------------------------------
 export const productPricingsRelations = relations(productPricings, ({ one, many }) => ({
   product: one(products, { fields: [productPricings.productId], references: [products.id] }),
@@ -139,7 +127,7 @@ export const productPricingsRelations = relations(productPricings, ({ one, many 
 }))
 
 // ---------------------------------------------------------------------------
-// ProductPrice
+// ProductPrice (intra-module — kept)
 // ---------------------------------------------------------------------------
 export const productPricesRelations = relations(productPrices, ({ one }) => ({
   productPricing: one(productPricings, {
@@ -149,17 +137,16 @@ export const productPricesRelations = relations(productPrices, ({ one }) => ({
 }))
 
 // ---------------------------------------------------------------------------
-// ProductSchedule
+// ProductSchedule (intra-module — kept)
 // ---------------------------------------------------------------------------
 export const productSchedulesRelations = relations(productSchedules, ({ one }) => ({
   product: one(products, { fields: [productSchedules.productId], references: [products.id] }),
 }))
 
 // ---------------------------------------------------------------------------
-// Category (self-referential)
+// Category (FK to company removed — self-referential kept)
 // ---------------------------------------------------------------------------
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
-  company: one(companies, { fields: [categories.companyId], references: [companies.id] }),
   parent: one(categories, {
     fields: [categories.parentId],
     references: [categories.id],
@@ -169,52 +156,33 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Enrollment
+// Enrollment (FKs to company, branch, student, product, productPricing removed)
 // ---------------------------------------------------------------------------
-export const enrollmentsRelations = relations(enrollments, ({ one, many }) => ({
-  company: one(companies, { fields: [enrollments.companyId], references: [companies.id] }),
-  branch: one(branches, { fields: [enrollments.branchId], references: [branches.id] }),
-  student: one(students, { fields: [enrollments.studentId], references: [students.id] }),
-  product: one(products, { fields: [enrollments.productId], references: [products.id] }),
-  productPricing: one(productPricings, {
-    fields: [enrollments.productPricingId],
-    references: [productPricings.id],
-  }),
+export const enrollmentsRelations = relations(enrollments, ({ many }) => ({
   invoices: many(invoices),
 }))
 
 // ---------------------------------------------------------------------------
-// Invoice
+// Invoice (FKs to company, branch removed — enrollment kept as intra-module)
 // ---------------------------------------------------------------------------
 export const invoicesRelations = relations(invoices, ({ one, many }) => ({
-  company: one(companies, { fields: [invoices.companyId], references: [companies.id] }),
-  branch: one(branches, { fields: [invoices.branchId], references: [branches.id] }),
   enrollment: one(enrollments, { fields: [invoices.enrollmentId], references: [enrollments.id] }),
   payments: many(payments),
 }))
 
 // ---------------------------------------------------------------------------
-// Payment
+// Payment (FKs to company, branch removed — invoice kept as intra-module)
 // ---------------------------------------------------------------------------
 export const paymentsRelations = relations(payments, ({ one }) => ({
-  company: one(companies, { fields: [payments.companyId], references: [companies.id] }),
-  branch: one(branches, { fields: [payments.branchId], references: [branches.id] }),
   invoice: one(invoices, { fields: [payments.invoiceId], references: [invoices.id] }),
 }))
 
 // ---------------------------------------------------------------------------
-// ActivityLog
+// ActivityLog (FKs to company, branch, user removed)
 // ---------------------------------------------------------------------------
-export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
-  company: one(companies, { fields: [activityLogs.companyId], references: [companies.id] }),
-  branch: one(branches, { fields: [activityLogs.branchId], references: [branches.id] }),
-  user: one(users, { fields: [activityLogs.userId], references: [users.id] }),
-}))
+export const activityLogsRelations = relations(activityLogs, () => ({}))
 
 // ---------------------------------------------------------------------------
-// StorageFile
+// StorageFile (FKs to company, user removed)
 // ---------------------------------------------------------------------------
-export const storageFilesRelations = relations(storageFiles, ({ one }) => ({
-  company: one(companies, { fields: [storageFiles.companyId], references: [companies.id] }),
-  creator: one(users, { fields: [storageFiles.createdBy], references: [users.id] }),
-}))
+export const storageFilesRelations = relations(storageFiles, () => ({}))

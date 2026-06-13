@@ -1,9 +1,5 @@
 import { index, json, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
-import { branches } from './branch'
-import { companies } from './company'
-import { users } from './user'
-
 // ---------------------------------------------------------------------------
 // ActivityLog
 // ---------------------------------------------------------------------------
@@ -11,13 +7,9 @@ export const activityLogs = pgTable(
   'activity_logs',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    companyId: uuid('company_id')
-      .notNull()
-      .references(() => companies.id),
-    branchId: uuid('branch_id').references(() => branches.id),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id),
+    companyId: uuid('company_id').notNull(),
+    branchId: uuid('branch_id'),
+    userId: uuid('user_id').notNull(),
     entityName: text('entity_name').notNull().default(''),
     entityId: text('entity_id').notNull().default(''),
     activity: text('activity').notNull().default(''),

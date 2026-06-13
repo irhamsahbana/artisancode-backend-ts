@@ -1,8 +1,6 @@
 import { index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import { studentStatusEnum } from '../enums'
-import { branches } from './branch'
-import { companies } from './company'
 import { defaultId, softDelete, timestamps } from './helpers'
 
 // ---------------------------------------------------------------------------
@@ -12,12 +10,8 @@ export const students = pgTable(
   'students',
   {
     id: defaultId,
-    companyId: uuid('company_id')
-      .notNull()
-      .references(() => companies.id),
-    branchId: uuid('branch_id')
-      .notNull()
-      .references(() => branches.id),
+    companyId: uuid('company_id').notNull(),
+    branchId: uuid('branch_id').notNull(),
     firstName: text('first_name').notNull().default(''),
     lastName: text('last_name').notNull().default(''),
     gender: text('gender').notNull().default(''),

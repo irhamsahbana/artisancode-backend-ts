@@ -1,8 +1,6 @@
 import { index, pgTable, text, uuid } from 'drizzle-orm/pg-core'
 
 import { employeeStatusEnum } from '../enums'
-import { branches } from './branch'
-import { companies } from './company'
 import { defaultId, softDelete, timestamps } from './helpers'
 
 // ---------------------------------------------------------------------------
@@ -12,10 +10,8 @@ export const teachers = pgTable(
   'teachers',
   {
     id: defaultId,
-    companyId: uuid('company_id')
-      .notNull()
-      .references(() => companies.id),
-    branchId: uuid('branch_id').references(() => branches.id),
+    companyId: uuid('company_id').notNull(),
+    branchId: uuid('branch_id'),
     status: employeeStatusEnum('status').notNull().default('active'),
     name: text('name').notNull().default(''),
     email: text('email').notNull().unique().default(''),

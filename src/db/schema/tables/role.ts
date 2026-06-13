@@ -1,6 +1,6 @@
 import { index, pgTable, text, unique, uuid } from 'drizzle-orm/pg-core'
 
-import { companies } from './company'
+
 import { defaultId, softDelete, timestamps } from './helpers'
 
 // ---------------------------------------------------------------------------
@@ -10,7 +10,7 @@ export const roles = pgTable(
   'roles',
   {
     id: defaultId,
-    companyId: uuid('company_id').references(() => companies.id),
+    companyId: uuid('company_id'),
     name: text('name').notNull(),
     description: text('description').notNull().default(''),
     ...timestamps,

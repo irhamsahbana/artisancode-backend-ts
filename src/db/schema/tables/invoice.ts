@@ -1,8 +1,6 @@
 import { decimal, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import { invoiceStatusEnum } from '../enums'
-import { branches } from './branch'
-import { companies } from './company'
 import { enrollments } from './enrollment'
 import { defaultId } from './helpers'
 
@@ -13,12 +11,8 @@ export const invoices = pgTable(
   'invoices',
   {
     id: defaultId,
-    companyId: uuid('company_id')
-      .notNull()
-      .references(() => companies.id),
-    branchId: uuid('branch_id')
-      .notNull()
-      .references(() => branches.id),
+    companyId: uuid('company_id').notNull(),
+    branchId: uuid('branch_id').notNull(),
     enrollmentId: uuid('enrollment_id')
       .notNull()
       .references(() => enrollments.id),

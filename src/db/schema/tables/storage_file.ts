@@ -1,20 +1,14 @@
 import { boolean, index, pgTable, text, uuid } from 'drizzle-orm/pg-core'
 
-import { companies } from './company'
 import { defaultId, softDelete, timestamps } from './helpers'
-import { users } from './user'
 import { fileStatusEnum } from '../enums'
 
 export const storageFiles = pgTable(
   'storage_files',
   {
     id: defaultId,
-    companyId: uuid('company_id')
-      .notNull()
-      .references(() => companies.id, { onDelete: 'cascade' }),
-    createdBy: uuid('created_by')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+    companyId: uuid('company_id').notNull(),
+    createdBy: uuid('created_by').notNull(),
     folder: text('folder').notNull().default(''),
     objectKey: text('object_key').notNull(),
     originalFilename: text('original_filename').notNull(),

@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 
+import activityLogRouter from '@/modules/activity_log/activity_log.index'
 import branchRouter from '@/modules/branch/branch.index'
 import categoryRouter from '@/modules/category/category.index'
 import companyRouter from '@/modules/company/company.index'
@@ -17,6 +18,7 @@ import webhookRouter from '@/modules/webhook/webhook.index'
 const router = new Hono()
 
 router.route('/templates', templateRouter)
+router.route('/activity-logs', activityLogRouter)
 router.route('/companies', companyRouter)
 router.route('/branches', branchRouter)
 router.route('/categories', categoryRouter)

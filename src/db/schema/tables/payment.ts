@@ -1,7 +1,5 @@
 import { decimal, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
-import { branches } from './branch'
-import { companies } from './company'
 import { defaultId, softDelete, timestamps } from './helpers'
 import { invoices } from './invoice'
 
@@ -12,12 +10,8 @@ export const payments = pgTable(
   'payments',
   {
     id: defaultId,
-    companyId: uuid('company_id')
-      .notNull()
-      .references(() => companies.id),
-    branchId: uuid('branch_id')
-      .notNull()
-      .references(() => branches.id),
+    companyId: uuid('company_id').notNull(),
+    branchId: uuid('branch_id').notNull(),
     invoiceId: uuid('invoice_id')
       .notNull()
       .references(() => invoices.id),

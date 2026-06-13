@@ -1,7 +1,6 @@
 import { pgTable, primaryKey, uuid } from 'drizzle-orm/pg-core'
 
 import { products } from './product'
-import { teachers } from './teacher'
 
 // ---------------------------------------------------------------------------
 // TeacherProduct (composite PK)
@@ -9,9 +8,7 @@ import { teachers } from './teacher'
 export const teacherProducts = pgTable(
   'teacher_products',
   {
-    teacherId: uuid('teacher_id')
-      .notNull()
-      .references(() => teachers.id),
+    teacherId: uuid('teacher_id').notNull(),
     productId: uuid('product_id')
       .notNull()
       .references(() => products.id, { onDelete: 'cascade' }),
