@@ -54,17 +54,18 @@ interface IStorageRepo {
 
 The server receives the file binary, uploads it directly to S3, and saves the resulting URL.
 
-```
-Client                    Server                      S3
-  │                         │                          │
-  │── POST /storage/upload ─►│                          │
-  │   (multipart/form-data) │                          │
-  │                         │── PutObject ────────────►│
-  │                         │◄── URL ──────────────────│
-  │                         │                          │
-  │                         │── INSERT storage_files ──►│
-  │                         │── UPDATE status=attached ─►│
-  │◄── 201 {fileId, url} ──│                          │
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant S3
+
+    Client->>Server: POST /storage/upload (multipart/form-data)
+    Server->>S3: PutObject
+    S3-->>Server: URL
+    Server->>Server: INSERT storage_files
+    Server->>Server: UPDATE status=attached
+    Server-->>Client: 201 {fileId, url}
 ```
 
 **When to use:** Simple admin/internal flows, small files, trusted clients.
@@ -75,20 +76,19 @@ Client                    Server                      S3
 
 The server creates a DB record, generates a presigned PUT URL, and returns it to the client. The client uploads directly to S3, then the server marks the file as attached.
 
-```
-Client                    Server                      S3
-  │                         │                          │
-  │── POST /storage/upload-url ►│                      │
-  │   {filename, content_type,  │                      │
-  │    folder, is_public}       │                      │
-  │                         │── INSERT storage_files ──►│
-  │                         │── PresignPutObject ─────►│
-  │                         │◄── presigned URL ────────│
-  │◄── {fileId, upload_url}─│                          │
-  │                         │                          │
-  │── PUT {upload_url} ────────────────────────────────►│
-  │   (raw file binary)     │                          │
-  │◄── 200 OK ─────────────────────────────────────────│
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant S3
+
+    Client->>Server: POST /storage/upload-url {filename, content_type, folder, is_public}
+    Server->>Server: INSERT storage_files
+    Server->>S3: PresignPutObject
+    S3-->>Server: presigned URL
+    Server-->>Client: {fileId, upload_url}
+    Client->>S3: PUT {upload_url} (raw file binary)
+    S3-->>Client: 200 OK
 ```
 
 **When to use:** Mobile apps, large files, flows where file must be tracked before attachment.
@@ -97,10 +97,13 @@ Client                    Server                      S3
 
 ## File Lifecycle
 
-```text
-pending ──► attached ──► deleted
-   │
-   └──► deleted (orphan cleanup, never linked)
+```mermaid
+stateDiagram-v2
+    [*] --> pending
+    pending --> attached : Link to resource
+    pending --> deleted : Orphan cleanup
+    attached --> deleted : Soft delete
+    deleted --> [*]
 ```
 
 | Status | Meaning | Deletable? |
