@@ -1,155 +1,102 @@
-# Preparation
+# Artisancode Backend API
 
-## ESLint and Prettier Setup
+A backend REST API built with Hono, Drizzle ORM, and Bun runtime.
 
-This document outlines the steps to configure ESLint and Prettier in this project to ensure code consistency and quality.
+## Tech Stack
 
-## 1. Install Dependencies
+| Layer | Technology |
+|---|---|
+| Runtime | Bun |
+| Framework | Hono |
+| Language | TypeScript (strict mode) |
+| ORM | Drizzle ORM |
+| Database | PostgreSQL |
+| Validation | Zod |
+| Logging | Winston |
+| Observability | OpenTelemetry |
+| Payment | DOKU |
+| Storage | AWS S3 |
+| Scheduling | node-cron |
+| Testing | Bun test runner, Testcontainers |
 
-Ensure you are using `pnpm` as the package manager. Install all necessary dev dependencies with the following command:
+## Project Structure
+
+```
+src/
+  __tests__/       # Integration tests (Testcontainers)
+  bin/             # CLI / binary entry points
+  common/          # Shared utilities
+  config/          # App configuration
+  contracts/       # Interface contracts / DTOs
+  db/              # Database layer (Drizzle schema, migrations)
+  entities/        # Domain entities
+  integrations/    # External service integrations (DOKU, S3, etc.)
+  jobs/            # Scheduled jobs (node-cron)
+  models/          # Data models
+  modules/         # Feature modules (unit tests live here)
+  routes/          # Hono route definitions
+  types/           # TypeScript type definitions
+```
+
+## Getting Started
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) >= 1.3
+- PostgreSQL
+
+### Setup
 
 ```bash
-pnpm add -D eslint prettier eslint-config-prettier eslint-plugin-prettier eslint-plugin-import eslint-import-resolver-typescript @eslint/js typescript-eslint husky lint-staged
+# Install dependencies
+bun install
+
+# Copy environment variables and configure
+cp .env.example .env
+
+# Run database migrations
+bun run drizzle:migrate
+
+# Start development server
+bun run dev
 ```
 
-## 2. Configure ESLint
+The server starts at `http://localhost:3002` (configurable via `REST_PORT` in `.env`).
 
-This project uses the latest ESLint configuration format (**flat config**).
+## Available Scripts
 
-Create an `eslint.config.mjs` file in the root directory with the following content:
+| Script | Description |
+|---|---|
+| `bun run dev` | Start dev server with file watching |
+| `bun run build` | Compile TypeScript and resolve path aliases |
+| `bun run start` | Run compiled output |
+| `bun run test` | Run unit tests (`src/modules/`) |
+| `bun run test:integration` | Run integration tests (`src/__tests__/`) |
+| `bun run lint` | ESLint with auto-fix |
+| `bun run format` | Prettier formatting |
+| `bun run lint:fix` | ESLint + Prettier combined |
+| `bun run type-check` | TypeScript type checking |
+| `bun run drizzle:generate` | Generate Drizzle migration files |
+| `bun run drizzle:migrate` | Apply pending migrations |
+| `bun run drizzle:studio` | Open Drizzle Studio |
+| `bun run drizzle:push` | Push schema directly to DB (dev only) |
 
-```javascript
-// eslint.config.mjs
-import eslint from '@eslint/js';
-import pluginImport from 'eslint-plugin-import';
-import tseslint from 'typescript-eslint';
-import prettierConfig from 'eslint-config-prettier';
+## Environment Variables
 
-export default tseslint.config(
-  // Base recommended ESLint rules
-  eslint.configs.recommended,
+See `.env.example` for the full list. Key variables:
 
-  // Recommended TypeScript rules
-  ...tseslint.configs.recommended,
+| Variable | Description |
+|---|---|
+| `APP_ENV` | `development` or `production` |
+| `REST_PORT` | Server port (default: `3002`) |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `CORS_ORIGINS` | Comma-separated allowed origins |
+| `OTEL_ENABLED` | Enable OpenTelemetry (`true`/`false`) |
+| `DOKU_CLIENT_ID` | DOKU payment client ID |
+| `DOKU_SHARED_KEY` | DOKU payment shared key |
 
-  // Prettier compatibility (disables conflicting ESLint rules)
-  prettierConfig,
+## Linting & Formatting
 
-  // Ignore generated and build files
-  {
-    ignores: ['node_modules', 'dist', 'coverage', 'src/generated/**'],
-  },
+This project uses **ESLint** (flat config) with `typescript-eslint` strict + stylistic rules and `eslint-plugin-import` for import ordering. **Prettier** handles formatting (no semicolons, single quotes, 100-char width).
 
-  // Import plugin configuration
-  {
-    plugins: { import: pluginImport },
-    settings: {
-      // Enable TypeScript-aware import resolution based on tsconfig paths
-      'import/resolver': { typescript: true },
-    },
-    rules: {
-      'import/order': [
-        'error',
-        {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            ['parent', 'sibling', 'index'],
-            'object',
-            'type',
-          ],
-          pathGroups: [
-            // Match custom alias imports (e.g., @/**) as "internal"
-            { pattern: '@/**', group: 'internal', position: 'before' },
-          ],
-          pathGroupsExcludedImportTypes: ['builtin'],
-          'newlines-between': 'always',
-          alphabetize: { order: 'asc', caseInsensitive: true },
-        },
-      ],
-    },
-  },
-);
-```
-
-## 3. Configure Prettier
-
-Create a `.prettierrc.json` file to define Prettier's rules.
-
-```json
-{
-  "singleQuote": true,
-  "trailingComma": "all",
-  "semi": true,
-  "tabWidth": 2
-}
-```
-
-Next, create a `.prettierignore` file to tell Prettier which files or directories to ignore.
-
-```bash
-node_modules
-dist
-coverage
-.env
-```
-
-## 4. Add Scripts to `package.json`
-
-Ensure the following scripts exist in your `package.json`:
-
-```json
-"scripts": {
-  "test": "jest",
-  "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/index.ts",
-  "prisma:migrate": "prisma migrate dev --name $name",
-  "lint": "eslint --ext .ts src --fix",
-  "format": "prettier --write \"src/**/*.{ts,js,json}\"",
-  "lint:fix": "eslint --ext .ts src --fix && prettier --write \"src/**/*.{ts,js,json}\"",
-  "type-check": "tsc --noEmit",
-  "lint-staged": "lint-staged",
-  "prepare": "husky"
-}
-```
-
-## 5. Configure Lint-Staged
-
-In this project, `lint-staged` is configured in `package.json`:
-
-```json
-"lint-staged": {
-  "*.ts": [
-    "eslint --fix"
-  ]
-}
-```
-
-This means that whenever you commit, ESLint will automatically fix issues in staged `.ts` files before committing. If you also want Prettier to run on staged files, you can modify it like this:
-
-```json
-"lint-staged": {
-  "*.ts": [
-    "eslint --fix",
-    "prettier --write"
-  ]
-}
-```
-
-## 6. Configure Husky
-
-Husky is used to automatically run scripts on git hooks.
-
-1. Initialize Husky:
-
-   ```bash
-   pnpm run prepare
-   ```
-
-2. Create the pre-commit hook:
-
-   ```bash
-   npx husky add .husky/pre-commit "pnpm lint-staged"
-   ```
-
-After completing all the steps above, ESLint and Prettier will run automatically every time you `git commit`. This will help maintain a consistent and high-quality codebase.
+A **Husky pre-commit** hook runs `lint-staged`, which applies ESLint auto-fix to staged `.ts` files.

@@ -6,9 +6,9 @@
 - When generating code, add comments in English.
 - **Shell & Package Manager**:
   - Use `fish` (preferred) or `bash` for shell commands.
-  - Use `pnpm` for package management (installing dependencies).
-  - **Running the App**: Prefer `pnpm run dev:bun` or `pnpm run start:bun` (using Bun runtime).
-  - **Verification**: Run `pnpm lint:fix` and `pnpm type-check` after changes.
+  - Use `bun` for package management (installing dependencies).
+  - **Running the App**: Use `bun run dev` for development.
+  - **Verification**: Run `bun run lint:fix` and `bun run type-check` after changes.
 - **Documentation Maintenance**:
   - The AI agent is authorized to update `AGENTS.md` and `docs/` files to keep them accurate.
   - **Protocol**:
@@ -30,7 +30,7 @@ The technical details and guidelines for this project have been moved to the `do
 - [Tech Stack](docs/tech_stack.md)
 - [Architecture](docs/architecture.md)
 - [Coding Conventions](docs/coding_conventions.md)
-- [Prisma Model Structure](docs/prisma_model_structure.md)
+- [Drizzle Schema Structure](docs/drizzle_schema_structure.md)
 - [Development Workflow](docs/development_workflow.md)
 - [Commit Guidelines](docs/commit_guidelines.md)
 - [Database Seeding](docs/seeding.md)
