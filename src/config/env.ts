@@ -46,6 +46,7 @@ export const env = {
   },
   OTEL: {
     ENABLED: parseBoolean(process.env.OTEL_ENABLED, false),
+    SAMPLING_RATIO: parseFloat(process.env.OTEL_SAMPLING_RATIO || '1'),
     EXPORTER: {
       OTLP: {
         ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,

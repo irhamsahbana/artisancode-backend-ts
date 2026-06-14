@@ -12,6 +12,7 @@ import { CompressionAlgorithm } from '@opentelemetry/otlp-exporter-base'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { BatchLogRecordProcessor } from '@opentelemetry/sdk-logs'
 import { NodeSDK } from '@opentelemetry/sdk-node'
+import { ParentBasedSampler, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base'
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
 
 import { env } from '@/config/env'
@@ -89,9 +90,14 @@ export const startTelemetry = () => {
     ? new OTLPLogExporter({ url: logExporterUrl, headers: otlpHeaders, compression })
     : null
 
+  const sampler = new ParentBasedSampler({
+    root: new TraceIdRatioBasedSampler(env.OTEL.SAMPLING_RATIO),
+  })
+
   sdk = new NodeSDK({
     resource,
     traceExporter,
+    sampler,
     instrumentations: [
       new WinstonInstrumentation({
         disableLogSending: false,
