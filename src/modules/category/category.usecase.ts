@@ -19,12 +19,9 @@ export function createCategoryUsecase(repo: ICategoryRepo): ICategoryUsecase {
       withSpan('category.usecase', 'CategoryUsecase.create', () => createCategory(deps, req)),
     update: (req) =>
       withSpan('category.usecase', 'CategoryUsecase.update', () => updateCategory(deps, req)),
-    delete: (id, companyId) =>
-      withSpan('category.usecase', 'CategoryUsecase.delete', () => deleteCategory(deps, id, companyId)),
-    findById: (id, companyId) =>
-      withSpan('category.usecase', 'CategoryUsecase.findById', () => findCategoryById(deps, id, companyId)),
-    findList: (req) =>
-      withSpan('category.usecase', 'CategoryUsecase.findList', () => findCategoryList(deps, req)),
+    delete: (id, companyId) => deleteCategory(deps, id, companyId),
+    findById: (id, companyId) => findCategoryById(deps, id, companyId),
+    findList: (req) => findCategoryList(deps, req),
   }
 }
 

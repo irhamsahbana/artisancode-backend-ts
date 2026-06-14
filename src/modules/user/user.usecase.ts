@@ -22,12 +22,9 @@ export function createUserUsecase(repo: IUserRepo): IUserUsecase {
       withSpan('user.usecase', 'UserUsecase.register', () => registerUser(deps, req)),
     login: (req) =>
       withSpan('user.usecase', 'UserUsecase.login', () => loginUser(deps, req)),
-    findList: (req) =>
-      withSpan('user.usecase', 'UserUsecase.findList', () => findUserList(deps, req)),
-    findById: (id, companyId) =>
-      withSpan('user.usecase', 'UserUsecase.findById', () => findUserById(deps, id, companyId)),
-    findByUsername: (username) =>
-      withSpan('user.usecase', 'UserUsecase.findByUsername', () => findUserByUsername(deps, username)),
+    findList: (req) => findUserList(deps, req),
+    findById: (id, companyId) => findUserById(deps, id, companyId),
+    findByUsername: (username) => findUserByUsername(deps, username),
   }
 }
 

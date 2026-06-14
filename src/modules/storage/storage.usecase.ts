@@ -40,8 +40,7 @@ export function createStorageUsecase(
       withSpan('storage.usecase', 'StorageUsecase.createUploadUrl', () => createUploadUrl(deps.storage, deps.repo, req)),
     deleteFile: (id, companyId) =>
       withSpan('storage.usecase', 'StorageUsecase.deleteFile', () => deleteFile(deps.storage, deps.repo, id, companyId)),
-    getFileUrl: (id, companyId, expiresIn) =>
-      withSpan('storage.usecase', 'StorageUsecase.getFileUrl', () => getFileUrl(deps.storage, deps.repo, id, companyId, expiresIn)),
+    getFileUrl: (id, companyId, expiresIn) => getFileUrl(deps.storage, deps.repo, id, companyId, expiresIn),
     cleanupExpiredFiles: (req) =>
       withSpan('storage.usecase', 'StorageUsecase.cleanupExpiredFiles', () => cleanupExpiredFiles(deps.storage, deps.repo, req)),
   }

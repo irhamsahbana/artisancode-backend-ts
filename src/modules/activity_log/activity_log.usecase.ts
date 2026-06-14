@@ -15,10 +15,8 @@ export function createActivityLogUsecase(repo: IActivityLogRepo): IActivityLogUs
   return {
     create: (req) =>
       withSpan('activity_log.usecase', 'ActivityLogUsecase.create', () => createActivityLog(deps, req)),
-    findById: (id, companyId) =>
-      withSpan('activity_log.usecase', 'ActivityLogUsecase.findById', () => findActivityLogById(deps, id, companyId)),
-    findList: (req) =>
-      withSpan('activity_log.usecase', 'ActivityLogUsecase.findList', () => findActivityLogList(deps, req)),
+    findById: (id, companyId) => findActivityLogById(deps, id, companyId),
+    findList: (req) => findActivityLogList(deps, req),
   }
 }
 

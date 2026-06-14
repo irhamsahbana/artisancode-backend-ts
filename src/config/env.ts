@@ -46,14 +46,13 @@ export const env = {
   },
   OTEL: {
     ENABLED: parseBoolean(process.env.OTEL_ENABLED, false),
-    SERVICE_NAME: process.env.OTEL_SERVICE_NAME || process.env.APP_NAME || 'api',
-    SERVICE_VERSION: process.env.OTEL_SERVICE_VERSION || process.env.APP_VERSION || '1.0.0',
     EXPORTER: {
       OTLP: {
         ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
         TRACES_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
         LOGS_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT,
         HEADERS: process.env.OTEL_EXPORTER_OTLP_HEADERS,
+        COMPRESSION: process.env.OTEL_EXPORTER_OTLP_COMPRESSION || 'none',
       },
     },
     DIAG_LOG_LEVEL: process.env.OTEL_DIAG_LOG_LEVEL,

@@ -60,15 +60,9 @@ export function createEnrollmentUsecase(
     generateInvoice: (req) =>
       withSpan('enrollment.usecase', 'EnrollmentUsecase.generateInvoice', () =>
         generateEnrollmentInvoice(deps, req)),
-    delete: (id, companyId) =>
-      withSpan('enrollment.usecase', 'EnrollmentUsecase.delete', () =>
-        deleteEnrollment(deps, id, companyId)),
-    findById: (id, companyId) =>
-      withSpan('enrollment.usecase', 'EnrollmentUsecase.findById', () =>
-        findEnrollmentById(deps, id, companyId)),
-    findList: (req) =>
-      withSpan('enrollment.usecase', 'EnrollmentUsecase.findList', () =>
-        findEnrollmentList(deps, req)),
+    delete: (id, companyId) => deleteEnrollment(deps, id, companyId),
+    findById: (id, companyId) => findEnrollmentById(deps, id, companyId),
+    findList: (req) => findEnrollmentList(deps, req),
     uploadPaymentProof: (req) =>
       withSpan('enrollment.usecase', 'EnrollmentUsecase.uploadPaymentProof', () =>
         uploadPaymentProof(deps, req)),

@@ -5,6 +5,7 @@ import branchRouter from '@/modules/branch/branch.index'
 import categoryRouter from '@/modules/category/category.index'
 import companyRouter from '@/modules/company/company.index'
 import enrollmentRouter from '@/modules/enrollment/enrollment.index'
+import healthRouter from '@/modules/health/health.index'
 import invoiceRouter from '@/modules/invoice/invoice.index'
 import programRouter from '@/modules/program/program.index'
 import roleAndPermissionRouter from '@/modules/role_and_permission/role_and_permission.index'
@@ -17,6 +18,7 @@ import webhookRouter from '@/modules/webhook/webhook.index'
 
 const router = new Hono()
 
+router.route('/health', healthRouter)
 router.route('/templates', templateRouter)
 router.route('/activity-logs', activityLogRouter)
 router.route('/companies', companyRouter)

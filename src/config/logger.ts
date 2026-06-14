@@ -1,9 +1,11 @@
+import path from 'path'
+
 import { context, trace } from '@opentelemetry/api'
 import winston from 'winston'
 
 import { env } from './env'
 
-const { combine, timestamp, printf, colorize } = winston.format
+const { combine, timestamp } = winston.format
 
 const withTraceContext = winston.format((info) => {
   const span = trace.getSpan(context.active())
@@ -12,31 +14,43 @@ const withTraceContext = winston.format((info) => {
     ;(info as unknown as Record<string, unknown>).trace_id = spanContext.traceId
     ;(info as unknown as Record<string, unknown>).span_id = spanContext.spanId
   }
+  delete (info as unknown as Record<string, unknown>).trace_flags
   return info
 })
 
-const devFormat = combine(
-  colorize(),
-  timestamp({
-    format: 'HH:mm:ss.SSS',
-  }),
-  withTraceContext(),
-  printf((info) => {
-    const traceId = (info as unknown as { trace_id?: string }).trace_id
-    const spanId = (info as unknown as { span_id?: string }).span_id
-    const trace = traceId && spanId ? ` trace_id=${traceId} span_id=${spanId}` : ''
-    return `[${info.timestamp}] ${info.level}: ${info.message}${trace}`
-  }),
-)
-
-const prodFormat = combine(withTraceContext(), timestamp(), winston.format.json())
+const withSourceLocation = winston.format((info) => {
+  const err = new Error()
+  const stack = err.stack?.split('\n') || []
+  // cari frame pertama yang bukan dari logger.ts atau node_modules
+  for (const line of stack) {
+    const match = line.match(/\s+at\s+(.+):(\d+):\d+/)
+    if (match) {
+      const filePath = match[1]
+      const lineNo = match[2]
+      // skip internal frames
+      if (
+        filePath.includes('logger.ts') ||
+        filePath.includes('node_modules') ||
+        filePath.includes('telemetry.ts')
+      ) {
+        continue
+      }
+      // ambil path relatif dari src/ terakhir (buang duplikat src/sobatbisnis/api/src/)
+      const lastSrcIndex = filePath.lastIndexOf('src/')
+      const relativePath = lastSrcIndex !== -1 ? filePath.slice(lastSrcIndex) : path.basename(filePath)
+      ;(info as unknown as Record<string, unknown>).location = `${relativePath}:${lineNo}`
+      break
+    }
+  }
+  return info
+})
 
 const logger = winston.createLogger({
   level: env.APP_LOG_LEVEL || 'info',
-  format: process.env.NODE_ENV === 'production' ? prodFormat : devFormat,
+  format: combine(timestamp(), withTraceContext(), withSourceLocation(), winston.format.json()),
   transports: [
     new winston.transports.Console(),
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    // new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
   ],
 })
 

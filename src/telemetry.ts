@@ -1,20 +1,18 @@
 import {
-  context,
   diag,
   DiagConsoleLogger,
   DiagLogLevel,
-  type Attributes,
-  type Span,
   SpanStatusCode,
   trace,
 } from '@opentelemetry/api'
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston'
+import { CompressionAlgorithm } from '@opentelemetry/otlp-exporter-base'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { BatchLogRecordProcessor } from '@opentelemetry/sdk-logs'
 import { NodeSDK } from '@opentelemetry/sdk-node'
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
 
 import { env } from '@/config/env'
 
@@ -56,12 +54,10 @@ export const startTelemetry = () => {
 
   if (!env.OTEL.ENABLED) return
 
-  const serviceName = env.OTEL.SERVICE_NAME || env.APP_NAME || 'api'
-  const serviceVersion = env.OTEL.SERVICE_VERSION || env.APP_VERSION || '0.0.0'
-
   const resource = resourceFromAttributes({
-    [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
-    [SemanticResourceAttributes.SERVICE_VERSION]: serviceVersion,
+    [ATTR_SERVICE_NAME]: env.APP_NAME,
+    [ATTR_SERVICE_VERSION]: env.APP_VERSION,
+    'deployment.environment': env.APP_ENV,
   })
 
   const traceExporterUrl =
@@ -77,18 +73,20 @@ export const startTelemetry = () => {
       : undefined)
 
   const otlpHeaders = parseHeaders(env.OTEL.EXPORTER.OTLP.HEADERS)
+  const compression = (env.OTEL.EXPORTER.OTLP.COMPRESSION || 'none') as CompressionAlgorithm
 
   const traceExporter = new OTLPTraceExporter(
     traceExporterUrl
       ? {
           url: traceExporterUrl,
           headers: otlpHeaders,
+          compression,
         }
       : undefined,
   )
 
   const logExporter = logExporterUrl
-    ? new OTLPLogExporter({ url: logExporterUrl, headers: otlpHeaders })
+    ? new OTLPLogExporter({ url: logExporterUrl, headers: otlpHeaders, compression })
     : null
 
   sdk = new NodeSDK({
@@ -97,13 +95,6 @@ export const startTelemetry = () => {
     instrumentations: [
       new WinstonInstrumentation({
         disableLogSending: false,
-        logHook: (_span, record) => {
-          const activeSpan = trace.getSpan(context.active())
-          const spanContext = activeSpan?.spanContext()
-          if (!spanContext) return
-          ;(record as unknown as Record<string, unknown>).trace_id = spanContext.traceId
-          ;(record as unknown as Record<string, unknown>).span_id = spanContext.spanId
-        },
       }),
     ],
     logRecordProcessors: logExporter ? [new BatchLogRecordProcessor(logExporter)] : [],
@@ -126,33 +117,6 @@ export const withSpan = async <T>(
 ): Promise<T> => {
   const tracer = trace.getTracer(tracerName)
   return tracer.startActiveSpan(spanName, async (span) => {
-    try {
-      return await fn()
-    } catch (error) {
-      span.recordException(error as Error)
-      span.setStatus({ code: SpanStatusCode.ERROR })
-      throw error
-    } finally {
-      span.end()
-    }
-  })
-}
-
-export type SpanAttributeSetter = Attributes | ((span: Span) => void)
-
-export const withSpanAttributes = async <T>(
-  tracerName: string,
-  spanName: string,
-  attributes: SpanAttributeSetter,
-  fn: () => Promise<T> | T,
-): Promise<T> => {
-  const tracer = trace.getTracer(tracerName)
-  return tracer.startActiveSpan(spanName, async (span) => {
-    if (typeof attributes === 'function') {
-      attributes(span)
-    } else {
-      span.setAttributes(attributes)
-    }
     try {
       return await fn()
     } catch (error) {

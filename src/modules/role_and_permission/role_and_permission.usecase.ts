@@ -21,21 +21,13 @@ export function createRoleAndPermissionUsecase(
     createRole: (req) =>
       withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.createRole', () =>
         createRole(deps, req)),
-    findRoleList: (req) =>
-      withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.findRoleList', () =>
-        findRoleList(deps, req)),
-    findRoleById: (id, companyId) =>
-      withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.findRoleById', () =>
-        findRoleById(deps, id, companyId)),
+    findRoleList: (req) => findRoleList(deps, req),
+    findRoleById: (id, companyId) => findRoleById(deps, id, companyId),
     updateRole: (req) =>
       withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.updateRole', () =>
         updateRole(deps, req)),
-    deleteRole: (id, companyId) =>
-      withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.deleteRole', () =>
-        deleteRole(deps, id, companyId)),
-    findPermissionList: (req) =>
-      withSpan('role_and_permission.usecase', 'RoleAndPermissionUsecase.findPermissionList', () =>
-        findPermissionList(deps, req)),
+    deleteRole: (id, companyId) => deleteRole(deps, id, companyId),
+    findPermissionList: (req) => findPermissionList(deps, req),
   }
 }
 

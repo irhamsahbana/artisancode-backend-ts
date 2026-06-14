@@ -94,12 +94,9 @@ export function createProgramUsecase(
       withSpan('program.usecase', 'ProgramUsecase.update', () => updateProgram(deps, req)),
     updateAll: (req) =>
       withSpan('program.usecase', 'ProgramUsecase.updateAll', () => updateAllProgram(deps, req)),
-    delete: (id, companyId) =>
-      withSpan('program.usecase', 'ProgramUsecase.delete', () => deleteProgram(deps, id, companyId)),
-    findById: (id, companyId) =>
-      withSpan('program.usecase', 'ProgramUsecase.findById', () => findProgramById(deps, id, companyId)),
-    findList: (req) =>
-      withSpan('program.usecase', 'ProgramUsecase.findList', () => findProgramList(deps, req)),
+    delete: (id, companyId) => deleteProgram(deps, id, companyId),
+    findById: (id, companyId) => findProgramById(deps, id, companyId),
+    findList: (req) => findProgramList(deps, req),
     addSchedule: (req) =>
       withSpan('program.usecase', 'ProgramUsecase.addSchedule', () => addSchedule(deps, req)),
     addPricing: (req) =>
