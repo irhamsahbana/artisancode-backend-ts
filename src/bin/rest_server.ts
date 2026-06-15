@@ -4,6 +4,7 @@ import { cors } from 'hono/cors'
 import { AppError } from '@/common/app_error'
 import { errorHandler } from '@/common/middlewares/error_handler'
 import { requestLogger } from '@/common/middlewares/request_logger'
+import { traceContext } from '@/common/middlewares/trace_context'
 import { AppEnv } from '@/common/types'
 import { env } from '@/config/env'
 import logger from '@/config/logger'
@@ -50,6 +51,9 @@ class RESTServer {
       c.set('rawBody', text)
       await next()
     })
+
+    // Extract trace context from incoming requests
+    app.use('*', traceContext)
 
     // Request logger
     app.use('*', requestLogger)
