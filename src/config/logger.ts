@@ -11,8 +11,8 @@ const withTraceContext = winston.format((info) => {
   const span = trace.getSpan(context.active())
   const spanContext = span?.spanContext()
   if (spanContext) {
-    ;(info as unknown as Record<string, unknown>).trace_id = spanContext.traceId
-    ;(info as unknown as Record<string, unknown>).span_id = spanContext.spanId
+    (info as unknown as Record<string, unknown>).trace_id = spanContext.traceId;
+    (info as unknown as Record<string, unknown>).span_id = spanContext.spanId;
   }
   return info
 })
