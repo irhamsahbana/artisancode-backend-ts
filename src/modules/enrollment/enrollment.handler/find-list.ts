@@ -8,7 +8,7 @@ import { withSpan } from '@/telemetry'
 
 export function findEnrollmentListHandler(usecase: IEnrollmentUsecase) {
   return async (c: Context<AppEnv>) => {
-    return withSpan('enrollment.handler', 'EnrollmentHandler.findList', async () => {
+    return withSpan('EnrollmentHandler.findList', async () => {
       const query = c.get('body')?._query || c.req.query()
       const { page, limit, branch_id, student_id, program_id } = query as {
         page: number

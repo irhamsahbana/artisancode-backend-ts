@@ -54,17 +54,17 @@ export function createEnrollmentUsecase(
 
   return {
     create: (req) =>
-      withSpan('enrollment.usecase', 'EnrollmentUsecase.create', () => createEnrollment(deps, req)),
+      withSpan('EnrollmentUsecase.create', () => createEnrollment(deps, req)),
     update: (req) =>
-      withSpan('enrollment.usecase', 'EnrollmentUsecase.update', () => updateEnrollment(deps, req)),
+      withSpan('EnrollmentUsecase.update', () => updateEnrollment(deps, req)),
     generateInvoice: (req) =>
-      withSpan('enrollment.usecase', 'EnrollmentUsecase.generateInvoice', () =>
+      withSpan('EnrollmentUsecase.generateInvoice', () =>
         generateEnrollmentInvoice(deps, req)),
     delete: (id, companyId) => deleteEnrollment(deps, id, companyId),
     findById: (id, companyId) => findEnrollmentById(deps, id, companyId),
     findList: (req) => findEnrollmentList(deps, req),
     uploadPaymentProof: (req) =>
-      withSpan('enrollment.usecase', 'EnrollmentUsecase.uploadPaymentProof', () =>
+      withSpan('EnrollmentUsecase.uploadPaymentProof', () =>
         uploadPaymentProof(deps, req)),
   }
 }

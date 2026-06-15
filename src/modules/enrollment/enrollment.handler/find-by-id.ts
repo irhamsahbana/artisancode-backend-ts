@@ -7,7 +7,7 @@ import { withSpan } from '@/telemetry'
 
 export function findEnrollmentByIdHandler(usecase: IEnrollmentUsecase) {
   return async (c: Context<AppEnv>) => {
-    return withSpan('enrollment.handler', 'EnrollmentHandler.findById', async () => {
+    return withSpan('EnrollmentHandler.findById', async () => {
       const id = c.req.param('id') ?? ''
       const user = c.get('user')
 

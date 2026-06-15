@@ -8,7 +8,7 @@ import { withSpan } from '@/telemetry'
 
 export function createEnrollmentHandler(usecase: IEnrollmentUsecase) {
   return async (c: Context<AppEnv>) => {
-    return withSpan('enrollment.handler', 'EnrollmentHandler.create', async () => {
+    return withSpan('EnrollmentHandler.create', async () => {
       const user = c.get('user')
       const body = c.get('body')
       const payload: Entity.CreateEnrollmentReq = {

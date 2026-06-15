@@ -8,7 +8,7 @@ import { withSpan } from '@/telemetry'
 
 export function findInvoiceListHandler(usecase: IInvoiceUsecase) {
   return async (c: Context<AppEnv>) => {
-    return withSpan('invoice.handler', 'InvoiceHandler.findList', async () => {
+    return withSpan('InvoiceHandler.findList', async () => {
       const query = c.get('body')?._query || c.req.query()
       const { page, limit, enrollment_id, status } = query as {
         page: number

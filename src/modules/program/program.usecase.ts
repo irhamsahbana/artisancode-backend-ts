@@ -89,27 +89,27 @@ export function createProgramUsecase(
 
   return {
     create: (req) =>
-      withSpan('program.usecase', 'ProgramUsecase.create', () => createProgram(deps, req)),
+      withSpan('ProgramUsecase.create', () => createProgram(deps, req)),
     update: (req) =>
-      withSpan('program.usecase', 'ProgramUsecase.update', () => updateProgram(deps, req)),
+      withSpan('ProgramUsecase.update', () => updateProgram(deps, req)),
     updateAll: (req) =>
-      withSpan('program.usecase', 'ProgramUsecase.updateAll', () => updateAllProgram(deps, req)),
+      withSpan('ProgramUsecase.updateAll', () => updateAllProgram(deps, req)),
     delete: (id, companyId) => deleteProgram(deps, id, companyId),
     findById: (id, companyId) => findProgramById(deps, id, companyId),
     findList: (req) => findProgramList(deps, req),
     addSchedule: (req) =>
-      withSpan('program.usecase', 'ProgramUsecase.addSchedule', () => addSchedule(deps, req)),
+      withSpan('ProgramUsecase.addSchedule', () => addSchedule(deps, req)),
     addPricing: (req) =>
-      withSpan('program.usecase', 'ProgramUsecase.addPricing', () => addPricing(deps, req)),
+      withSpan('ProgramUsecase.addPricing', () => addPricing(deps, req)),
     addPrice: (req) =>
-      withSpan('program.usecase', 'ProgramUsecase.addPrice', () => addPrice(deps, req)),
+      withSpan('ProgramUsecase.addPrice', () => addPrice(deps, req)),
     updatePrice: (req) =>
-      withSpan('program.usecase', 'ProgramUsecase.updatePrice', () => updatePrice(deps, req)),
+      withSpan('ProgramUsecase.updatePrice', () => updatePrice(deps, req)),
     deleteSchedule: (programId, scheduleId, companyId) =>
-      withSpan('program.usecase', 'ProgramUsecase.deleteSchedule', () =>
+      withSpan('ProgramUsecase.deleteSchedule', () =>
         deleteSchedule(deps, programId, scheduleId, companyId)),
     deletePricing: (programId, pricingId, companyId) =>
-      withSpan('program.usecase', 'ProgramUsecase.deletePricing', () =>
+      withSpan('ProgramUsecase.deletePricing', () =>
         deletePricing(deps, programId, pricingId, companyId)),
   }
 }

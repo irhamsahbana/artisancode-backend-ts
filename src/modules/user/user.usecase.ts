@@ -17,11 +17,11 @@ export function createUserUsecase(repo: IUserRepo): IUserUsecase {
 
   return {
     create: (req) =>
-      withSpan('user.usecase', 'UserUsecase.create', () => createUser(deps, req)),
+      withSpan('UserUsecase.create', () => createUser(deps, req)),
     register: (req) =>
-      withSpan('user.usecase', 'UserUsecase.register', () => registerUser(deps, req)),
+      withSpan('UserUsecase.register', () => registerUser(deps, req)),
     login: (req) =>
-      withSpan('user.usecase', 'UserUsecase.login', () => loginUser(deps, req)),
+      withSpan('UserUsecase.login', () => loginUser(deps, req)),
     findList: (req) => findUserList(deps, req),
     findById: (id, companyId) => findUserById(deps, id, companyId),
     findByUsername: (username) => findUserByUsername(deps, username),

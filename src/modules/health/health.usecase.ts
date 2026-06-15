@@ -8,12 +8,12 @@ export default class HealthUsecase implements IHealthUsecase {
   async check() {
     logger.info('[health.usecase] starting health check')
 
-    const db = await withSpan('health.usecase', 'HealthUsecase.checkDb', async () => {
+    const db = await withSpan('HealthUsecase.checkDb', async () => {
       logger.info('[health.usecase] delegating to repo for db check')
       return this.repo.checkDb()
     })
 
-    const cache = await withSpan('health.usecase', 'HealthUsecase.checkCache', async () => {
+    const cache = await withSpan('HealthUsecase.checkCache', async () => {
       logger.info('[health.usecase] delegating to repo for cache check')
       return this.repo.checkCache()
     })

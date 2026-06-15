@@ -8,7 +8,7 @@ import { withSpan } from '@/telemetry'
 
 export function updateEnrollmentHandler(usecase: IEnrollmentUsecase) {
   return async (c: Context<AppEnv>) => {
-    return withSpan('enrollment.handler', 'EnrollmentHandler.update', async () => {
+    return withSpan('EnrollmentHandler.update', async () => {
       const id = c.req.param('id') ?? ''
       const user = c.get('user')
       const body = c.get('body')

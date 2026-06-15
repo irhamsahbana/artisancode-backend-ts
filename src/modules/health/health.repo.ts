@@ -4,7 +4,7 @@ import { withSpan } from '@/telemetry'
 
 export default class HealthRepo implements IHealthRepo {
   async checkDb() {
-    return withSpan('health.repo', 'HealthRepo.checkDb', async () => {
+    return withSpan('HealthRepo.checkDb', async () => {
       logger.info('[health.repo] checking database connectivity')
       // simulasikan query ke database
       await new Promise((r) => setTimeout(r, 5))
@@ -14,7 +14,7 @@ export default class HealthRepo implements IHealthRepo {
   }
 
   async checkCache() {
-    return withSpan('health.repo', 'HealthRepo.checkCache', async () => {
+    return withSpan('HealthRepo.checkCache', async () => {
       logger.info('[health.repo] checking cache connectivity')
       // simulasikan query ke cache
       await new Promise((r) => setTimeout(r, 2))

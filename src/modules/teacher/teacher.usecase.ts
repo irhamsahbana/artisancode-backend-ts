@@ -22,9 +22,9 @@ export function createTeacherUsecase(repo: ITeacherRepo): ITeacherUsecase {
 
   return {
     create: (req) =>
-      withSpan('teacher.usecase', 'TeacherUsecase.create', () => createTeacher(deps, req)),
+      withSpan('TeacherUsecase.create', () => createTeacher(deps, req)),
     update: (req) =>
-      withSpan('teacher.usecase', 'TeacherUsecase.update', () => updateTeacher(deps, req)),
+      withSpan('TeacherUsecase.update', () => updateTeacher(deps, req)),
     delete: (id, companyId) => deleteTeacher(deps, id, companyId),
     findById: (id, companyId) => findTeacherById(deps, id, companyId),
     findList: (req) => findTeacherList(deps, req),

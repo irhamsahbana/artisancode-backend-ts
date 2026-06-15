@@ -16,11 +16,11 @@ export function createCompanyUsecase(repo: ICompanyRepo): ICompanyUsecase {
 
   return {
     create: (req) =>
-      withSpan('company.usecase', 'CompanyUsecase.create', () => createCompany(deps, req)),
+      withSpan('CompanyUsecase.create', () => createCompany(deps, req)),
     findList: (req) => findCompanyList(deps, req),
     findById: (req) => findCompanyById(deps, req),
     update: (req) =>
-      withSpan('company.usecase', 'CompanyUsecase.update', () => updateCompany(deps, req)),
+      withSpan('CompanyUsecase.update', () => updateCompany(deps, req)),
     delete: (req) => deleteCompany(deps, req),
   }
 }

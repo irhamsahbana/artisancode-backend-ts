@@ -8,7 +8,7 @@ import { withSpan } from '@/telemetry'
 
 export function createInvoiceHandler(usecase: IInvoiceUsecase) {
   return async (c: Context<AppEnv>) => {
-    return withSpan('invoice.handler', 'InvoiceHandler.create', async () => {
+    return withSpan('InvoiceHandler.create', async () => {
       const user = c.get('user')
       const body = c.get('body') as Entity.CreateInvoiceReq
 

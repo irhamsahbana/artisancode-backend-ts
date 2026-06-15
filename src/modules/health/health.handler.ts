@@ -10,7 +10,7 @@ export default function healthHandler(usecase: IHealthUsecase) {
   router.get('/', async (c) => {
     logger.info('[health.handler] request received')
 
-    const result = await withSpan('health.handler', 'HealthHandler.check', async () => {
+    const result = await withSpan('HealthHandler.check', async () => {
       logger.info('[health.handler] calling usecase')
       return usecase.check()
     })

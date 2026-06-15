@@ -7,7 +7,7 @@ import { withSpan } from '@/telemetry'
 
 export function deleteEnrollmentHandler(usecase: IEnrollmentUsecase) {
   return async (c: Context<AppEnv>) => {
-    return withSpan('enrollment.handler', 'EnrollmentHandler.delete', async () => {
+    return withSpan('EnrollmentHandler.delete', async () => {
       const id = c.req.param('id') ?? ''
       const user = c.get('user')
 

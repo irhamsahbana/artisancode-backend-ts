@@ -139,14 +139,14 @@ export function createInvoiceUsecase(
 
   return {
     create: (data) =>
-      withSpan('invoice.usecase', 'InvoiceUsecase.create', () => createInvoice(deps, data)),
+      withSpan('InvoiceUsecase.create', () => createInvoice(deps, data)),
     findById: (id, companyId) => findInvoiceById(deps, id, companyId),
     findList: (req) => findInvoiceList(deps, req),
     updateStatus: (id, companyId, status) =>
-      withSpan('invoice.usecase', 'InvoiceUsecase.updateStatus', () =>
+      withSpan('InvoiceUsecase.updateStatus', () =>
         updateInvoiceStatus(deps, id, companyId, status)),
     generatePaymentLink: (id, companyId) =>
-      withSpan('invoice.usecase', 'InvoiceUsecase.generatePaymentLink', () =>
+      withSpan('InvoiceUsecase.generatePaymentLink', () =>
         generatePaymentLink(deps, id, companyId)),
     findActiveByEnrollment: (enrollmentId, companyId) =>
       findActiveInvoiceByEnrollment(deps, enrollmentId, companyId),

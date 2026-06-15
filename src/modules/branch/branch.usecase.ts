@@ -16,9 +16,9 @@ export function createBranchUsecase(repo: IBranchRepo): IBranchUsecase {
 
   return {
     create: (req) =>
-      withSpan('branch.usecase', 'BranchUsecase.create', () => createBranch(deps, req)),
+      withSpan('BranchUsecase.create', () => createBranch(deps, req)),
     update: (req) =>
-      withSpan('branch.usecase', 'BranchUsecase.update', () => updateBranch(deps, req)),
+      withSpan('BranchUsecase.update', () => updateBranch(deps, req)),
     delete: (id, companyId) => deleteBranch(deps, id, companyId),
     findById: (id, companyId) => findBranchById(deps, id, companyId),
     findList: (req) => findBranchList(deps, req),

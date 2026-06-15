@@ -16,9 +16,9 @@ export function createStudentUsecase(
 
   return {
     create: (req) =>
-      withSpan('student.usecase', 'StudentUsecase.create', () => createStudent(deps, req)),
+      withSpan('StudentUsecase.create', () => createStudent(deps, req)),
     update: (req) =>
-      withSpan('student.usecase', 'StudentUsecase.update', () => updateStudent(deps, req)),
+      withSpan('StudentUsecase.update', () => updateStudent(deps, req)),
     delete: (id, companyId) => deleteStudent(deps, id, companyId),
     findById: (id, companyId) => findStudentById(deps, id, companyId),
     findList: (req) => findStudentList(deps, req),
