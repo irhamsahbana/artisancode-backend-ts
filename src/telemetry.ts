@@ -116,12 +116,16 @@ export const shutdownTelemetry = async () => {
   await current.shutdown()
 }
 
+export interface WithSpanOptions {
+  tracerName?: string
+}
+
 export const withSpan = async <T>(
-  tracerName: string,
   spanName: string,
   fn: () => Promise<T> | T,
+  options?: WithSpanOptions,
 ): Promise<T> => {
-  const tracer = trace.getTracer(tracerName)
+  const tracer = trace.getTracer(options?.tracerName ?? 'default')
   return tracer.startActiveSpan(spanName, async (span) => {
     try {
       return await fn()
