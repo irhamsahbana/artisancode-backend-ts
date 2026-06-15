@@ -14,7 +14,6 @@ const withTraceContext = winston.format((info) => {
     ;(info as unknown as Record<string, unknown>).trace_id = spanContext.traceId
     ;(info as unknown as Record<string, unknown>).span_id = spanContext.spanId
   }
-  delete (info as unknown as Record<string, unknown>).trace_flags
   return info
 })
 
