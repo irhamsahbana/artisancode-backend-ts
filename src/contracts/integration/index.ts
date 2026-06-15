@@ -7,6 +7,6 @@ export type {
 
 export type { SendEmailReq, IEmailService } from './email.contract'
 
-export type { UploadFileReq, UploadFileRes, IStorageService } from './storage.contract'
+export type { UploadFileReq, UploadFileRes, PresignUploadReq, PresignUploadRes, IStorageService } from './storage.contract'
 
 export type { ITransactor } from './transactor.contract'

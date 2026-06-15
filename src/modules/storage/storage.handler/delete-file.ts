@@ -7,7 +7,7 @@ import { IStorageUsecase } from '../storage.usecase'
 
 export function deleteFileHandler(usecase: IStorageUsecase) {
   return async (c: Context<AppEnv>) => {
-    const id = c.req.param('id')
+    const id = c.req.param('id') ?? ''
     const user = c.get('user')
 
     await usecase.deleteFile(id, user?.company_id || '')

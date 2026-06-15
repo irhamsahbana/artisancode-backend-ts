@@ -42,6 +42,7 @@ function makeProgram(overrides?: Partial<Program>): Program {
     capacity: null,
     status: 'active',
     schedules: [makeSchedule()],
+    pricings: [],
     created_at: new Date(),
     updated_at: new Date(),
     deleted_at: null,
@@ -61,7 +62,7 @@ function makeEnrollment(program: Program): Entity.Enrollment {
     created_at: new Date(),
     updated_at: new Date(),
     deleted_at: null,
-    program,
+    program: program as Entity.Enrollment['program'],
   }
 }
 

@@ -48,7 +48,7 @@ function makeDeps(overrides: {
   when(invoiceUsecaseMock.create(anything())).thenResolve({ id: 'inv-new' } as any)
   when(invoiceUsecaseMock.generatePaymentLink(anything(), anything())).thenResolve({
     id: 'inv-new',
-    paymentUrl: 'https://pay.example.com',
+    payment_url: 'https://pay.example.com',
   } as any)
 
   return {
@@ -77,11 +77,11 @@ describe('generateEnrollmentInvoice', () => {
     })
 
     expect(result.id).toBe('inv-new')
-    expect(result.paymentUrl).toBe('https://pay.example.com')
+    expect(result.payment_url).toBe('https://pay.example.com')
   })
 
   it('returns existing payment link when active invoice exists', async () => {
-    const activeInvoice = { id: 'inv-active', status: 'unpaid', paymentUrl: 'https://existing.pay' }
+    const activeInvoice = { id: 'inv-active', status: 'unpaid', payment_url: 'https://existing.pay' }
     const { deps, invoiceUsecaseMock } = makeDeps({
       enrollment: makeEnrollment(),
       activeInvoice,

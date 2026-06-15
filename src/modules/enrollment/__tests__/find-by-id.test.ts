@@ -2,6 +2,8 @@
 import { describe, expect, it } from 'bun:test'
 import { mock, instance, when } from 'ts-mockito'
 
+import type { Enrollment } from '@/entities/enrollment.entity'
+
 import { findEnrollmentById } from '../enrollment.usecase/find-by-id'
 
 import type { EnrollmentUsecaseDeps } from '../enrollment.usecase'
@@ -9,8 +11,8 @@ import type { EnrollmentUsecaseDeps } from '../enrollment.usecase'
 describe('findEnrollmentById', () => {
   it('returns enrollment when found', async () => {
     const repoMock = mock<EnrollmentUsecaseDeps['repo']>()
-    const enrollment = { id: 'enr-1', company_id: 'comp-1', status: 'active' }
-    when(repoMock.findById('enr-1', 'comp-1')).thenResolve(enrollment as any)
+    const enrollment: Enrollment = { id: 'enr-1', company_id: 'comp-1', branch_id: 'branch-1', student_id: 'student-1', program_id: 'prog-1', pricing_id: 'pricing-1', status: 'active', created_at: new Date(), updated_at: new Date(), deleted_at: null }
+    when(repoMock.findById('enr-1', 'comp-1')).thenResolve(enrollment)
 
     const deps: EnrollmentUsecaseDeps = {
       repo: instance(repoMock),

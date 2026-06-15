@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { transactor } from '@/common/executor'
 import { authenticate } from '@/common/middlewares/auth.middleware'
 import { validate, validateQuery } from '@/common/middlewares/validation.middleware'
-import { createPaymentGateway } from '@/integrations'
+import { createPaymentGateway, createStorageService } from '@/integrations'
 import { createBranchRepo } from '@/modules/branch/branch.repo'
 import { createInvoiceRepo } from '@/modules/invoice/invoice.repo'
 import { createInvoiceUsecase } from '@/modules/invoice/invoice.usecase'
@@ -23,6 +23,7 @@ const programRepo = createProgramRepo()
 const invoiceRepo = createInvoiceRepo()
 const paymentGateway = createPaymentGateway()
 const invoiceUsecase = createInvoiceUsecase(invoiceRepo, paymentGateway)
+const storage = createStorageService()
 
 const usecase = createEnrollmentUsecase(
   repo,
@@ -31,6 +32,7 @@ const usecase = createEnrollmentUsecase(
   programRepo,
   invoiceUsecase,
   transactor,
+  storage,
 )
 const handler = createEnrollmentHandlerDeps(usecase)
 

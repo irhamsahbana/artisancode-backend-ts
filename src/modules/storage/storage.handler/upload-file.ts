@@ -13,7 +13,8 @@ export function uploadFileHandler(usecase: IStorageUsecase) {
     // NOTE: In production, the file binary would come from multipart form data.
     // For now, this handler expects the file to be passed via request context
     // or a middleware that parses multipart data.
-    const file = c.get('file') as Buffer | ReadableStream | undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const file = (c as any).get('file') as Buffer | ReadableStream | undefined
     if (!file) {
       return c.json({ success: false, message: 'File is required' }, 400)
     }
