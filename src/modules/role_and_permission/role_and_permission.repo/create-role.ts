@@ -1,7 +1,9 @@
 import { getExecutor } from '@/common/executor'
+import { AppError } from '@/common/packages/types'
 import { rolePermissions, roles } from '@/db/schema'
 import * as Entity from '@/entities/role.entity'
 
+import { RoleErrorCode } from '../role_and_permission.errors'
 import { RoleAndPermissionRepoDeps } from '../role_and_permission.repo'
 import { findRoleById } from './find-by-id'
 
@@ -10,7 +12,7 @@ export async function createRole(
   req: Entity.CreateRoleReq,
 ): Promise<Entity.Role> {
   if (!req.company_id) {
-    throw new Error('Company ID is required to create a role')
+    throw new AppError(RoleErrorCode.COMPANY_REQUIRED, 'Company ID is required to create a role', { httpCode: 400 })
   }
 
   const [role] = await getExecutor()

@@ -1,7 +1,9 @@
 import { getExecutor } from '@/common/executor'
+import { AppError } from '@/common/packages/types'
 import { enrollments } from '@/db/schema'
 import * as Entity from '@/entities/enrollment.entity'
 
+import { EnrollmentErrorCode } from '../enrollment.errors'
 import { EnrollmentRepoDeps } from '../enrollment.repo'
 
 export async function createEnrollment(
@@ -28,6 +30,8 @@ export async function createEnrollment(
     .returning()
 
   const data = await deps.findEnrollmentWithRelations(row.id)
-  if (!data) throw new Error('Enrollment not found')
+  if (!data) {
+    throw new AppError(EnrollmentErrorCode.NOT_FOUND, 'Enrollment not found', { httpCode: 404 })
+  }
   return deps.toEnrollmentEntity(data)
 }

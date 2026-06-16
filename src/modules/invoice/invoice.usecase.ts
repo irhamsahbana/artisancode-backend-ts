@@ -1,4 +1,5 @@
 import { withSpan } from '@/common/packages/observability'
+import { AppError } from '@/common/packages/types'
 import { CheckStatusRes, IPaymentGateway } from '@/contracts/integration'
 import { IInvoiceRepo, IInvoiceUsecase } from '@/contracts/invoice.contract'
 import {
@@ -7,6 +8,7 @@ import {
   InvoiceStatus,
 } from '@/entities/invoice.entity'
 
+import { InvoiceErrorCode } from './invoice.errors'
 import { createInvoice } from './invoice.usecase/create'
 import { findActiveInvoiceByEnrollment } from './invoice.usecase/find-active-by-enrollment'
 import { findInvoiceById } from './invoice.usecase/find-by-id'
@@ -26,10 +28,12 @@ async function generatePaymentLink(
   companyId: string,
 ): Promise<Invoice> {
   const invoice = await deps.repo.findById(id, companyId)
-  if (!invoice) throw new Error('Invoice not found')
+  if (!invoice) {
+    throw new AppError(InvoiceErrorCode.NOT_FOUND, 'Invoice not found', { httpCode: 404 })
+  }
 
   if (invoice.status === 'paid') {
-    throw new Error('Invoice is already paid')
+    throw new AppError(InvoiceErrorCode.ALREADY_PAID, 'Invoice is already paid', { httpCode: 400 })
   }
 
   if (invoice.payment_url) {
@@ -37,12 +41,12 @@ async function generatePaymentLink(
     try {
       statusPayload = await deps.paymentGateway.checkStatus(invoice.invoice_number)
     } catch {
-      throw new Error('DOKU status check failed')
+      throw new AppError(InvoiceErrorCode.PAYMENT_FAILED, 'DOKU status check failed', { httpCode: 502 })
     }
     const resolvedStatus = await deps.resolveDokuStatus(statusPayload)
 
     if (!resolvedStatus) {
-      throw new Error('DOKU status is not recognized')
+      throw new AppError(InvoiceErrorCode.STATUS_INVALID, 'DOKU status is not recognized', { httpCode: 400 })
     }
 
     if (resolvedStatus === 'paid') {

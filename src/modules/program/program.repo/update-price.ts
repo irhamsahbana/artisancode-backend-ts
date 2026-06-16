@@ -1,12 +1,15 @@
 import { eq, and } from 'drizzle-orm'
 
 import { getExecutor } from '@/common/executor'
+import { AppError } from '@/common/packages/types'
 import {
   productPrices as productPricesTable,
   productPricings as productPricingsTable,
   products as productsTable,
 } from '@/db/schema'
 import * as Entity from '@/entities/program.entity'
+
+import { ProgramErrorCode } from '../program.errors'
 
 export async function updatePrice(req: Entity.UpdatePriceReq): Promise<Entity.ProgramPrice> {
   const [existing] = await getExecutor()
@@ -27,7 +30,9 @@ export async function updatePrice(req: Entity.UpdatePriceReq): Promise<Entity.Pr
     )
     .limit(1)
 
-  if (!existing) throw new Error('Price not found')
+  if (!existing) {
+    throw new AppError(ProgramErrorCode.PRICE_NOT_FOUND, 'Price not found', { httpCode: 404 })
+  }
 
   const [row] = await getExecutor()
     .update(productPricesTable)
