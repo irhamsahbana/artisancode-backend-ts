@@ -13,10 +13,10 @@ const HTTP_CODE_MAP: Record<number, ErrorCode> = {
 export class HttpError extends AppError {
   public readonly statusText: string
 
-  constructor(statusCode: number, statusText: string, data?: unknown) {
-    const code = HTTP_CODE_MAP[statusCode] ?? (2100 + statusCode) as ErrorCode
-    super(code, `HTTP ${statusCode} ${statusText}`, {
-      statusCode,
+  constructor(httpCode: number, statusText: string, data?: unknown) {
+    const code = HTTP_CODE_MAP[httpCode] ?? (2100 + httpCode) as ErrorCode
+    super(code, `HTTP ${httpCode} ${statusText}`, {
+      httpCode,
       errors: data,
     })
     this.statusText = statusText

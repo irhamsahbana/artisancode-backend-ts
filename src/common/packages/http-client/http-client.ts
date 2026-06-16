@@ -55,18 +55,18 @@ export async function httpClient<T = unknown>(
     }
   } catch (error) {
     if (error instanceof HttpError) {
-      logger.error(`[HTTP] ${method} ${url} failed: ${error.statusCode} ${error.message}`)
+      logger.error(`[HTTP] ${method} ${url} failed: ${error.httpCode} ${error.message}`)
       throw error
     }
 
     if (error instanceof DOMException && error.name === 'AbortError') {
       logger.error(`[HTTP] ${method} ${url} timed out after ${timeout}ms`)
-      throw new AppError(ErrorCode.REQUEST_TIMEOUT, `Request timed out after ${timeout}ms`, { statusCode: 408 })
+      throw new AppError(ErrorCode.REQUEST_TIMEOUT, `Request timed out after ${timeout}ms`, { httpCode: 408 })
     }
 
     if (error instanceof TypeError) {
       logger.error(`[HTTP] ${method} ${url} network error: ${error.message}`)
-      throw new AppError(ErrorCode.NETWORK_ERROR, `Network error: ${error.message}`, { statusCode: 502 })
+      throw new AppError(ErrorCode.NETWORK_ERROR, `Network error: ${error.message}`, { httpCode: 502 })
     }
 
     logger.error(`[HTTP] ${method} ${url} error:`, error)
