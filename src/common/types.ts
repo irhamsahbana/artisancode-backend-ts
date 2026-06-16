@@ -1,21 +1,2 @@
-export { AppError } from './types/app-error'
-export { ErrorCode } from './types/error-codes'
-
-export interface JwtPayload {
-  id: string
-  company_id: string
-  branch_id?: string
-  role_id: string
-  name: string
-  username: string
-}
-
-export interface AppEnv {
-  Variables: {
-    user?: JwtPayload
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    body?: any
-    rawBody?: string
-    traceId?: string
-  }
-}
+export { AppError, ErrorCode } from './packages/types'
+export type { JwtPayload, AppEnv } from './packages/types'
