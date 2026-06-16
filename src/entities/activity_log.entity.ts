@@ -1,5 +1,4 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
-import { UserContext } from './user.entity'
 
 export interface ActivityLog {
   id: string
@@ -24,7 +23,6 @@ export interface CreateActivityLogReq {
   activity: string
   before?: Record<string, unknown>
   after?: Record<string, unknown>
-  user?: UserContext
 }
 
 export interface GetActivityLogReq {
@@ -35,7 +33,6 @@ export interface GetActivityLogReq {
   entity_name?: string
   q?: string
   pagination?: PaginationQuery
-  user?: UserContext
 }
 
 export interface ActivityLogList {

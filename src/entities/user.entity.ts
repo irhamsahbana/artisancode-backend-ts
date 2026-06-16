@@ -5,15 +5,6 @@ export type UserStatus = 'active' | 'inactive'
 
 export const UserStatuses: UserStatus[] = ['active', 'inactive']
 
-export interface UserContext {
-  id: string
-  company_id: string
-  branch_id?: string
-  role_id: string
-  name: string
-  username: string
-}
-
 export interface CreateUserReq {
   name: string
   username: string
@@ -23,7 +14,6 @@ export interface CreateUserReq {
   company_id: string
   role_id: string
   status?: UserStatus
-  user?: UserContext
 }
 
 export interface LoginReq {
@@ -38,7 +28,6 @@ export interface UpdateUserReq {
   phone?: string
   role_id?: string
   status?: UserStatus
-  user?: UserContext
 }
 
 export interface GetUserReq {
@@ -46,7 +35,6 @@ export interface GetUserReq {
   username?: string
   company_id?: string
   pagination?: PaginationQuery
-  user?: UserContext
 }
 
 export interface User extends BaseEntity {

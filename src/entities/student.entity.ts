@@ -1,5 +1,4 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
-import { UserContext } from './user.entity'
 
 export type StudentStatus =
   | 'active'
@@ -64,7 +63,6 @@ export interface CreateStudentReq {
   blood_type?: string
   medical_notes?: string
   status?: string
-  user?: UserContext
 }
 
 export interface UpdateStudentReq {
@@ -86,7 +84,6 @@ export interface UpdateStudentReq {
   blood_type?: string
   medical_notes?: string
   status?: string
-  user?: UserContext
 }
 
 export interface GetStudentReq {
@@ -96,7 +93,6 @@ export interface GetStudentReq {
   age?: number
   q?: string
   pagination?: PaginationQuery
-  user?: UserContext
 }
 
 export interface StudentList {

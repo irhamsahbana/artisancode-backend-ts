@@ -1,5 +1,4 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
-import { UserContext } from './user.entity'
 
 export type BranchStatus =
   | 'active'
@@ -44,7 +43,6 @@ export interface CreateBranchReq {
   email?: string
   head_coach?: string
   status?: string
-  user?: UserContext
 }
 
 export interface UpdateBranchReq {
@@ -59,7 +57,6 @@ export interface UpdateBranchReq {
   email?: string
   head_coach?: string
   status?: string
-  user?: UserContext
 }
 
 export interface GetBranchReq {
@@ -67,7 +64,6 @@ export interface GetBranchReq {
   company_id: string
   q?: string
   pagination?: PaginationQuery
-  user?: UserContext
 }
 
 export interface BranchList {

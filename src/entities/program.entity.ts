@@ -1,5 +1,4 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
-import { UserContext } from './user.entity'
 
 export type ProgramStatus = 'active' | 'inactive' | 'archived'
 
@@ -83,7 +82,6 @@ export interface CreateProgramReq {
     }[]
   }[]
   teachers?: string[]
-  user?: UserContext
 }
 
 export interface UpdateProgramReq {
@@ -94,7 +92,6 @@ export interface UpdateProgramReq {
   description?: string
   capacity?: number | null
   status?: ProgramStatus
-  user?: UserContext
 }
 
 export interface UpdateProgramAllReq {
@@ -124,7 +121,6 @@ export interface UpdateProgramAllReq {
     }[]
   }[]
   teachers?: string[]
-  user?: UserContext
 }
 
 export interface UpdatePriceReq {
@@ -135,7 +131,6 @@ export interface UpdatePriceReq {
   price?: number
   started_at?: Date
   ended_at?: Date | null
-  user?: UserContext
 }
 
 export interface AddScheduleReq {
@@ -144,7 +139,6 @@ export interface AddScheduleReq {
   day?: string
   start_time?: string
   end_time?: string
-  user?: UserContext
 }
 
 export interface AddPricingReq {
@@ -158,7 +152,6 @@ export interface AddPricingReq {
     started_at?: Date
     ended_at?: Date | null
   }[]
-  user?: UserContext
 }
 
 export interface AddPriceReq {
@@ -169,7 +162,6 @@ export interface AddPriceReq {
   price: number
   started_at?: Date
   ended_at?: Date | null
-  user?: UserContext
 }
 
 export interface GetProgramReq {
@@ -178,7 +170,6 @@ export interface GetProgramReq {
   branch_id?: string
   q?: string
   pagination?: PaginationQuery
-  user?: UserContext
 }
 
 export interface ProgramList {

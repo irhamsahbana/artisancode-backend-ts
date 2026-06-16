@@ -1,5 +1,4 @@
 import { PaginationMetadata, PaginationQuery } from './pagination.entity'
-import { UserContext } from './user.entity'
 
 export type CategoryStatus = 'active' | 'inactive'
 
@@ -23,7 +22,6 @@ export interface CreateCategoryReq {
   group?: string
   name: string
   status?: string
-  user?: UserContext
 }
 
 export interface UpdateCategoryReq {
@@ -33,7 +31,6 @@ export interface UpdateCategoryReq {
   group?: string
   name?: string
   status?: string
-  user?: UserContext
 }
 
 export interface GetCategoryReq {
@@ -42,7 +39,6 @@ export interface GetCategoryReq {
   q?: string
   group?: string
   pagination?: PaginationQuery
-  user?: UserContext
 }
 
 export interface CategoryList {
