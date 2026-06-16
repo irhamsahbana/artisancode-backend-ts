@@ -9,6 +9,7 @@ export const ErrorCode = {
   REQUEST_TIMEOUT: 2006,
   INTERNAL_ERROR: 2007,
   SERVICE_UNAVAILABLE: 2008,
+  NOT_IMPLEMENTED: 2009,
 
   // ── HTTP Client (2100–2199) ─────────────────────────────
   HTTP_BAD_REQUEST: 2100,
@@ -37,6 +38,25 @@ export const ErrorCode = {
   // ── Resilience (2500–2599) ─────────────────────────────
   CIRCUIT_BREAKER_OPEN: 2500,
   RESILIENCE_EXHAUSTED: 2501,
+
+  // ── Invoice (3100–3199) ──────────────────────────────────
+  INVOICE_NOT_FOUND: 3100,
+  INVOICE_ALREADY_PAID: 3101,
+  INVOICE_EXPIRED: 3102,
+  INVOICE_PAYMENT_FAILED: 3103,
+  INVOICE_STATUS_INVALID: 3104,
+
+  // ── Enrollment (3200–3299) ──────────────────────────────
+  ENROLLMENT_NOT_FOUND: 3200,
+
+  // ── Company (3300–3399) ─────────────────────────────────
+  COMPANY_NOT_FOUND: 3300,
+
+  // ── Role (3400–3499) ────────────────────────────────────
+  ROLE_COMPANY_REQUIRED: 3400,
+
+  // ── Program (3500–3599) ─────────────────────────────────
+  PROGRAM_PRICE_NOT_FOUND: 3500,
 } as const
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode]
