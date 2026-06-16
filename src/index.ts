@@ -1,7 +1,6 @@
-import { startTelemetry } from '@/telemetry'
+import { startTelemetry } from '@/common/packages/observability'
 
-startTelemetry()
+await startTelemetry()
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { default: App } = require('./bin/app')
+const { default: App } = await import('./bin/app')
 new App()

@@ -1,6 +1,6 @@
 import { disconnect } from '@/common/db'
+import { shutdownTelemetry } from '@/common/packages/observability'
 import logger from '@/config/logger'
-import { shutdownTelemetry } from '@/telemetry'
 
 const shutdown = (server: ReturnType<typeof Bun.serve>) => {
   logger.info('Received kill signal, shutting down gracefully ...')
