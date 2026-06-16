@@ -64,6 +64,11 @@ export async function httpClient<T = unknown>(
       throw new AppError(ErrorCode.REQUEST_TIMEOUT, `Request timed out after ${timeout}ms`, { statusCode: 408 })
     }
 
+    if (error instanceof TypeError) {
+      logger.error(`[HTTP] ${method} ${url} network error: ${error.message}`)
+      throw new AppError(ErrorCode.NETWORK_ERROR, `Network error: ${error.message}`, { statusCode: 502 })
+    }
+
     logger.error(`[HTTP] ${method} ${url} error:`, error)
     throw error
   } finally {

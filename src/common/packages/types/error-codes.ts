@@ -17,6 +17,7 @@ export const ErrorCode = {
   HTTP_NOT_FOUND: 2103,
   HTTP_TIMEOUT: 2104,
   HTTP_INTERNAL_ERROR: 2105,
+  NETWORK_ERROR: 2106,
 
   // ── Auth (2200–2299) ────────────────────────────────────
   AUTH_INVALID_CREDENTIALS: 2200,
