@@ -10,6 +10,9 @@ import { createProgramRepo } from './program.repo'
 import * as Schema from './program.schema'
 import { createProgramUsecase } from './program.usecase'
 
+// Re-export error codes for external consumers
+export { ProgramErrorCode } from './program.errors'
+
 const repo = createProgramRepo()
 const branchRepo = createBranchRepo()
 const enrollmentRepo = createEnrollmentRepo()

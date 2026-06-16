@@ -9,6 +9,9 @@ import { createInvoiceRepo } from './invoice.repo'
 import { createInvoiceSchema } from './invoice.schema'
 import { createInvoiceUsecase } from './invoice.usecase'
 
+// Re-export error codes for external consumers
+export { InvoiceErrorCode } from './invoice.errors'
+
 const router = new Hono()
 
 const repo = createInvoiceRepo()

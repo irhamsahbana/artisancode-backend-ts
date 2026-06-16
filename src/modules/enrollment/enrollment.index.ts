@@ -15,6 +15,9 @@ import { createEnrollmentRepo } from './enrollment.repo'
 import * as Schema from './enrollment.schema'
 import { createEnrollmentUsecase } from './enrollment.usecase'
 
+// Re-export error codes for external consumers
+export { EnrollmentErrorCode } from './enrollment.errors'
+
 const repo = createEnrollmentRepo()
 const branchRepo = createBranchRepo()
 const studentRepo = createStudentRepo()

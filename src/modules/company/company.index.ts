@@ -8,6 +8,9 @@ import { createCompanyRepo } from './company.repo'
 import * as Schema from './company.schema'
 import { createCompanyUsecase } from './company.usecase'
 
+// Re-export error codes for external consumers
+export { CompanyErrorCode } from './company.errors'
+
 const repo = createCompanyRepo()
 const usecase = createCompanyUsecase(repo)
 const handler = createCompanyHandlerDeps(usecase)
