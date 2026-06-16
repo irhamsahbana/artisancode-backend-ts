@@ -16,6 +16,7 @@ export const env = {
   APP_NAME: process.env.APP_NAME || 'artisancode-backend-ts',
   APP_VERSION: process.env.APP_VERSION || '1.0.0',
   APP_LOG_LEVEL: process.env.APP_LOG_LEVEL || 'info',
+  APP_LOGGER: (process.env.APP_LOGGER || 'winston') as 'winston' | 'pino',
   IS_PRODUCTION: process.env.APP_ENV === 'production',
   CORS: {
     ORIGINS: (process.env.CORS_ORIGINS || '')

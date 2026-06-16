@@ -80,7 +80,7 @@ class RESTServer {
   }
 
   public listen() {
-    logger.info(`Server running on port ${env.REST.PORT}`)
+    logger.info(`Server running on port ${env.REST.PORT} using ${env.APP_LOGGER} logger`)
     startJobs()
   }
 }
