@@ -22,7 +22,6 @@
         "bcrypt": "^6.0.0",
         "cockatiel": "^4.0.0",
         "doku-nodejs-library": "^1.0.52",
-        "dotenv": "^17.2.1",
         "drizzle-orm": "^0.45.2",
         "hono": "^4.12.25",
         "jsonwebtoken": "^9.0.3",

@@ -1,5 +1,3 @@
-import 'dotenv/config'
-
 const parseBoolean = (value: string | undefined, def: boolean): boolean => {
   if (value === undefined) return def
   return value.toLowerCase() === 'true'
