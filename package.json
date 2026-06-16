@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "test": "bun run test:unit",
-    "test:unit": "bun test src/modules/ src/common/packages/",
+    "test:unit": "bun test src/modules/ src/common/packages/ src/common/store/ src/common/middlewares/",
     "test:packages": "bun test src/__tests__/packages/",
     "test:integration": "bun test src/__tests__/",
     "build": "rm -rf dist && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
