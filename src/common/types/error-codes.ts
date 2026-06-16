@@ -1,0 +1,40 @@
+// ── General ──────────────────────────────────────────────
+export const ErrorCode = {
+  // 4xx Client Errors
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  NOT_FOUND: 'NOT_FOUND',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  CONFLICT: 'CONFLICT',
+  TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
+  REQUEST_TIMEOUT: 'REQUEST_TIMEOUT',
+
+  // 5xx Server Errors
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+
+  // ── HTTP Client ─────────────────────────────────────────
+  HTTP_BAD_REQUEST: 'HTTP_BAD_REQUEST',
+  HTTP_UNAUTHORIZED: 'HTTP_UNAUTHORIZED',
+  HTTP_FORBIDDEN: 'HTTP_FORBIDDEN',
+  HTTP_NOT_FOUND: 'HTTP_NOT_FOUND',
+  HTTP_TIMEOUT: 'HTTP_TIMEOUT',
+  HTTP_INTERNAL_ERROR: 'HTTP_INTERNAL_ERROR',
+
+  // ── Auth ────────────────────────────────────────────────
+  AUTH_INVALID_CREDENTIALS: 'AUTH_INVALID_CREDENTIALS',
+  AUTH_TOKEN_EXPIRED: 'AUTH_TOKEN_EXPIRED',
+  AUTH_TOKEN_INVALID: 'AUTH_TOKEN_INVALID',
+
+  // ── Database ────────────────────────────────────────────
+  DB_RECORD_NOT_FOUND: 'DB_RECORD_NOT_FOUND',
+  DB_DUPLICATE_ENTRY: 'DB_DUPLICATE_ENTRY',
+  DB_TRANSACTION_FAILED: 'DB_TRANSACTION_FAILED',
+
+  // ── External Service ────────────────────────────────────
+  EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR',
+  PAYMENT_GATEWAY_ERROR: 'PAYMENT_GATEWAY_ERROR',
+  STORAGE_ERROR: 'STORAGE_ERROR',
+} as const
+
+export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode]

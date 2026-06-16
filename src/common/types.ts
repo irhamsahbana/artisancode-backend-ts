@@ -1,3 +1,6 @@
+export { AppError } from './types/app-error'
+export { ErrorCode } from './types/error-codes'
+
 export interface JwtPayload {
   id: string
   company_id: string
