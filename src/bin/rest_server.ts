@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 
 import { AppError } from '@/common/app_error'
 import { errorHandler } from '@/common/middlewares/error_handler'
+import { httpSpan } from '@/common/middlewares/http_span'
 import { requestLogger } from '@/common/middlewares/request_logger'
 import { traceContext } from '@/common/middlewares/trace_context'
 import { AppEnv } from '@/common/types'
@@ -54,6 +55,9 @@ class RESTServer {
 
     // Extract trace context from incoming requests
     app.use('*', traceContext)
+
+    // OpenTelemetry span per request
+    app.use('*', httpSpan())
 
     // Request logger
     app.use('*', requestLogger)
