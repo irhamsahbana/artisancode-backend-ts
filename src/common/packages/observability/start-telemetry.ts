@@ -1,10 +1,4 @@
-import {
-  diag,
-  DiagConsoleLogger,
-  DiagLogLevel,
-  SpanStatusCode,
-  trace,
-} from '@opentelemetry/api'
+import { diag, DiagConsoleLogger } from '@opentelemetry/api'
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston'
@@ -17,36 +11,12 @@ import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic
 
 import { env } from '@/config/env'
 
-let sdk: NodeSDK | null = null
-
-const parseHeaders = (raw: string | undefined): Record<string, string> | undefined => {
-  if (!raw?.trim()) return undefined
-  const headers: Record<string, string> = {}
-  for (const pair of raw.split(',')) {
-    const idx = pair.indexOf('=')
-    if (idx === -1) continue
-    const key = pair.slice(0, idx).trim()
-    const value = pair.slice(idx + 1).trim()
-    if (key) headers[key] = value
-  }
-  return Object.keys(headers).length > 0 ? headers : undefined
-}
-
-const getDiagLogLevel = (value: string | undefined) => {
-  if (!value) return undefined
-  const normalized = value.trim().toLowerCase()
-  if (normalized === 'all') return DiagLogLevel.ALL
-  if (normalized === 'verbose') return DiagLogLevel.VERBOSE
-  if (normalized === 'debug') return DiagLogLevel.DEBUG
-  if (normalized === 'info') return DiagLogLevel.INFO
-  if (normalized === 'warn') return DiagLogLevel.WARN
-  if (normalized === 'error') return DiagLogLevel.ERROR
-  if (normalized === 'none') return DiagLogLevel.NONE
-  return undefined
-}
+import { getDiagLogLevel } from './get-diag-log-level'
+import { parseHeaders } from './parse-headers'
+import { getSdk, setSdk } from './sdk-state'
 
 export const startTelemetry = () => {
-  if (sdk) return
+  if (getSdk()) return
 
   const diagLogLevel = getDiagLogLevel(env.OTEL.DIAG_LOG_LEVEL)
   if (diagLogLevel !== undefined) {
@@ -94,7 +64,7 @@ export const startTelemetry = () => {
     root: new TraceIdRatioBasedSampler(env.OTEL.SAMPLING_RATIO),
   })
 
-  sdk = new NodeSDK({
+  const sdk = new NodeSDK({
     resource,
     traceExporter,
     sampler,
@@ -106,35 +76,6 @@ export const startTelemetry = () => {
     logRecordProcessors: logExporter ? [new BatchLogRecordProcessor(logExporter)] : [],
   })
 
+  setSdk(sdk)
   void sdk.start()
-}
-
-export const shutdownTelemetry = async () => {
-  if (!sdk) return
-  const current = sdk
-  sdk = null
-  await current.shutdown()
-}
-
-export interface WithSpanOptions {
-  tracerName?: string
-}
-
-export const withSpan = async <T>(
-  spanName: string,
-  fn: () => Promise<T> | T,
-  options?: WithSpanOptions,
-): Promise<T> => {
-  const tracer = trace.getTracer(options?.tracerName ?? 'default')
-  return tracer.startActiveSpan(spanName, async (span) => {
-    try {
-      return await fn()
-    } catch (error) {
-      span.recordException(error as Error)
-      span.setStatus({ code: SpanStatusCode.ERROR })
-      throw error
-    } finally {
-      span.end()
-    }
-  })
 }

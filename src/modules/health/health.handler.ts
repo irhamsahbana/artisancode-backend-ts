@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
 
+import { withSpan } from '@/common/packages/observability'
 import logger from '@/config/logger'
 import { IHealthUsecase } from '@/contracts/health.contract'
-import { withSpan } from '@/telemetry'
 
 export default function healthHandler(usecase: IHealthUsecase) {
   const router = new Hono()

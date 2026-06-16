@@ -1,10 +1,10 @@
 import { Context } from 'hono'
 
+import { withSpan } from '@/common/packages/observability'
 import { responseSuccess } from '@/common/rest_response'
 import { AppEnv } from '@/common/types'
 import { IEnrollmentUsecase } from '@/contracts/enrollment.contract'
 import * as Entity from '@/entities/enrollment.entity'
-import { withSpan } from '@/telemetry'
 
 export function findEnrollmentListHandler(usecase: IEnrollmentUsecase) {
   return async (c: Context<AppEnv>) => {

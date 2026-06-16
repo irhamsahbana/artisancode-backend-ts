@@ -1,8 +1,8 @@
 import { AppError } from '@/common/app_error'
+import { withSpan } from '@/common/packages/observability'
 import { IBranchRepo } from '@/contracts/branch.contract'
 import { IEnrollmentRepo } from '@/contracts/enrollment.contract'
 import { IProgramRepo, IProgramUsecase } from '@/contracts/program.contract'
-import { withSpan } from '@/telemetry'
 
 import { addPrice } from './program.usecase/add-price'
 import { addPricing } from './program.usecase/add-pricing'

@@ -1,6 +1,6 @@
+import { withSpan } from '@/common/packages/observability'
 import { IStorageService } from '@/contracts/integration'
 import { IStorageRepo } from '@/contracts/storage.contract'
-import { withSpan } from '@/telemetry'
 
 import { cleanupExpiredFiles, CleanupExpiredReq } from './storage.usecase/cleanup-expired'
 import { createUploadUrl, CreateUploadUrlReq } from './storage.usecase/create-upload-url'

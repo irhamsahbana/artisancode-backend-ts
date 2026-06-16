@@ -1,5 +1,5 @@
+import { withSpan } from '@/common/packages/observability'
 import { ICompanyRepo, ICompanyUsecase } from '@/contracts/company.contract'
-import { withSpan } from '@/telemetry'
 
 import { createCompany } from './company.usecase/create'
 import { deleteCompany } from './company.usecase/delete'

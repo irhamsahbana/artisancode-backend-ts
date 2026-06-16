@@ -1,6 +1,6 @@
+import { withSpan } from '@/common/packages/observability'
 import logger from '@/config/logger'
 import { IHealthRepo } from '@/contracts/health.contract'
-import { withSpan } from '@/telemetry'
 
 export default class HealthRepo implements IHealthRepo {
   async checkDb() {

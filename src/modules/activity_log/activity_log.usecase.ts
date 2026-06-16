@@ -1,5 +1,5 @@
+import { withSpan } from '@/common/packages/observability'
 import { IActivityLogRepo, IActivityLogUsecase } from '@/contracts/activity_log.contract'
-import { withSpan } from '@/telemetry'
 
 import { createActivityLog } from './activity_log.usecase/create'
 import { findActivityLogById } from './activity_log.usecase/find-by-id'

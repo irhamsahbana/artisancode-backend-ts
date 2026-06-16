@@ -1,5 +1,5 @@
+import { withSpan } from '@/common/packages/observability'
 import { ITeacherRepo, ITeacherUsecase } from '@/contracts/teacher.contract'
-import { withSpan } from '@/telemetry'
 
 import { createTeacher } from './teacher.usecase/create'
 import { deleteTeacher } from './teacher.usecase/delete'

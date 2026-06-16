@@ -1,9 +1,9 @@
 import { Context } from 'hono'
 
+import { withSpan } from '@/common/packages/observability'
 import { responseSuccess } from '@/common/rest_response'
 import { AppEnv } from '@/common/types'
 import { IInvoiceUsecase } from '@/contracts/invoice.contract'
-import { withSpan } from '@/telemetry'
 
 export function findInvoiceByIdHandler(usecase: IInvoiceUsecase) {
   return async (c: Context<AppEnv>) => {

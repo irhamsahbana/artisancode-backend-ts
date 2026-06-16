@@ -1,5 +1,5 @@
+import { withSpan } from '@/common/packages/observability'
 import { IUserRepo, IUserUsecase } from '@/contracts/user.contract'
-import { withSpan } from '@/telemetry'
 
 import { createUser } from './user.usecase/create'
 import { findUserById } from './user.usecase/find-by-id'

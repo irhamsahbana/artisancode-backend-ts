@@ -1,3 +1,4 @@
+import { withSpan } from '@/common/packages/observability'
 import { CheckStatusRes, IPaymentGateway } from '@/contracts/integration'
 import { IInvoiceRepo, IInvoiceUsecase } from '@/contracts/invoice.contract'
 import {
@@ -5,7 +6,6 @@ import {
   Invoice,
   InvoiceStatus,
 } from '@/entities/invoice.entity'
-import { withSpan } from '@/telemetry'
 
 import { createInvoice } from './invoice.usecase/create'
 import { findActiveInvoiceByEnrollment } from './invoice.usecase/find-active-by-enrollment'

@@ -1,6 +1,6 @@
+import { withSpan } from '@/common/packages/observability'
 import { IBranchRepo } from '@/contracts/branch.contract'
 import { IStudentRepo, IStudentUsecase, StudentUsecaseDeps } from '@/contracts/student.contract'
-import { withSpan } from '@/telemetry'
 
 import { createStudent } from './student.usecase/create'
 import { deleteStudent } from './student.usecase/delete'

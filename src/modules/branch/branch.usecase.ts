@@ -1,5 +1,5 @@
+import { withSpan } from '@/common/packages/observability'
 import { IBranchRepo, IBranchUsecase } from '@/contracts/branch.contract'
-import { withSpan } from '@/telemetry'
 
 import { createBranch } from './branch.usecase/create'
 import { deleteBranch } from './branch.usecase/delete'

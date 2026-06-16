@@ -1,3 +1,4 @@
+import { withSpan } from '@/common/packages/observability'
 import { IBranchRepo } from '@/contracts/branch.contract'
 import { IEnrollmentRepo, IEnrollmentUsecase } from '@/contracts/enrollment.contract'
 import { IStorageService, ITransactor } from '@/contracts/integration'
@@ -6,7 +7,6 @@ import { IProgramRepo } from '@/contracts/program.contract'
 import { IStudentRepo } from '@/contracts/student.contract'
 import * as Entity from '@/entities/enrollment.entity'
 import { Program } from '@/entities/program.entity'
-import { withSpan } from '@/telemetry'
 
 import { checkScheduleConflict } from './enrollment.usecase/check-schedule-conflict'
 import { createEnrollment } from './enrollment.usecase/create'

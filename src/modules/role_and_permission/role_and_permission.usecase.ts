@@ -1,5 +1,5 @@
+import { withSpan } from '@/common/packages/observability'
 import { IRoleAndPermissionRepo, IRoleAndPermissionUsecase } from '@/contracts/role_and_permission.contract'
-import { withSpan } from '@/telemetry'
 
 import { createRole } from './role_and_permission.usecase/create-role'
 import { deleteRole } from './role_and_permission.usecase/delete-role'
