@@ -247,7 +247,7 @@ describe('httpClient', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(HttpError)
         const httpErr = error as HttpError
-        expect(httpErr.statusCode).toBe(400)
+        expect(httpErr.httpCode).toBe(400)
         expect(httpErr.message).toContain('400')
       }
     })
@@ -261,7 +261,7 @@ describe('httpClient', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(HttpError)
         const httpErr = error as HttpError
-        expect(httpErr.statusCode).toBe(404)
+        expect(httpErr.httpCode).toBe(404)
       }
     })
 
@@ -274,7 +274,7 @@ describe('httpClient', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(HttpError)
         const httpErr = error as HttpError
-        expect(httpErr.statusCode).toBe(500)
+        expect(httpErr.httpCode).toBe(500)
       }
     })
 
@@ -299,7 +299,7 @@ describe('httpClient', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(AppError)
         const appErr = error as AppError
-        expect(appErr.statusCode).toBe(408)
+        expect(appErr.httpCode).toBe(408)
         expect(appErr.message).toContain('timed out')
       }
     })

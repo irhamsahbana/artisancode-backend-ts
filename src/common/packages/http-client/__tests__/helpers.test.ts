@@ -103,7 +103,7 @@ describe('isJsonBody', () => {
 describe('HttpError', () => {
   it('maps 400 to HTTP_BAD_REQUEST', () => {
     const err = new HttpError(400, 'Bad Request')
-    expect(err.statusCode).toBe(400)
+    expect(err.httpCode).toBe(400)
     expect(err.code).toBe(ErrorCode.HTTP_BAD_REQUEST)
     expect(err.name).toBe('HttpError')
   })

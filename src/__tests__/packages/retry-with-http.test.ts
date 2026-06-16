@@ -44,7 +44,7 @@ describe('Retry + HTTP Client', () => {
       expect.unreachable('should have thrown')
     } catch (error) {
       expect(error).toBeInstanceOf(HttpError)
-      expect((error as HttpError).statusCode).toBe(503)
+      expect((error as HttpError).httpCode).toBe(503)
     }
 
     expect(api.callCount).toBe(4)
