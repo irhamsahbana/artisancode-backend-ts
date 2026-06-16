@@ -10,6 +10,7 @@
     "test:packages": "bun test src/__tests__/packages/",
     "test:integration": "bun test src/__tests__/",
     "build": "rm -rf dist && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:binary": "bun build --compile --minify --sourcemap --target=bun src/index.ts --outfile dist/api && rm -f .*.bun-build",
     "start": "bun dist/index.js",
     "dev": "bun --watch src/index.ts",
     "drizzle:generate": "drizzle-kit generate",

@@ -2,6 +2,7 @@
 .vscode
 .env
 error.log
+*.bun-build
 
 # Directories
 .dist
