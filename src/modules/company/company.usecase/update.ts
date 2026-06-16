@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import * as Entity from '@/entities/company.entity'
 
 import { CompanyUsecaseDeps } from '../company.usecase'
@@ -9,7 +9,7 @@ export async function updateCompany(
 ): Promise<Entity.Company> {
   const existing = await deps.repo.findById(req)
   if (!existing) {
-    throw new AppError(404, 'Company not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Company not found')
   }
   return deps.repo.update(req)
 }

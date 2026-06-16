@@ -1,6 +1,6 @@
-import { AppError } from '@/common/app_error'
 import { comparePassword } from '@/common/encryption'
 import { generateToken } from '@/common/jwt'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import * as Entity from '@/entities/user.entity'
 
 import { UserUsecaseDeps } from '../user.usecase'
@@ -16,7 +16,7 @@ export async function loginUser(
   if (!isValid) return null
 
   if (user.status !== 'active') {
-    throw new AppError(403, 'User account is not active')
+    throw new AppError(ErrorCode.FORBIDDEN, 'User account is not active')
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

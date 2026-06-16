@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 
 import { EnrollmentUsecaseDeps } from '../enrollment.usecase'
 
@@ -15,7 +15,7 @@ export async function uploadPaymentProof(
 ) {
   const enrollment = await deps.repo.findById(req.id, req.company_id)
   if (!enrollment) {
-    throw new AppError(404, 'Enrollment not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Enrollment not found')
   }
 
   const result = await deps.storage.upload({

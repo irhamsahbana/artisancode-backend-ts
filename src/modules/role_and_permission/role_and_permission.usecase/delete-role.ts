@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 
 import { RoleAndPermissionUsecaseDeps } from '../role_and_permission.usecase'
 
@@ -9,7 +9,7 @@ export async function deleteRole(
 ): Promise<void> {
   const existing = await deps.repo.findRoleById(id, companyId)
   if (!existing) {
-    throw new AppError(404, 'Role not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Role not found')
   }
   await deps.repo.deleteRole(id, companyId)
 }

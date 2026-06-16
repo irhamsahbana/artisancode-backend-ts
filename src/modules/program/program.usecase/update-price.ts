@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import * as Entity from '@/entities/program.entity'
 
 import { ProgramUsecaseDeps } from '../program.usecase'
@@ -9,17 +9,17 @@ export async function updatePrice(
 ): Promise<Entity.ProgramPrice> {
   const program = await deps.repo.findById(req.program_id, req.company_id)
   if (!program) {
-    throw new AppError(404, 'Program not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Program not found')
   }
 
   const pricing = program.pricings?.find((p) => p.id === req.pricing_id)
   if (!pricing) {
-    throw new AppError(404, 'Pricing package not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Pricing package not found')
   }
 
   const price = pricing.prices.find((p) => p.id === req.price_id)
   if (!price) {
-    throw new AppError(404, 'Price not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Price not found')
   }
 
   const effectiveStartedAt = req.started_at
@@ -35,7 +35,7 @@ export async function updatePrice(
   }
 
   if (effectiveEndedAt && effectiveStartedAt > effectiveEndedAt) {
-    throw new AppError(400, 'Start date cannot be after end date')
+    throw new AppError(ErrorCode.VALIDATION_ERROR, 'Start date cannot be after end date')
   }
 
   const otherPrices = pricing.prices.filter(

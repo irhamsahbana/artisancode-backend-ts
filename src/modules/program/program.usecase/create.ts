@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import * as Entity from '@/entities/program.entity'
 
 import { ProgramUsecaseDeps } from '../program.usecase'
@@ -10,7 +10,7 @@ export async function createProgram(
   if (req.branch_id) {
     const branch = await deps.branchRepo.findById(req.branch_id, req.company_id)
     if (!branch) {
-      throw new AppError(404, 'Branch not found')
+      throw new AppError(ErrorCode.NOT_FOUND, 'Branch not found')
     }
   }
 
@@ -20,7 +20,7 @@ export async function createProgram(
     req.branch_id || null,
   )
   if (existingProgram) {
-    throw new AppError(409, 'Program with this name already exists')
+    throw new AppError(ErrorCode.CONFLICT, 'Program with this name already exists')
   }
 
   if (req.pricings) {

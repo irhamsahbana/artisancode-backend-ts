@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, mock } from 'bun:test'
 
-import { AppError } from '@/common/app_error'
+import { AppError } from '@/common/packages/types'
 
 import { EnrollmentUsecaseDeps } from '../enrollment.usecase'
 import { uploadPaymentProof } from '../enrollment.usecase/upload-payment-proof'

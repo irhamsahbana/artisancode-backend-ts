@@ -1,5 +1,5 @@
-import { AppError } from '@/common/app_error'
 import { withSpan } from '@/common/packages/observability'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import { IBranchRepo } from '@/contracts/branch.contract'
 import { IEnrollmentRepo } from '@/contracts/enrollment.contract'
 import { IProgramRepo, IProgramUsecase } from '@/contracts/program.contract'
@@ -47,7 +47,7 @@ function checkOverlap(
 
   if (isStartABeforeEndB && isEndAAfterStartB) {
     throw new AppError(
-      409,
+      ErrorCode.CONFLICT,
       `Date overlap detected with another price (ID: ${existing.id}) for currency ${currency}.`,
     )
   }
@@ -75,7 +75,7 @@ function validatePricingOverlap(
     })
 
     if (overlap) {
-      throw new AppError(409, `Price overlap detected for currency ${newPrice.currency}.`)
+      throw new AppError(ErrorCode.CONFLICT, `Price overlap detected for currency ${newPrice.currency}.`)
     }
   }
 }

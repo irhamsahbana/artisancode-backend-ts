@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import { Invoice } from '@/entities/invoice.entity'
 
 import { InvoiceUsecaseDeps } from '../invoice.usecase'
@@ -10,7 +10,7 @@ export async function updateInvoiceStatus(
   status: string,
 ): Promise<Invoice> {
   const invoice = await deps.repo.findById(id, companyId)
-  if (!invoice) throw new AppError(404, 'Invoice not found')
+  if (!invoice) throw new AppError(ErrorCode.NOT_FOUND, 'Invoice not found')
 
   return deps.repo.update({
     id,

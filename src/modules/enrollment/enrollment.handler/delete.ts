@@ -1,8 +1,8 @@
 import { Context } from 'hono'
 
 import { withSpan } from '@/common/packages/observability'
+import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
-import { AppEnv } from '@/common/types'
 import { IEnrollmentUsecase } from '@/contracts/enrollment.contract'
 
 export function deleteEnrollmentHandler(usecase: IEnrollmentUsecase) {

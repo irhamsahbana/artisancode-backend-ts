@@ -1,12 +1,12 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 
-import { AppError } from '@/common/app_error'
 import { errorHandler } from '@/common/middlewares/error_handler'
 import { httpSpan } from '@/common/middlewares/http_span'
 import { requestLogger } from '@/common/middlewares/request_logger'
 import { traceContext } from '@/common/middlewares/trace_context'
-import { AppEnv } from '@/common/types'
+import { AppError, ErrorCode } from '@/common/packages/types'
+import { AppEnv } from '@/common/packages/types'
 import { env } from '@/config/env'
 import logger from '@/config/logger'
 import { startJobs } from '@/jobs'
@@ -67,7 +67,7 @@ class RESTServer {
 
     // Not found handler
     app.notFound((c) => {
-      throw new AppError(404, `Route not found: ${c.req.method} ${c.req.url}`)
+      throw new AppError(ErrorCode.NOT_FOUND, `Route not found: ${c.req.method} ${c.req.url}`)
     })
 
     // Error handler

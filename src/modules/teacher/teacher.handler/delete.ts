@@ -1,7 +1,7 @@
 import { Context } from 'hono'
 
+import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
-import { AppEnv } from '@/common/types'
 import { ITeacherUsecase } from '@/contracts/teacher.contract'
 
 export function deleteTeacherHandler(usecase: ITeacherUsecase) {

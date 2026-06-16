@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import type { IStorageService } from '@/contracts/integration'
 import type { IStorageRepo } from '@/contracts/storage.contract'
 
@@ -10,11 +10,11 @@ export async function deleteFile(
 ) {
   const file = await repo.findById(id, companyId)
   if (!file) {
-    throw new AppError(404, 'File not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'File not found')
   }
 
   if (file.status !== 'pending') {
-    throw new AppError(400, 'File can no longer be deleted')
+    throw new AppError(ErrorCode.VALIDATION_ERROR, 'File can no longer be deleted')
   }
 
   await storage.delete(file.objectKey)

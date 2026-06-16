@@ -14,6 +14,7 @@ export const withSourceLocation = winston.format((info) => {
       // skip internal frames
       if (
         filePath.includes('logger.ts') ||
+        filePath.includes('with-source-location.ts') ||
         filePath.includes('node_modules') ||
         filePath.includes('telemetry.ts')
       ) {

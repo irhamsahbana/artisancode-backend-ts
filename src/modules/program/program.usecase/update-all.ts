@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import * as Entity from '@/entities/program.entity'
 
 import { ProgramUsecaseDeps } from '../program.usecase'
@@ -9,13 +9,13 @@ export async function updateAllProgram(
 ): Promise<Entity.Program> {
   const program = await deps.repo.findById(req.id, req.company_id)
   if (!program) {
-    throw new AppError(404, 'Program not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Program not found')
   }
 
   if (req.branch_id !== undefined && req.branch_id !== null) {
     const branch = await deps.branchRepo.findById(req.branch_id, req.company_id)
     if (!branch) {
-      throw new AppError(404, 'Branch not found')
+      throw new AppError(ErrorCode.NOT_FOUND, 'Branch not found')
     }
   }
 
@@ -26,7 +26,7 @@ export async function updateAllProgram(
       req.branch_id !== undefined ? req.branch_id : program.branch_id,
     )
     if (existingProgram && existingProgram.id !== req.id) {
-      throw new AppError(409, 'Program with this name already exists')
+      throw new AppError(ErrorCode.CONFLICT, 'Program with this name already exists')
     }
   }
 
@@ -44,7 +44,7 @@ export async function updateAllProgram(
         (p: Entity.ProgramPricing) => p.id === pricing.id,
       )
       if (!existingPricing) {
-        throw new AppError(404, 'Pricing package not found')
+        throw new AppError(ErrorCode.NOT_FOUND, 'Pricing package not found')
       }
 
       const mergedPrices: PriceList = existingPricing.prices.map(
@@ -63,7 +63,7 @@ export async function updateAllProgram(
             (p: Entity.ProgramPrice) => p.id === reqPrice.id,
           )
           if (!existingPrice) {
-            throw new AppError(404, 'Price not found')
+            throw new AppError(ErrorCode.NOT_FOUND, 'Price not found')
           }
 
           const priceChanged =
@@ -74,7 +74,7 @@ export async function updateAllProgram(
             const newEnd = reqPrice.ended_at === undefined ? null : reqPrice.ended_at
 
             if (newEnd && newStart > newEnd) {
-              throw new AppError(400, 'Start date cannot be after end date')
+              throw new AppError(ErrorCode.VALIDATION_ERROR, 'Start date cannot be after end date')
             }
 
             const existingIndex = mergedPrices.findIndex(
@@ -120,7 +120,7 @@ export async function updateAllProgram(
             reqPrice.ended_at === undefined ? existingPrice.ended_at : reqPrice.ended_at
 
           if (effectiveEndedAt && new Date(effectiveStartedAt) > new Date(effectiveEndedAt)) {
-            throw new AppError(400, 'Start date cannot be after end date')
+            throw new AppError(ErrorCode.VALIDATION_ERROR, 'Start date cannot be after end date')
           }
 
           const otherPrices = mergedPrices.filter(
@@ -158,7 +158,7 @@ export async function updateAllProgram(
         const newEnd = reqPrice.ended_at === undefined ? null : reqPrice.ended_at
 
         if (newEnd && newStart > newEnd) {
-          throw new AppError(400, 'Start date cannot be after end date')
+          throw new AppError(ErrorCode.VALIDATION_ERROR, 'Start date cannot be after end date')
         }
 
         const openEndedPrice = mergedPrices.find((p: PriceList[number]) => {

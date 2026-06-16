@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 
 import { EnrollmentUsecaseDeps } from '../enrollment.usecase'
 
@@ -9,11 +9,11 @@ export async function deleteEnrollment(
 ): Promise<void> {
   const enrollment = await deps.repo.findById(id, companyId)
   if (!enrollment) {
-    throw new AppError(404, 'Enrollment not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Enrollment not found')
   }
   const activeInvoice = await deps.invoiceUsecase.findActiveByEnrollment(id, companyId)
   if (activeInvoice) {
-    throw new AppError(400, 'Cannot delete enrollment with active invoice')
+    throw new AppError(ErrorCode.VALIDATION_ERROR, 'Cannot delete enrollment with active invoice')
   }
   return deps.repo.delete(id, companyId)
 }

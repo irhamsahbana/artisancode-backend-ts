@@ -1,5 +1,5 @@
-import { AppError } from '@/common/app_error'
-import { ErrorCode } from '@/common/types/error-codes'
+import { AppError } from '@/common/packages/types'
+import { ErrorCode } from '@/common/packages/types/error-codes'
 
 const HTTP_CODE_MAP: Record<number, ErrorCode> = {
   400: ErrorCode.HTTP_BAD_REQUEST,
@@ -14,9 +14,9 @@ export class HttpError extends AppError {
   public readonly statusText: string
 
   constructor(statusCode: number, statusText: string, data?: unknown) {
-    const code = HTTP_CODE_MAP[statusCode] ?? `HTTP_${statusCode}` as ErrorCode
-    super(statusCode, `HTTP ${statusCode} ${statusText}`, {
-      code,
+    const code = HTTP_CODE_MAP[statusCode] ?? (2100 + statusCode) as ErrorCode
+    super(code, `HTTP ${statusCode} ${statusText}`, {
+      statusCode,
       errors: data,
     })
     this.statusText = statusText

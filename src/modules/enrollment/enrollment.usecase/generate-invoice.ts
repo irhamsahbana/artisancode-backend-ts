@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import { selectValidPrice } from '@/common/utils/select_valid_price'
 import * as Entity from '@/entities/enrollment.entity'
 import { Invoice } from '@/entities/invoice.entity'
@@ -11,11 +11,11 @@ export async function generateEnrollmentInvoice(
 ): Promise<Invoice> {
   const enrollment = await deps.repo.findById(req.id, req.company_id)
   if (!enrollment) {
-    throw new AppError(404, 'Enrollment not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Enrollment not found')
   }
 
   if (enrollment.status !== 'active') {
-    throw new AppError(400, 'Enrollment is not active')
+    throw new AppError(ErrorCode.VALIDATION_ERROR, 'Enrollment is not active')
   }
 
   const activeInvoice = await deps.invoiceUsecase.findActiveByEnrollment(
@@ -29,7 +29,7 @@ export async function generateEnrollmentInvoice(
   const pricing = enrollment.pricing
   const prices = pricing?.prices || []
   if (!pricing || prices.length === 0) {
-    throw new AppError(400, 'Pricing is not available for this enrollment')
+    throw new AppError(ErrorCode.VALIDATION_ERROR, 'Pricing is not available for this enrollment')
   }
 
   const effectiveEnrollmentDate = enrollment.enrollment_date
@@ -41,12 +41,12 @@ export async function generateEnrollmentInvoice(
     const candidates = prices.filter((price) => price.currency === enrollment.currency)
     validPrice = selectValidPrice(candidates, effectiveEnrollmentDate)
     if (!validPrice) {
-      throw new AppError(400, 'Pricing has no valid price for the enrollment currency')
+      throw new AppError(ErrorCode.VALIDATION_ERROR, 'Pricing has no valid price for the enrollment currency')
     }
   } else {
     validPrice = selectValidPrice(prices, effectiveEnrollmentDate)
     if (!validPrice) {
-      throw new AppError(400, 'Pricing has no valid price for the enrollment date')
+      throw new AppError(ErrorCode.VALIDATION_ERROR, 'Pricing has no valid price for the enrollment date')
     }
   }
 

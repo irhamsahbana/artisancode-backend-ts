@@ -2,8 +2,8 @@ import { Context, Next } from 'hono'
 import jwt from 'jsonwebtoken'
 
 import { verifyToken } from '@/common/jwt'
+import { AppEnv, JwtPayload } from '@/common/packages/types'
 import { responseError } from '@/common/rest_response'
-import { AppEnv, JwtPayload } from '@/common/types'
 import logger from '@/config/logger'
 
 export const authenticate = async (c: Context<AppEnv>, next: Next) => {

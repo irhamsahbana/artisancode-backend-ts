@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import logger from '@/config/logger'
 
 import { buildUrl } from './build-url'
@@ -61,7 +61,7 @@ export async function httpClient<T = unknown>(
 
     if (error instanceof DOMException && error.name === 'AbortError') {
       logger.error(`[HTTP] ${method} ${url} timed out after ${timeout}ms`)
-      throw new AppError(408, `Request timed out after ${timeout}ms`)
+      throw new AppError(ErrorCode.REQUEST_TIMEOUT, `Request timed out after ${timeout}ms`, { statusCode: 408 })
     }
 
     logger.error(`[HTTP] ${method} ${url} error:`, error)

@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 
 import { TeacherUsecaseDeps } from '../teacher.usecase'
 
@@ -9,7 +9,7 @@ export async function deleteTeacher(
 ): Promise<void> {
   const teacher = await deps.repo.findById(id, companyId)
   if (!teacher) {
-    throw new AppError(404, 'Teacher not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Teacher not found')
   }
   return deps.repo.delete(id, companyId)
 }

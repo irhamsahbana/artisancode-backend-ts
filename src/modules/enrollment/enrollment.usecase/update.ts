@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import { selectValidPrice } from '@/common/utils/select_valid_price'
 import * as Entity from '@/entities/enrollment.entity'
 import { Program, ProgramStatuses } from '@/entities/program.entity'
@@ -12,7 +12,7 @@ export async function updateEnrollment(
 ): Promise<Entity.Enrollment> {
   const enrollment = await deps.repo.findById(req.id, req.company_id)
   if (!enrollment) {
-    throw new AppError(404, 'Enrollment not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Enrollment not found')
   }
 
   const effectiveBranchId = req.branch_id ?? enrollment.branch_id
@@ -28,7 +28,7 @@ export async function updateEnrollment(
   if (req.branch_id) {
     const branch = await deps.branchRepo.findById(req.branch_id, req.company_id)
     if (!branch) {
-      throw new AppError(404, 'Branch not found')
+      throw new AppError(ErrorCode.NOT_FOUND, 'Branch not found')
     }
   }
 
@@ -36,15 +36,15 @@ export async function updateEnrollment(
   if (req.student_id || effectiveStatus === 'active') {
     student = await deps.studentRepo.findById(effectiveStudentId, req.company_id)
     if (!student) {
-      throw new AppError(404, 'Student not found')
+      throw new AppError(ErrorCode.NOT_FOUND, 'Student not found')
     }
     if (InactiveStudentStatuses.includes(student.status as StudentStatus)) {
-      throw new AppError(400, 'Student is not active')
+      throw new AppError(ErrorCode.VALIDATION_ERROR, 'Student is not active')
     }
   }
 
   if (student && student.branch_id !== effectiveBranchId) {
-    throw new AppError(400, 'Student belongs to a different branch')
+    throw new AppError(ErrorCode.VALIDATION_ERROR, 'Student belongs to a different branch')
   }
 
   let program: Program | null = null
@@ -52,7 +52,7 @@ export async function updateEnrollment(
     if (program) return program
     program = await deps.programRepo.findById(effectiveProgramId, req.company_id)
     if (!program) {
-      throw new AppError(404, 'Program not found')
+      throw new AppError(ErrorCode.NOT_FOUND, 'Program not found')
     }
     return program
   }
@@ -62,12 +62,12 @@ export async function updateEnrollment(
 
     if (effectiveStatus === 'active') {
       if (!ProgramStatuses.includes(programData.status) || programData.status !== 'active') {
-        throw new AppError(400, 'Program is not active')
+        throw new AppError(ErrorCode.VALIDATION_ERROR, 'Program is not active')
       }
     }
 
     if (programData.branch_id && programData.branch_id !== effectiveBranchId) {
-      throw new AppError(400, 'Program is not available in this branch')
+      throw new AppError(ErrorCode.VALIDATION_ERROR, 'Program is not available in this branch')
     }
 
     if (programData.capacity && effectiveStatus === 'active') {
@@ -81,7 +81,7 @@ export async function updateEnrollment(
           : activeEnrollments
 
       if (adjustedActiveEnrollments >= programData.capacity) {
-        throw new AppError(400, 'Program capacity reached')
+        throw new AppError(ErrorCode.VALIDATION_ERROR, 'Program capacity reached')
       }
     }
   }
@@ -91,10 +91,10 @@ export async function updateEnrollment(
     const pricingId = req.pricing_id ?? enrollment.pricing_id
     const pricing = programData.pricings?.find((p) => p.id === pricingId)
     if (!pricing) {
-      throw new AppError(400, 'Invalid pricing for this program')
+      throw new AppError(ErrorCode.VALIDATION_ERROR, 'Invalid pricing for this program')
     }
     if (!pricing.is_active) {
-      throw new AppError(400, 'Selected pricing is not active')
+      throw new AppError(ErrorCode.VALIDATION_ERROR, 'Selected pricing is not active')
     }
     const prices = pricing.prices || []
     const effectiveCurrency = req.currency ?? enrollment.currency
@@ -104,7 +104,7 @@ export async function updateEnrollment(
       const validPrice = selectValidPrice(priceCandidates, effectiveEnrollmentDate)
       if (!validPrice) {
         throw new AppError(
-          400,
+          ErrorCode.VALIDATION_ERROR,
           'Selected pricing package has no valid price for the enrollment currency',
         )
       }
@@ -112,7 +112,7 @@ export async function updateEnrollment(
       const validPrice = selectValidPrice(prices, effectiveEnrollmentDate)
       if (!validPrice) {
         throw new AppError(
-          400,
+          ErrorCode.VALIDATION_ERROR,
           'Selected pricing package has no valid price for the enrollment date',
         )
       }
@@ -123,14 +123,14 @@ export async function updateEnrollment(
   if (req.billing_cycle) {
     const validCycles = ['monthly', 'quarterly', 'annually', 'one_time']
     if (!validCycles.includes(req.billing_cycle)) {
-      throw new AppError(400, 'Invalid billing cycle')
+      throw new AppError(ErrorCode.VALIDATION_ERROR, 'Invalid billing cycle')
     }
   }
 
   if (req.next_billing_date) {
     const nextBillingDate = new Date(req.next_billing_date)
     if (nextBillingDate <= effectiveEnrollmentDate) {
-      throw new AppError(400, 'Next billing date must be after enrollment date')
+      throw new AppError(ErrorCode.VALIDATION_ERROR, 'Next billing date must be after enrollment date')
     }
   }
 
@@ -142,7 +142,7 @@ export async function updateEnrollment(
     )
 
     if (existingActiveEnrollment && existingActiveEnrollment.id !== enrollment.id) {
-      throw new AppError(400, 'Student is already active in this program')
+      throw new AppError(ErrorCode.VALIDATION_ERROR, 'Student is already active in this program')
     }
 
     const programData = await resolveProgram()

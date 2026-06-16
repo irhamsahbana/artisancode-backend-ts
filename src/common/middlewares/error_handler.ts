@@ -1,9 +1,9 @@
 import { ErrorHandler } from 'hono'
 import { ContentfulStatusCode } from 'hono/utils/http-status'
 
-import { AppError } from '@/common/app_error'
+import { AppError } from '@/common/packages/types'
+import { AppEnv } from '@/common/packages/types'
 import { responseError } from '@/common/rest_response'
-import { AppEnv } from '@/common/types'
 import { env } from '@/config/env'
 import logger from '@/config/logger'
 
@@ -11,7 +11,7 @@ export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
   // Handle AppError (Business Logic Errors)
   if (err instanceof AppError) {
     const errorResponse = responseError(err.message, err.errors)
-    return c.json(errorResponse, err.statusCode as ContentfulStatusCode)
+    return c.json(errorResponse, err.toHttpStatus() as ContentfulStatusCode)
   }
 
   // For non-production environments, send detailed error for unexpected errors

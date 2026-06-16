@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import * as Entity from '@/entities/enrollment.entity'
 import { Program } from '@/entities/program.entity'
 
@@ -28,7 +28,7 @@ export async function checkScheduleConflict(
             newSchedule.end_time > existingSchedule.start_time
           ) {
             throw new AppError(
-              409,
+              ErrorCode.CONFLICT,
               `Schedule conflict with existing program: ${existingProgram.name} on ${newSchedule.day} (${existingSchedule.start_time} - ${existingSchedule.end_time})`,
             )
           }

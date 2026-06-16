@@ -1,4 +1,4 @@
-import { AppError } from '@/common/app_error'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import * as Entity from '@/entities/program.entity'
 
 import { ProgramUsecaseDeps } from '../program.usecase'
@@ -9,12 +9,12 @@ export async function addPrice(
 ): Promise<Entity.ProgramPrice> {
   const program = await deps.repo.findById(req.program_id, req.company_id)
   if (!program) {
-    throw new AppError(404, 'Program not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Program not found')
   }
 
   const pricing = program.pricings?.find((p) => p.id === req.pricing_id)
   if (!pricing) {
-    throw new AppError(404, 'Pricing package not found')
+    throw new AppError(ErrorCode.NOT_FOUND, 'Pricing package not found')
   }
 
   const newStart = req.started_at ? new Date(req.started_at) : new Date()
