@@ -2,13 +2,14 @@ import { Context } from 'hono'
 
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { IActivityLogUsecase } from '@/contracts/activity_log.contract'
 import * as Entity from '@/entities/activity_log.entity'
 
 export function createActivityLogHandler(usecase: IActivityLogUsecase) {
   return async (c: Context<AppEnv>) => {
     const body = c.get('body')
-    const user = c.get('user')
+    const user = getUserContext()
     const companyId = user?.company_id || ''
 
     const payload: Entity.CreateActivityLogReq = {
@@ -20,7 +21,6 @@ export function createActivityLogHandler(usecase: IActivityLogUsecase) {
       activity: body.activity,
       before: body.before,
       after: body.after,
-      user,
     }
 
     const data = await usecase.create(payload)

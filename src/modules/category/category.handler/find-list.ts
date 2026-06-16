@@ -2,6 +2,7 @@ import { Context } from 'hono'
 
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { ICategoryUsecase } from '@/contracts/category.contract'
 import * as Entity from '@/entities/category.entity'
 
@@ -14,7 +15,7 @@ export function findCategoryListHandler(usecase: ICategoryUsecase) {
       q: string
       group: string
     }
-    const user = c.get('user')
+    const user = getUserContext()
     const companyId = user?.company_id || ''
 
     const payload: Entity.GetCategoryReq = {
@@ -25,7 +26,6 @@ export function findCategoryListHandler(usecase: ICategoryUsecase) {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
-      user,
     }
 
     const data = await usecase.findList(payload)

@@ -2,6 +2,7 @@ import { Context } from 'hono'
 
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { IRoleAndPermissionUsecase } from '@/contracts/role_and_permission.contract'
 import * as Entity from '@/entities/role.entity'
 
@@ -14,7 +15,7 @@ export function findRoleListHandler(usecase: IRoleAndPermissionUsecase) {
       q: string
       ids: string
     }
-    const user = c.get('user')
+    const user = getUserContext()
     const companyId = user?.company_id || ''
 
     const payload: Entity.GetRoleReq = {
@@ -24,7 +25,6 @@ export function findRoleListHandler(usecase: IRoleAndPermissionUsecase) {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
-      user,
     }
 
     if (companyId) {

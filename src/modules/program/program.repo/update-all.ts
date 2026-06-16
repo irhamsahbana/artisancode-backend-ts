@@ -16,8 +16,7 @@ export async function updateAllProgram(
   deps: ProgramRepoDeps,
   req: Entity.UpdateProgramAllReq,
 ): Promise<Entity.Program> {
-  const { id, company_id, branch_id, schedules, pricings, teachers, user, ...rest } = req
-  void user
+  const { id, company_id, branch_id, schedules, pricings, teachers, ...rest } = req
 
   return await db.transaction(async (tx) => {
     await tx

@@ -2,6 +2,7 @@ import { Context } from 'hono'
 
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { IProgramUsecase } from '@/contracts/program.contract'
 import * as Entity from '@/entities/program.entity'
 
@@ -14,7 +15,7 @@ export function findProgramListHandler(usecase: IProgramUsecase) {
       q: string
       branch_id: string
     }
-    const user = c.get('user')
+    const user = getUserContext()
 
     const payload: Entity.GetProgramReq = {
       company_id: user?.company_id || '',
@@ -24,7 +25,6 @@ export function findProgramListHandler(usecase: IProgramUsecase) {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
-      user,
     }
 
     const data = await usecase.findList(payload)

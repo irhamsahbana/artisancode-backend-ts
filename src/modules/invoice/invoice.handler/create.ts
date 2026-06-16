@@ -3,18 +3,18 @@ import { Context } from 'hono'
 import { withSpan } from '@/common/packages/observability'
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { IInvoiceUsecase } from '@/contracts/invoice.contract'
 import * as Entity from '@/entities/invoice.entity'
 
 export function createInvoiceHandler(usecase: IInvoiceUsecase) {
   return async (c: Context<AppEnv>) => {
     return withSpan('InvoiceHandler.create', async () => {
-      const user = c.get('user')
+      const user = getUserContext()
       const body = c.get('body') as Entity.CreateInvoiceReq
 
       const payload: Entity.CreateInvoiceReq = {
         ...body,
-        user,
       }
 
       payload.company_id = user?.company_id || ''

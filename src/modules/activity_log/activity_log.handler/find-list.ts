@@ -2,6 +2,7 @@ import { Context } from 'hono'
 
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { IActivityLogUsecase } from '@/contracts/activity_log.contract'
 import * as Entity from '@/entities/activity_log.entity'
 
@@ -16,7 +17,7 @@ export function findActivityLogListHandler(usecase: IActivityLogUsecase) {
       user_id: string
       entity_name: string
     }
-    const user = c.get('user')
+    const user = getUserContext()
     const companyId = user?.company_id || ''
 
     const payload: Entity.GetActivityLogReq = {
@@ -29,7 +30,6 @@ export function findActivityLogListHandler(usecase: IActivityLogUsecase) {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
-      user,
     }
 
     const data = await usecase.findList(payload)

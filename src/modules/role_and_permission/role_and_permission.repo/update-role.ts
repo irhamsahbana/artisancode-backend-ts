@@ -11,8 +11,7 @@ export async function updateRole(
   deps: RoleAndPermissionRepoDeps,
   req: Entity.UpdateRoleReq,
 ): Promise<Entity.Role> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { id, permission_ids, company_id, user, ...rest } = req
+  const { id, permission_ids, company_id, ...rest } = req
 
   if (permission_ids) {
     await getExecutor().delete(rolePermissions).where(eq(rolePermissions.roleId, id))

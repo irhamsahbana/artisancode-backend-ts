@@ -2,6 +2,7 @@ import { Context } from 'hono'
 
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { IStudentUsecase } from '@/contracts/student.contract'
 import * as Entity from '@/entities/student.entity'
 
@@ -15,7 +16,7 @@ export function findStudentListHandler(usecase: IStudentUsecase) {
       branch_id: string
       age: number
     }
-    const user = c.get('user')
+    const user = getUserContext()
 
     const payload: Entity.GetStudentReq = {
       company_id: user?.company_id || '',
@@ -26,7 +27,6 @@ export function findStudentListHandler(usecase: IStudentUsecase) {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
-      user,
     }
 
     const data = await usecase.findList(payload)

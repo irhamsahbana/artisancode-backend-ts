@@ -134,7 +134,6 @@ export async function createEnrollment(
         due_date: req.next_billing_date || req.enrollment_date || new Date(),
         issued_date: new Date(),
         status: 'pending',
-        user: req.user,
       })
       invoice = await deps.invoiceUsecase.generatePaymentLink(invoiceData.id, req.company_id)
     }

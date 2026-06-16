@@ -60,7 +60,6 @@ export async function generateEnrollmentInvoice(
     due_date: dueDate,
     issued_date: new Date(),
     status: 'pending',
-    user: req.user,
   })
 
   return deps.invoiceUsecase.generatePaymentLink(invoiceData.id, req.company_id)

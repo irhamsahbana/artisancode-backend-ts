@@ -3,6 +3,7 @@ import { Context } from 'hono'
 import { withSpan } from '@/common/packages/observability'
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { IInvoiceUsecase } from '@/contracts/invoice.contract'
 import * as Entity from '@/entities/invoice.entity'
 
@@ -16,7 +17,7 @@ export function findInvoiceListHandler(usecase: IInvoiceUsecase) {
         enrollment_id: string
         status: string
       }
-      const user = c.get('user')
+      const user = getUserContext()
 
       const payload: Entity.GetInvoiceReq = {
         company_id: user?.company_id || '',
@@ -26,7 +27,6 @@ export function findInvoiceListHandler(usecase: IInvoiceUsecase) {
           page: Number(page) || 1,
           per_page: Number(limit) || 10,
         },
-        user,
       }
 
       const result = await usecase.findList(payload)

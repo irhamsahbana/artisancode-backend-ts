@@ -3,6 +3,7 @@ import { Context } from 'hono'
 import { withSpan } from '@/common/packages/observability'
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { IEnrollmentUsecase } from '@/contracts/enrollment.contract'
 import * as Entity from '@/entities/enrollment.entity'
 
@@ -17,7 +18,7 @@ export function findEnrollmentListHandler(usecase: IEnrollmentUsecase) {
         student_id: string
         program_id: string
       }
-      const user = c.get('user')
+      const user = getUserContext()
 
       const payload: Entity.GetEnrollmentReq = {
         company_id: user?.company_id || '',
@@ -28,7 +29,6 @@ export function findEnrollmentListHandler(usecase: IEnrollmentUsecase) {
           page: Number(page) || 1,
           per_page: Number(limit) || 10,
         },
-        user,
       }
 
       const data = await usecase.findList(payload)

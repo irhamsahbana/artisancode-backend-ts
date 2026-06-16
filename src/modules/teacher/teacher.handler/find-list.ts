@@ -2,6 +2,7 @@ import { Context } from 'hono'
 
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { ITeacherUsecase } from '@/contracts/teacher.contract'
 import * as Entity from '@/entities/teacher.entity'
 
@@ -14,7 +15,7 @@ export function findTeacherListHandler(usecase: ITeacherUsecase) {
       q: string
       branch_id: string
     }
-    const user = c.get('user')
+    const user = getUserContext()
 
     const payload: Entity.GetTeacherReq = {
       company_id: user?.company_id || '',
@@ -24,7 +25,6 @@ export function findTeacherListHandler(usecase: ITeacherUsecase) {
         page: Number(page) || 1,
         per_page: Number(limit) || 10,
       },
-      user,
     }
 
     const data = await usecase.findList(payload)

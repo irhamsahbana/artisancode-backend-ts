@@ -2,6 +2,7 @@ import { Context } from 'hono'
 
 import { AppEnv } from '@/common/packages/types'
 import { responseSuccess } from '@/common/rest_response'
+import { getUserContext } from '@/common/store/user-context'
 import { ICompanyUsecase } from '@/contracts/company.contract'
 import * as Entity from '@/entities/company.entity'
 
@@ -14,7 +15,7 @@ export function findCompanyListHandler(usecase: ICompanyUsecase) {
       q: string
       ids?: string
     }
-    const user = c.get('user')
+    const user = getUserContext()
     const companyId = user?.company_id || ''
 
     const payload: Entity.GetCompanyReq = {
@@ -23,7 +24,6 @@ export function findCompanyListHandler(usecase: ICompanyUsecase) {
         page,
         per_page: limit,
       },
-      user,
     }
 
     if (companyId) {
