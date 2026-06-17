@@ -23,13 +23,14 @@
 - **Mapper Separation**:
   - For complex repo-to-entity transformations, extract mapping into `*.mapper.ts` within the module and keep repos focused on data access.
 
-# Documentation Index
+## Documentation Index
 
 The technical details and guidelines for this project have been moved to the `docs/` directory. Please refer to them for specific instructions.
 
 - [Tech Stack](docs/tech_stack.md)
 - [Architecture](docs/architecture.md)
 - [Coding Conventions](docs/coding_conventions.md)
+- [Factory Pattern](docs/factory_pattern.md)
 - [Drizzle Schema Structure](docs/drizzle_schema_structure.md)
 - [Development Workflow](docs/development_workflow.md)
 - [Commit Guidelines](docs/commit_guidelines.md)

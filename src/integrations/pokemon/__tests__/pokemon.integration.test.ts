@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test'
 
 import { HttpAdapter } from '@/common/packages/http-client'
 
-import { PokemonService } from '../pokemon.service'
+import { createPokemonService } from '../pokemon.service'
 
 const config = {
   baseUrl: 'https://pokeapi.co/api/v2',
@@ -10,7 +10,7 @@ const config = {
 }
 
 const httpClient = new HttpAdapter()
-const service = new PokemonService(config, httpClient)
+const service = createPokemonService(config, httpClient)
 
 describe('PokemonService Integration (real PokeAPI)', () => {
   it('getById returns pikachu', async () => {
