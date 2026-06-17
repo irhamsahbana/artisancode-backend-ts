@@ -2,11 +2,26 @@ import { AppError, ErrorCode } from '@/common/packages/types'
 import logger from '@/config/logger'
 
 import { buildUrl } from './build-url'
-import { HttpError } from './http-error'
 import { injectTraceHeaders } from './inject-trace-headers'
 import { isJsonBody } from './is-json-body'
 
 import type { RequestOptions, HttpResponse } from './types'
+
+const HTTP_STATUS_TO_CODE: Record<number, ErrorCode> = {
+  400: ErrorCode.HTTP_BAD_REQUEST,
+  401: ErrorCode.HTTP_UNAUTHORIZED,
+  403: ErrorCode.HTTP_FORBIDDEN,
+  404: ErrorCode.HTTP_NOT_FOUND,
+  408: ErrorCode.HTTP_TIMEOUT,
+  429: ErrorCode.HTTP_TOO_MANY_REQUESTS,
+  502: ErrorCode.HTTP_BAD_GATEWAY,
+  503: ErrorCode.HTTP_SERVICE_UNAVAILABLE,
+}
+
+function httpError(status: number, statusText: string, data?: unknown): AppError {
+  const code = HTTP_STATUS_TO_CODE[status] ?? ErrorCode.HTTP_INTERNAL_ERROR
+  return new AppError(code, `HTTP ${status}: ${statusText}`, { httpCode: status, data })
+}
 
 export async function httpClient<T = unknown>(
   baseUrl: string,
@@ -44,7 +59,7 @@ export async function httpClient<T = unknown>(
     }
 
     if (!response.ok) {
-      throw new HttpError(response.status, response.statusText, data)
+      throw httpError(response.status, response.statusText, data)
     }
 
     return {
@@ -54,19 +69,19 @@ export async function httpClient<T = unknown>(
       data,
     }
   } catch (error) {
-    if (error instanceof HttpError) {
+    if (error instanceof AppError) {
       logger.error(`[HTTP] ${method} ${url} failed: ${error.httpCode} ${error.message}`)
       throw error
     }
 
     if (error instanceof DOMException && error.name === 'AbortError') {
       logger.error(`[HTTP] ${method} ${url} timed out after ${timeout}ms`)
-      throw new AppError(ErrorCode.REQUEST_TIMEOUT, `Request timed out after ${timeout}ms`, { httpCode: 408 })
+      throw new AppError(ErrorCode.HTTP_TIMEOUT, `Request timed out after ${timeout}ms`, { httpCode: 408 })
     }
 
     if (error instanceof TypeError) {
       logger.error(`[HTTP] ${method} ${url} network error: ${error.message}`)
-      throw new AppError(ErrorCode.NETWORK_ERROR, `Network error: ${error.message}`, { httpCode: 502 })
+      throw new AppError(ErrorCode.HTTP_BAD_GATEWAY, `Network error: ${error.message}`, { httpCode: 502 })
     }
 
     logger.error(`[HTTP] ${method} ${url} error:`, error)
