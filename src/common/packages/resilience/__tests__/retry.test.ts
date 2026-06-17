@@ -1,5 +1,7 @@
 import { describe, it, expect, afterEach } from 'bun:test'
 
+import { AppError, ErrorCode } from '@/common/packages/types'
+
 import { createRetryPolicy } from '..'
 import { createFakeService, type FakeService } from './fake-service'
 
@@ -17,7 +19,7 @@ describe('Resilience — Retry Policy', () => {
 
     const result = await policy.execute(async () => {
       const res = await fetch(`${service.baseUrl}/api/orders/1`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) throw new AppError(ErrorCode.HTTP_INTERNAL_ERROR, `HTTP ${res.status}`, { httpCode: res.status })
       return res.json()
     })
 
@@ -34,7 +36,7 @@ describe('Resilience — Retry Policy', () => {
     try {
       await policy.execute(async () => {
         const res = await fetch(`${service.baseUrl}/api/orders/1`)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        if (!res.ok) throw new AppError(ErrorCode.HTTP_INTERNAL_ERROR, `HTTP ${res.status}`, { httpCode: res.status })
         return res.json()
       })
     } catch (err) {
@@ -53,7 +55,7 @@ describe('Resilience — Retry Policy', () => {
 
     const result = await policy.execute(async () => {
       const res = await fetch(`${service.baseUrl}/api/orders/1`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) throw new AppError(ErrorCode.HTTP_INTERNAL_ERROR, `HTTP ${res.status}`, { httpCode: res.status })
       return res.json()
     })
 

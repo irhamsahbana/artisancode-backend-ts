@@ -1,5 +1,7 @@
 import { describe, it, expect, afterEach } from 'bun:test'
 
+import { AppError, ErrorCode } from '@/common/packages/types'
+
 import {
   createRetryPolicy,
   createCircuitBreakerPolicy,
@@ -23,7 +25,7 @@ describe('Resilience — Combined Retry + Circuit Breaker', () => {
 
     const result = await policy.execute(async () => {
       const res = await fetch(`${service.baseUrl}/api/orders/1`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) throw new AppError(ErrorCode.HTTP_INTERNAL_ERROR, `HTTP ${res.status}`, { httpCode: res.status })
       return res.json()
     })
 
@@ -43,7 +45,7 @@ describe('Resilience — Combined Retry + Circuit Breaker', () => {
     try {
       await policy.execute(async () => {
         const res = await fetch(`${service.baseUrl}/api/orders/1`)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        if (!res.ok) throw new AppError(ErrorCode.HTTP_INTERNAL_ERROR, `HTTP ${res.status}`, { httpCode: res.status })
         return res.json()
       })
     } catch {
@@ -59,7 +61,7 @@ describe('Resilience — Combined Retry + Circuit Breaker', () => {
     try {
       await policy.execute(async () => {
         const res = await fetch(`${service.baseUrl}/api/orders/1`)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        if (!res.ok) throw new AppError(ErrorCode.HTTP_INTERNAL_ERROR, `HTTP ${res.status}`, { httpCode: res.status })
         return res.json()
       })
     } catch {
