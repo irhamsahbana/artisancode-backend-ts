@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'bun:test'
 
-import { ErrorCode } from '@/common/packages/types/error-codes'
-
 import { buildUrl } from '../build-url'
-import { HttpError } from '../http-error'
 import { isJsonBody } from '../is-json-body'
 
 // ── buildUrl ─────────────────────────────────────────────────────────────────
@@ -95,51 +92,5 @@ describe('isJsonBody', () => {
 
   it('returns false for Blob', () => {
     expect(isJsonBody(new Blob())).toBe(false)
-  })
-})
-
-// ── HttpError ────────────────────────────────────────────────────────────────
-
-describe('HttpError', () => {
-  it('maps 400 to HTTP_BAD_REQUEST', () => {
-    const err = new HttpError(400, 'Bad Request')
-    expect(err.httpCode).toBe(400)
-    expect(err.code).toBe(ErrorCode.HTTP_BAD_REQUEST)
-    expect(err.name).toBe('HttpError')
-  })
-
-  it('maps 401 to HTTP_UNAUTHORIZED', () => {
-    const err = new HttpError(401, 'Unauthorized')
-    expect(err.code).toBe(ErrorCode.HTTP_UNAUTHORIZED)
-  })
-
-  it('maps 403 to HTTP_FORBIDDEN', () => {
-    const err = new HttpError(403, 'Forbidden')
-    expect(err.code).toBe(ErrorCode.HTTP_FORBIDDEN)
-  })
-
-  it('maps 404 to HTTP_NOT_FOUND', () => {
-    const err = new HttpError(404, 'Not Found')
-    expect(err.code).toBe(ErrorCode.HTTP_NOT_FOUND)
-  })
-
-  it('maps 500 to HTTP_INTERNAL_ERROR', () => {
-    const err = new HttpError(500, 'Internal Server Error')
-    expect(err.code).toBe(ErrorCode.HTTP_INTERNAL_ERROR)
-  })
-
-  it('uses fallback code for unmapped status codes', () => {
-    const err = new HttpError(418, "I'm a teapot")
-    expect(err.code).toBe(2518 as ErrorCode) // 2100 + 418
-  })
-
-  it('includes response data', () => {
-    const err = new HttpError(400, 'Bad Request', { field: 'name is required' })
-    expect(err.errors).toEqual({ field: 'name is required' })
-  })
-
-  it('stores statusText', () => {
-    const err = new HttpError(502, 'Bad Gateway')
-    expect(err.statusText).toBe('Bad Gateway')
   })
 })

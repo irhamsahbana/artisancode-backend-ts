@@ -1,7 +1,8 @@
 import { describe, it, expect, afterEach } from 'bun:test'
 
-import { httpGet, httpPost, HttpError } from '@/common/packages/http-client'
+import { httpGet, httpPost } from '@/common/packages/http-client'
 import { createRetryPolicy } from '@/common/packages/resilience'
+import { AppError } from '@/common/packages/types'
 
 import { createFakeApi, type FakeApi } from './fake-api'
 
@@ -30,7 +31,7 @@ describe('Retry + HTTP Client', () => {
     expect(api.callCount).toBe(3)
   })
 
-  it('throws HttpError after exhausting retries', async () => {
+  it('throws AppError after exhausting retries', async () => {
     api = createFakeApi()
     api.setFailUntilAttempt(Infinity)
 
@@ -43,8 +44,8 @@ describe('Retry + HTTP Client', () => {
       })
       expect.unreachable('should have thrown')
     } catch (error) {
-      expect(error).toBeInstanceOf(HttpError)
-      expect((error as HttpError).httpCode).toBe(503)
+      expect(error).toBeInstanceOf(AppError)
+      expect((error as AppError).httpCode).toBe(503)
     }
 
     expect(api.callCount).toBe(4)

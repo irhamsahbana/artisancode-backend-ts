@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'bun:test'
 
 import { AppError } from '@/common/packages/types'
 
-import { httpClient, HttpError } from '../index'
+import { httpClient } from '../index'
 
 // ── Fake HTTP Server ─────────────────────────────────────────────────────────
 
@@ -238,55 +238,55 @@ describe('httpClient', () => {
   // ── Error handling ──
 
   describe('Error handling', () => {
-    it('throws HttpError on 400', async () => {
+    it('throws AppError on 400', async () => {
       server = createTestServer()
 
       try {
         await httpClient(server.baseUrl, '/api/error/400')
         expect.unreachable('should have thrown')
       } catch (error) {
-        expect(error).toBeInstanceOf(HttpError)
-        const httpErr = error as HttpError
-        expect(httpErr.httpCode).toBe(400)
-        expect(httpErr.message).toContain('400')
+        expect(error).toBeInstanceOf(AppError)
+        const appErr = error as AppError
+        expect(appErr.httpCode).toBe(400)
+        expect(appErr.message).toContain('400')
       }
     })
 
-    it('throws HttpError on 404', async () => {
+    it('throws AppError on 404', async () => {
       server = createTestServer()
 
       try {
         await httpClient(server.baseUrl, '/api/error/404')
         expect.unreachable('should have thrown')
       } catch (error) {
-        expect(error).toBeInstanceOf(HttpError)
-        const httpErr = error as HttpError
-        expect(httpErr.httpCode).toBe(404)
+        expect(error).toBeInstanceOf(AppError)
+        const appErr = error as AppError
+        expect(appErr.httpCode).toBe(404)
       }
     })
 
-    it('throws HttpError on 500', async () => {
+    it('throws AppError on 500', async () => {
       server = createTestServer()
 
       try {
         await httpClient(server.baseUrl, '/api/error/500')
         expect.unreachable('should have thrown')
       } catch (error) {
-        expect(error).toBeInstanceOf(HttpError)
-        const httpErr = error as HttpError
-        expect(httpErr.httpCode).toBe(500)
+        expect(error).toBeInstanceOf(AppError)
+        const appErr = error as AppError
+        expect(appErr.httpCode).toBe(500)
       }
     })
 
-    it('includes response body in HttpError', async () => {
+    it('includes response body in AppError', async () => {
       server = createTestServer()
 
       try {
         await httpClient(server.baseUrl, '/api/error/400')
         expect.unreachable('should have thrown')
       } catch (error) {
-        const httpErr = error as HttpError
-        expect(httpErr.errors).toEqual({ error: 'bad request' })
+        const appErr = error as AppError
+        expect(appErr.data).toEqual({ error: 'bad request' })
       }
     })
 
