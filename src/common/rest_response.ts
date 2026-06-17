@@ -1,3 +1,5 @@
+import { RestResponse } from './packages/types'
+
 const toSnakeCase = (obj: unknown): unknown => {
   if (Array.isArray(obj)) {
     return obj.map((v) => toSnakeCase(v))
@@ -16,7 +18,9 @@ const toSnakeCase = (obj: unknown): unknown => {
   return obj
 }
 
-export const responseSuccess = (data: unknown, message?: string) => {
+
+
+export const responseSuccess = (data: unknown, message?: string): RestResponse => {
   if (!message) {
     message = 'your request has been processed successfully'
   }
@@ -29,13 +33,13 @@ export const responseSuccess = (data: unknown, message?: string) => {
   }
 }
 
-export const responseError = (message?: string, errors?: unknown) => {
+export const responseError = (message?: string, data?: unknown): RestResponse => {
   if (!message) {
     message = 'your request has failed'
   }
 
   return {
-    errors: errors,
+    errors: data,
     success: false,
     message: message,
     data: null,
