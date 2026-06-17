@@ -1,3 +1,4 @@
+import { HttpAdapter } from '@/common/packages/http-client'
 import type { IPokemonService } from '@/contracts/integration'
 
 import { createPokemonClientConfig } from './client'
@@ -8,7 +9,8 @@ export class PokemonIntegration implements IPokemonService {
 
   constructor() {
     const config = createPokemonClientConfig()
-    this.service = new PokemonService(config)
+    const httpClient = new HttpAdapter()
+    this.service = new PokemonService(config, httpClient)
   }
 
   getById(id: number) {

@@ -1,6 +1,6 @@
-import { httpGet } from '@/common/packages/http-client'
 import { createRetryPolicy, createCircuitBreakerPolicy, wrapPolicies } from '@/common/packages/resilience'
 import type { ResiliencePolicy } from '@/common/packages/resilience'
+import type { IHttpClient } from '@/common/packages/types'
 import logger from '@/config/logger'
 import type { Pokemon, PokemonListResult, IPokemonService } from '@/contracts/integration'
 
@@ -56,16 +56,18 @@ function mapPokemonResponse(data: PokeApiPokemonResponse): Pokemon {
 
 export class PokemonService implements IPokemonService {
   private config: PokemonClientConfig
+  private httpClient: IHttpClient
 
-  constructor(config: PokemonClientConfig) {
+  constructor(config: PokemonClientConfig, httpClient: IHttpClient) {
     this.config = config
+    this.httpClient = httpClient
   }
 
   async getById(id: number): Promise<Pokemon> {
     const policy = await getResiliency()
     return policy.execute(async () => {
       logger.info(`[Pokemon] Fetching pokemon by id: ${id}`)
-      const { data } = await httpGet<PokeApiPokemonResponse>(this.config.baseUrl, `/pokemon/${id}`, {
+      const { data } = await this.httpClient.get<PokeApiPokemonResponse>(this.config.baseUrl, `/pokemon/${id}`, {
         timeout: this.config.timeout,
       })
       return mapPokemonResponse(data)
@@ -76,7 +78,7 @@ export class PokemonService implements IPokemonService {
     const policy = await getResiliency()
     return policy.execute(async () => {
       logger.info(`[Pokemon] Fetching pokemon by name: ${name}`)
-      const { data } = await httpGet<PokeApiPokemonResponse>(this.config.baseUrl, `/pokemon/${name.toLowerCase()}`, {
+      const { data } = await this.httpClient.get<PokeApiPokemonResponse>(this.config.baseUrl, `/pokemon/${name.toLowerCase()}`, {
         timeout: this.config.timeout,
       })
       return mapPokemonResponse(data)
@@ -87,7 +89,7 @@ export class PokemonService implements IPokemonService {
     const policy = await getResiliency()
     return policy.execute(async () => {
       logger.info(`[Pokemon] Listing pokemon (limit: ${limit}, offset: ${offset})`)
-      const { data } = await httpGet<PokeApiListResponse>(this.config.baseUrl, '/pokemon', {
+      const { data } = await this.httpClient.get<PokeApiListResponse>(this.config.baseUrl, '/pokemon', {
         query: { limit, offset },
         timeout: this.config.timeout,
       })
@@ -99,11 +101,11 @@ export class PokemonService implements IPokemonService {
     const policy = await getResiliency()
     return policy.execute(async () => {
       logger.info(`[Pokemon] Searching pokemon: ${query}`)
-      const { data } = await httpGet<PokeApiListResponse>(this.config.baseUrl, '/pokemon', {
+      const { data } = await this.httpClient.get<PokeApiListResponse>(this.config.baseUrl, '/pokemon', {
         query: { limit: 1000 },
         timeout: this.config.timeout,
       })
-      const filtered = data.results.filter((p) => p.name.includes(query.toLowerCase()))
+      const filtered = data.results.filter((p: { name: string; url: string }) => p.name.includes(query.toLowerCase()))
       return {
         count: filtered.length,
         next: null,
