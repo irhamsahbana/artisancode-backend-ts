@@ -7,11 +7,9 @@ import { listPokemon } from './pokemon.service/list'
 import { searchPokemon } from './pokemon.service/search'
 
 import type { PokemonClientConfig } from './client'
+import type { PokemonServiceDeps } from './pokemon.service/helpers'
 
-export interface PokemonServiceDeps {
-  config: PokemonClientConfig
-  httpClient: IHttpClient
-}
+export type { PokemonServiceDeps } from './pokemon.service/helpers'
 
 export function createPokemonService(
   config: PokemonClientConfig,

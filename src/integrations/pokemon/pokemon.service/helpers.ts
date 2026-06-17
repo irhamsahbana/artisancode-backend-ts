@@ -3,7 +3,15 @@ import { isBrokenCircuitError, isTaskCancelledError } from 'cockatiel'
 import { CircuitBreakerError, TimeoutError, createRetryPolicy, createCircuitBreakerPolicy, createTimeoutPolicy, wrapPolicies } from '@/common/packages/resilience'
 import type { ResiliencePolicy } from '@/common/packages/resilience'
 import { AppError, ErrorCode } from '@/common/packages/types'
+import type { IHttpClient } from '@/common/packages/types'
 import type { Pokemon } from '@/contracts/integration'
+
+import type { PokemonClientConfig } from '../client'
+
+export interface PokemonServiceDeps {
+  config: PokemonClientConfig
+  httpClient: IHttpClient
+}
 
 export interface PokeApiPokemonResponse {
   id: number

@@ -1,18 +1,10 @@
-import type { IHttpClient } from '@/common/packages/types'
 import logger from '@/config/logger'
 import type { Pokemon } from '@/contracts/integration'
 
-import { getResiliency, withErrorHandling, mapPokemonResponse, type PokeApiPokemonResponse } from './helpers'
-
-import type { PokemonClientConfig } from '../client'
-
-export interface GetPokemonByNameDeps {
-  config: PokemonClientConfig
-  httpClient: IHttpClient
-}
+import { getResiliency, withErrorHandling, mapPokemonResponse, type PokeApiPokemonResponse, type PokemonServiceDeps } from './helpers'
 
 export async function getPokemonByName(
-  deps: GetPokemonByNameDeps,
+  deps: PokemonServiceDeps,
   name: string,
 ): Promise<Pokemon> {
   const policy = await getResiliency()
