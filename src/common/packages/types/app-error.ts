@@ -52,6 +52,15 @@ export class AppError extends Error {
       errors: this.errors,
       success: false,
       message: this.message,
+      data: null,
+    }
+  }
+
+  getErrorResponse() {
+    return {
+      code: this.code,
+      message: this.message,
+      errors: this.errors,
       data: this.data,
     }
   }
