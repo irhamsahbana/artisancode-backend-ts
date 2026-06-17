@@ -1,6 +1,7 @@
 export interface RestResponse {
-  errors?: unknown | null
   success: boolean
   message: string
+  error_code?: string | null
+  errors?: unknown | null
   data?: unknown | null
 }

@@ -1,6 +1,6 @@
 import { Context } from 'hono'
 
-import { AppEnv } from '@/common/packages/types'
+import { AppEnv, ErrorCode } from '@/common/packages/types'
 import { responseError, responseSuccess } from '@/common/rest_response'
 import { getUserContext } from '@/common/store/user-context'
 import { IProgramUsecase } from '@/contracts/program.contract'
@@ -12,7 +12,7 @@ export function findProgramByIdHandler(usecase: IProgramUsecase) {
 
     const data = await usecase.findById(id, user?.company_id || '')
     if (!data) {
-      return c.json(responseError('Program not found'), 404)
+      return c.json(responseError('Program not found', undefined, ErrorCode.NOT_FOUND), 404)
     }
     return c.json(responseSuccess(data))
   }

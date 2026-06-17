@@ -90,9 +90,10 @@ export class AppError extends Error {
 
   getHttpResponse(): RestResponse {
     return {
-      errors: this.errors,
       success: false,
       message: this.message,
+      error_code: this.code,
+      errors: this.errors,
       data: null,
     }
   }

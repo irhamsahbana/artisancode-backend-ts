@@ -1,7 +1,7 @@
 import { Context, Next } from 'hono'
 import { ZodError, ZodObject } from 'zod'
 
-import { AppEnv } from '@/common/packages/types'
+import { AppEnv, ErrorCode } from '@/common/packages/types'
 import { responseError } from '@/common/rest_response'
 
 const formatZodError = (error: ZodError) => {
@@ -22,7 +22,7 @@ export const validate = (schema: ZodObject) => {
     const result = schema.safeParse(body)
 
     if (!result.success) {
-      return c.json(responseError('VALIDATION_ERROR', formatZodError(result.error)), 400)
+      return c.json(responseError('Validation failed', formatZodError(result.error), ErrorCode.VALIDATION_ERROR), 400)
     }
 
     c.set('body', result.data)
@@ -36,7 +36,7 @@ export const validateQuery = (schema: ZodObject) => {
     const result = schema.safeParse(query)
 
     if (!result.success) {
-      return c.json(responseError('VALIDATION_ERROR', formatZodError(result.error)), 400)
+      return c.json(responseError('Validation failed', formatZodError(result.error), ErrorCode.VALIDATION_ERROR), 400)
     }
 
     // Store validated query in body variable for handler access

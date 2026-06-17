@@ -1,6 +1,6 @@
 import { Context } from 'hono'
 
-import { AppEnv } from '@/common/packages/types'
+import { AppEnv, ErrorCode } from '@/common/packages/types'
 import { responseError, responseSuccess } from '@/common/rest_response'
 import { getUserContext } from '@/common/store/user-context'
 import { IUserUsecase } from '@/contracts/user.contract'
@@ -13,7 +13,7 @@ export function findUserByIdHandler(usecase: IUserUsecase) {
 
     const data = await usecase.findById(id, companyId)
     if (!data) {
-      return c.json(responseError('User not found'), 404)
+      return c.json(responseError('User not found', undefined, ErrorCode.NOT_FOUND), 404)
     }
     return c.json(responseSuccess(data))
   }

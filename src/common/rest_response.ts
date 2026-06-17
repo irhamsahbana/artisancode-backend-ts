@@ -33,15 +33,16 @@ export const responseSuccess = (data: unknown, message?: string): RestResponse =
   }
 }
 
-export const responseError = (message?: string, data?: unknown): RestResponse => {
+export const responseError = (message?: string, data?: unknown, errorCode?: string): RestResponse => {
   if (!message) {
     message = 'your request has failed'
   }
 
   return {
-    errors: data,
     success: false,
     message: message,
+    error_code: errorCode ?? null,
+    errors: data,
     data: null,
   }
 }

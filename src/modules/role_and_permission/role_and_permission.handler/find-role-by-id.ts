@@ -1,6 +1,6 @@
 import { Context } from 'hono'
 
-import { AppEnv } from '@/common/packages/types'
+import { AppEnv, ErrorCode } from '@/common/packages/types'
 import { responseError, responseSuccess } from '@/common/rest_response'
 import { getUserContext } from '@/common/store/user-context'
 import { IRoleAndPermissionUsecase } from '@/contracts/role_and_permission.contract'
@@ -13,7 +13,7 @@ export function findRoleByIdHandler(usecase: IRoleAndPermissionUsecase) {
 
     const data = await usecase.findRoleById(id, companyId)
     if (!data) {
-      return c.json(responseError('Role not found'), 404)
+      return c.json(responseError('Role not found', undefined, ErrorCode.NOT_FOUND), 404)
     }
     return c.json(responseSuccess(data))
   }
