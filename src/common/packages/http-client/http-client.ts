@@ -28,12 +28,9 @@ export async function httpClient<T = unknown>(
   path: string,
   options: RequestOptions = {},
 ): Promise<HttpResponse<T>> {
-  const { method = 'GET', headers = {}, body, query, timeout = 30_000 } = options
+  const { method = 'GET', headers = {}, body, query } = options
 
   const url = buildUrl(baseUrl, path, query)
-
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
     const isJson = isJsonBody(body)
@@ -46,7 +43,6 @@ export async function httpClient<T = unknown>(
         ...finalHeaders,
       },
       body: isJson ? JSON.stringify(body) : (body as BodyInit | undefined),
-      signal: controller.signal,
     })
 
     const contentType = response.headers.get('content-type') ?? ''
@@ -74,11 +70,6 @@ export async function httpClient<T = unknown>(
       throw error
     }
 
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      logger.error(`[HTTP] ${method} ${url} timed out after ${timeout}ms`)
-      throw new AppError(ErrorCode.HTTP_TIMEOUT, `Request timed out after ${timeout}ms`, { httpCode: 408 })
-    }
-
     if (error instanceof TypeError) {
       logger.error(`[HTTP] ${method} ${url} network error: ${error.message}`)
       throw new AppError(ErrorCode.HTTP_BAD_GATEWAY, `Network error: ${error.message}`, { httpCode: 502 })
@@ -86,7 +77,5 @@ export async function httpClient<T = unknown>(
 
     logger.error(`[HTTP] ${method} ${url} error:`, error)
     throw error
-  } finally {
-    clearTimeout(timeoutId)
   }
 }

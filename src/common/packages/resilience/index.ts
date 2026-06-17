@@ -1,6 +1,7 @@
 export { createRetryPolicy } from './retry'
 export { createCircuitBreakerPolicy } from './circuit-breaker'
+export { createTimeoutPolicy } from './timeout'
 export { wrapPolicies } from './wrap'
-export { CircuitBreakerError, ResilienceExhaustedError } from './errors'
+export { CircuitBreakerError, ResilienceExhaustedError, TimeoutError } from './errors'
 
-export type { ResiliencePolicy, RetryOptions, CircuitBreakerOptions } from './types'
+export type { ResiliencePolicy, RetryOptions, CircuitBreakerOptions, TimeoutOptions } from './types'

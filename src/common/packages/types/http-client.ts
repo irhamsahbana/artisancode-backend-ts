@@ -5,7 +5,6 @@ export interface RequestOptions {
   headers?: Record<string, string>
   body?: unknown
   query?: Record<string, string | number | boolean | undefined | null>
-  timeout?: number
 }
 
 export interface HttpResponse<T = unknown> {

@@ -12,6 +12,3 @@ export type {
   MutateOptions,
   IHttpClient,
 } from './http-client'
-
-// ── Resilience ───────────────────────────────────────────
-export type { ResiliencePolicy, RetryOptions, CircuitBreakerOptions } from './resilience'

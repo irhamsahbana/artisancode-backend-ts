@@ -1,5 +1,8 @@
-import { createRetryPolicy, createCircuitBreakerPolicy, wrapPolicies } from '@/common/packages/resilience'
+import { isBrokenCircuitError, isTaskCancelledError } from 'cockatiel'
+
+import { CircuitBreakerError, TimeoutError, createRetryPolicy, createCircuitBreakerPolicy, createTimeoutPolicy, wrapPolicies } from '@/common/packages/resilience'
 import type { ResiliencePolicy } from '@/common/packages/resilience'
+import { AppError, ErrorCode } from '@/common/packages/types'
 import type { Pokemon } from '@/contracts/integration'
 
 export interface PokeApiPokemonResponse {
@@ -29,11 +32,32 @@ export async function getResiliency(): Promise<ResiliencePolicy> {
   if (!resiliency) {
     const retryPolicy = await createRetryPolicy({ maxAttempts: 3 })
     const circuitBreakerPolicy = await createCircuitBreakerPolicy({ threshold: 5 })
-    resiliency = await wrapPolicies(retryPolicy, circuitBreakerPolicy)
+    const timeoutPolicy = await createTimeoutPolicy({ duration: 10_000 })
+    resiliency = await wrapPolicies(retryPolicy, circuitBreakerPolicy, timeoutPolicy)
   }
   return resiliency
 }
 
+export async function withErrorHandling<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn()
+  } catch (error) {
+    if (isTaskCancelledError(error)) {
+      throw new TimeoutError()
+    }
+    if (isBrokenCircuitError(error)) {
+      throw new CircuitBreakerError()
+    }
+    if (error instanceof AppError) {
+      throw error
+    }
+    throw new AppError(ErrorCode.HTTP_INTERNAL_ERROR, error instanceof Error ? error.message : 'Unknown error', {
+      httpCode: 500,
+      data: error,
+    })
+  }
+}
+ 
 export function mapPokemonResponse(data: PokeApiPokemonResponse): Pokemon {
   return {
     id: data.id,

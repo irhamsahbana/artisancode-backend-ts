@@ -6,7 +6,6 @@ import { createPokemonService } from '../pokemon.service'
 
 const config = {
   baseUrl: 'https://pokeapi.co/api/v2',
-  timeout: 10000,
 }
 
 const httpClient = new HttpAdapter()

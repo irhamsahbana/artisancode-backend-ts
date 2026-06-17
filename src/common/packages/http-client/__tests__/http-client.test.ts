@@ -71,12 +71,6 @@ function createTestServer() {
         return Response.json({ error: 'server error' }, { status: 500 })
       }
 
-      // Slow response (for timeout test)
-      if (url.pathname === '/api/slow') {
-        await new Promise((r) => setTimeout(r, 2000))
-        return Response.json({ slow: true })
-      }
-
       // Text response
       if (url.pathname === '/api/text') {
         return new Response('hello world', {
@@ -287,20 +281,6 @@ describe('httpClient', () => {
       } catch (error) {
         const appErr = error as AppError
         expect(appErr.data).toEqual({ error: 'bad request' })
-      }
-    })
-
-    it('throws AppError(408) on timeout', async () => {
-      server = createTestServer()
-
-      try {
-        await httpClient(server.baseUrl, '/api/slow', { timeout: 100 })
-        expect.unreachable('should have thrown')
-      } catch (error) {
-        expect(error).toBeInstanceOf(AppError)
-        const appErr = error as AppError
-        expect(appErr.httpCode).toBe(408)
-        expect(appErr.message).toContain('timed out')
       }
     })
   })

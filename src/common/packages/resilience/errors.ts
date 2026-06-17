@@ -13,3 +13,10 @@ export class ResilienceExhaustedError extends AppError {
     this.name = 'ResilienceExhaustedError'
   }
 }
+
+export class TimeoutError extends AppError {
+  constructor(message = 'Request timed out') {
+    super(ErrorCode.HTTP_TIMEOUT, message, { httpCode: 408 })
+    this.name = 'TimeoutError'
+  }
+}
