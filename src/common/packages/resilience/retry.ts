@@ -1,4 +1,4 @@
-import { ExponentialBackoff, retry, handleWhen, type IPolicy, type IDefaultPolicyContext } from 'cockatiel'
+import { ExponentialBackoff, retry, handleWhen, isTaskCancelledError, type IPolicy, type IDefaultPolicyContext } from 'cockatiel'
 
 import { AppError } from '@/common/packages/types'
 
@@ -7,6 +7,11 @@ import type { RetryOptions } from './types'
 function isRetryable(error: unknown): boolean {
   // Network errors (TypeError from fetch)
   if (error instanceof TypeError) {
+    return true
+  }
+
+  // Timeout errors
+  if (isTaskCancelledError(error)) {
     return true
   }
 

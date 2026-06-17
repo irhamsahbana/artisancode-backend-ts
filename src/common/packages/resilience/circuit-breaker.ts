@@ -1,4 +1,4 @@
-import { circuitBreaker, ConsecutiveBreaker, handleWhen, type IPolicy, type IDefaultPolicyContext } from 'cockatiel'
+import { circuitBreaker, ConsecutiveBreaker, handleWhen, isTaskCancelledError, type IPolicy, type IDefaultPolicyContext } from 'cockatiel'
 
 import { AppError } from '@/common/packages/types'
 
@@ -7,6 +7,11 @@ import type { CircuitBreakerOptions } from './types'
 function isCircuitBreakable(error: unknown): boolean {
   // Network errors (TypeError from fetch)
   if (error instanceof TypeError) {
+    return true
+  }
+
+  // Timeout errors
+  if (isTaskCancelledError(error)) {
     return true
   }
 
