@@ -1,1 +1,0 @@
-declare module 'doku-nodejs-library'
