@@ -10,7 +10,7 @@ import logger from '@/config/logger'
 export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
   // Handle AppError (Business Logic Errors)
   if (err instanceof AppError) {
-    const errorResponse = responseError(err.message, err.errors)
+    const errorResponse = responseError(err.message, err.data)
     return c.json(errorResponse, err.toHttpStatus() as ContentfulStatusCode)
   }
 
