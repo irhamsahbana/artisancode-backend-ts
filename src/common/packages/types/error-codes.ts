@@ -1,70 +1,70 @@
-// ── General (2000–2099) ────────────────────────────────
+// ── General ─────────────────────────────────────────────
 export const ErrorCode = {
-  VALIDATION_ERROR: 2000,
-  NOT_FOUND: 2001,
-  UNAUTHORIZED: 2002,
-  FORBIDDEN: 2003,
-  CONFLICT: 2004,
-  TOO_MANY_REQUESTS: 2005,
-  REQUEST_TIMEOUT: 2006,
-  INTERNAL_ERROR: 2007,
-  SERVICE_UNAVAILABLE: 2008,
-  NOT_IMPLEMENTED: 2009,
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  NOT_FOUND: 'NOT_FOUND',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  CONFLICT: 'CONFLICT',
+  TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
+  REQUEST_TIMEOUT: 'REQUEST_TIMEOUT',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+  NOT_IMPLEMENTED: 'NOT_IMPLEMENTED',
 
-  // ── HTTP Client (2100–2199) ─────────────────────────────
-  HTTP_BAD_REQUEST: 2100,
-  HTTP_UNAUTHORIZED: 2101,
-  HTTP_FORBIDDEN: 2102,
-  HTTP_NOT_FOUND: 2103,
-  HTTP_TIMEOUT: 2104,
-  HTTP_INTERNAL_ERROR: 2105,
-  NETWORK_ERROR: 2106,
-  HTTP_TOO_MANY_REQUESTS: 2107,
-  HTTP_BAD_GATEWAY: 2108,
-  HTTP_SERVICE_UNAVAILABLE: 2109,
+  // ── HTTP Client ────────────────────────────────────────
+  HTTP_BAD_REQUEST: 'HTTP_BAD_REQUEST',
+  HTTP_UNAUTHORIZED: 'HTTP_UNAUTHORIZED',
+  HTTP_FORBIDDEN: 'HTTP_FORBIDDEN',
+  HTTP_NOT_FOUND: 'HTTP_NOT_FOUND',
+  HTTP_TIMEOUT: 'HTTP_TIMEOUT',
+  HTTP_INTERNAL_ERROR: 'HTTP_INTERNAL_ERROR',
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  HTTP_TOO_MANY_REQUESTS: 'HTTP_TOO_MANY_REQUESTS',
+  HTTP_BAD_GATEWAY: 'HTTP_BAD_GATEWAY',
+  HTTP_SERVICE_UNAVAILABLE: 'HTTP_SERVICE_UNAVAILABLE',
 
-  // ── Auth (2200–2299) ────────────────────────────────────
-  AUTH_INVALID_CREDENTIALS: 2200,
-  AUTH_TOKEN_EXPIRED: 2201,
-  AUTH_TOKEN_INVALID: 2202,
+  // ── Auth ───────────────────────────────────────────────
+  AUTH_INVALID_CREDENTIALS: 'AUTH_INVALID_CREDENTIALS',
+  AUTH_TOKEN_EXPIRED: 'AUTH_TOKEN_EXPIRED',
+  AUTH_TOKEN_INVALID: 'AUTH_TOKEN_INVALID',
 
-  // ── Database (2300–2399) ────────────────────────────────
-  DB_RECORD_NOT_FOUND: 2300,
-  DB_DUPLICATE_ENTRY: 2301,
-  DB_TRANSACTION_FAILED: 2302,
+  // ── Database ───────────────────────────────────────────
+  DB_RECORD_NOT_FOUND: 'DB_RECORD_NOT_FOUND',
+  DB_DUPLICATE_ENTRY: 'DB_DUPLICATE_ENTRY',
+  DB_TRANSACTION_FAILED: 'DB_TRANSACTION_FAILED',
 
-  // ── External Service (2400–2499) ────────────────────────
-  EXTERNAL_SERVICE_ERROR: 2400,
-  PAYMENT_GATEWAY_ERROR: 2401,
-  STORAGE_ERROR: 2402,
+  // ── External Service ───────────────────────────────────
+  EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR',
+  PAYMENT_GATEWAY_ERROR: 'PAYMENT_GATEWAY_ERROR',
+  STORAGE_ERROR: 'STORAGE_ERROR',
 
-  // ── Resilience (2500–2599) ─────────────────────────────
-  CIRCUIT_BREAKER_OPEN: 2500,
-  RESILIENCE_EXHAUSTED: 2501,
+  // ── Resilience ─────────────────────────────────────────
+  CIRCUIT_BREAKER_OPEN: 'CIRCUIT_BREAKER_OPEN',
+  RESILIENCE_EXHAUSTED: 'RESILIENCE_EXHAUSTED',
 
-  // ── Invoice (3100–3199) ──────────────────────────────────
-  INVOICE_NOT_FOUND: 3100,
-  INVOICE_ALREADY_PAID: 3101,
-  INVOICE_EXPIRED: 3102,
-  INVOICE_PAYMENT_FAILED: 3103,
-  INVOICE_STATUS_INVALID: 3104,
+  // ── Invoice ────────────────────────────────────────────
+  INVOICE_NOT_FOUND: 'INVOICE_NOT_FOUND',
+  INVOICE_ALREADY_PAID: 'INVOICE_ALREADY_PAID',
+  INVOICE_EXPIRED: 'INVOICE_EXPIRED',
+  INVOICE_PAYMENT_FAILED: 'INVOICE_PAYMENT_FAILED',
+  INVOICE_STATUS_INVALID: 'INVOICE_STATUS_INVALID',
 
-  // ── Enrollment (3200–3299) ──────────────────────────────
-  ENROLLMENT_NOT_FOUND: 3200,
+  // ── Enrollment ─────────────────────────────────────────
+  ENROLLMENT_NOT_FOUND: 'ENROLLMENT_NOT_FOUND',
 
-  // ── Company (3300–3399) ─────────────────────────────────
-  COMPANY_NOT_FOUND: 3300,
+  // ── Company ────────────────────────────────────────────
+  COMPANY_NOT_FOUND: 'COMPANY_NOT_FOUND',
 
-  // ── Role (3400–3499) ────────────────────────────────────
-  ROLE_COMPANY_REQUIRED: 3400,
+  // ── Role ───────────────────────────────────────────────
+  ROLE_COMPANY_REQUIRED: 'ROLE_COMPANY_REQUIRED',
 
-  // ── Program (3500–3599) ─────────────────────────────────
-  PROGRAM_PRICE_NOT_FOUND: 3500,
+  // ── Program ────────────────────────────────────────────
+  PROGRAM_PRICE_NOT_FOUND: 'PROGRAM_PRICE_NOT_FOUND',
 } as const
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode]
 
-// ── HTTP status → ErrorCode (2100–2199) ─────────────────
+// ── HTTP Client codes only ──────────────────────────────
 export const HttpErrorCode = {
   HTTP_BAD_REQUEST: ErrorCode.HTTP_BAD_REQUEST,
   HTTP_UNAUTHORIZED: ErrorCode.HTTP_UNAUTHORIZED,

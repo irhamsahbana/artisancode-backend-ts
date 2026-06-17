@@ -10,14 +10,15 @@ import logger from '@/config/logger'
 export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
   // Handle AppError (Business Logic Errors)
   if (err instanceof AppError) {
-    const errorResponse = responseError(err.message, err.data)
+    const errorResponse = err.getHttpResponse()
+    logger.error("AppError occurred:", err.getErrorResponse())
     return c.json(errorResponse, err.toHttpStatus() as ContentfulStatusCode)
   }
 
   // For non-production environments, send detailed error for unexpected errors
   if (env.APP_ENV !== 'production') {
     const errorResponse = responseError(err.message, err.stack)
-    logger.error(errorResponse)
+    logger.error("Unexpected error occurred:", err)
     return c.json(errorResponse, 500)
   }
 

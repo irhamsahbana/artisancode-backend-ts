@@ -1,5 +1,70 @@
-import type { ErrorCode } from './error-codes'
+import { ErrorCode } from './error-codes'
+
 import type { RestResponse } from './rest-response'
+
+const ERROR_TO_HTTP_STATUS: Record<ErrorCode, number> = {
+  // ── General ─────────────────────────────────────────
+  [ErrorCode.VALIDATION_ERROR]: 400,
+  [ErrorCode.NOT_FOUND]: 404,
+  [ErrorCode.UNAUTHORIZED]: 401,
+  [ErrorCode.FORBIDDEN]: 403,
+  [ErrorCode.CONFLICT]: 409,
+  [ErrorCode.TOO_MANY_REQUESTS]: 429,
+  [ErrorCode.REQUEST_TIMEOUT]: 408,
+  [ErrorCode.INTERNAL_ERROR]: 500,
+  [ErrorCode.SERVICE_UNAVAILABLE]: 503,
+  [ErrorCode.NOT_IMPLEMENTED]: 501,
+
+  // ── HTTP Client ──────────────────────────────────────
+  [ErrorCode.HTTP_BAD_REQUEST]: 400,
+  [ErrorCode.HTTP_UNAUTHORIZED]: 401,
+  [ErrorCode.HTTP_FORBIDDEN]: 403,
+  [ErrorCode.HTTP_NOT_FOUND]: 404,
+  [ErrorCode.HTTP_TIMEOUT]: 408,
+  [ErrorCode.HTTP_INTERNAL_ERROR]: 500,
+  [ErrorCode.NETWORK_ERROR]: 502,
+  [ErrorCode.HTTP_TOO_MANY_REQUESTS]: 429,
+  [ErrorCode.HTTP_BAD_GATEWAY]: 502,
+  [ErrorCode.HTTP_SERVICE_UNAVAILABLE]: 503,
+
+  // ── Auth ─────────────────────────────────────────────
+  [ErrorCode.AUTH_INVALID_CREDENTIALS]: 401,
+  [ErrorCode.AUTH_TOKEN_EXPIRED]: 401,
+  [ErrorCode.AUTH_TOKEN_INVALID]: 401,
+
+  // ── Database ─────────────────────────────────────────
+  [ErrorCode.DB_RECORD_NOT_FOUND]: 404,
+  [ErrorCode.DB_DUPLICATE_ENTRY]: 409,
+  [ErrorCode.DB_TRANSACTION_FAILED]: 500,
+
+  // ── External Service ─────────────────────────────────
+  [ErrorCode.EXTERNAL_SERVICE_ERROR]: 502,
+  [ErrorCode.PAYMENT_GATEWAY_ERROR]: 502,
+  [ErrorCode.STORAGE_ERROR]: 502,
+
+  // ── Resilience ───────────────────────────────────────
+  [ErrorCode.CIRCUIT_BREAKER_OPEN]: 503,
+  [ErrorCode.RESILIENCE_EXHAUSTED]: 503,
+
+  // ── Invoice ──────────────────────────────────────────
+  [ErrorCode.INVOICE_NOT_FOUND]: 404,
+  [ErrorCode.INVOICE_ALREADY_PAID]: 409,
+  [ErrorCode.INVOICE_EXPIRED]: 409,
+  [ErrorCode.INVOICE_PAYMENT_FAILED]: 402,
+  [ErrorCode.INVOICE_STATUS_INVALID]: 409,
+
+  // ── Enrollment ───────────────────────────────────────
+  [ErrorCode.ENROLLMENT_NOT_FOUND]: 404,
+
+  // ── Company ──────────────────────────────────────────
+  [ErrorCode.COMPANY_NOT_FOUND]: 404,
+
+  // ── Role ─────────────────────────────────────────────
+  [ErrorCode.ROLE_COMPANY_REQUIRED]: 400,
+
+  // ── Program ──────────────────────────────────────────
+  [ErrorCode.PROGRAM_PRICE_NOT_FOUND]: 404,
+}
 
 export class AppError extends Error {
   public readonly httpCode?: number
@@ -7,7 +72,7 @@ export class AppError extends Error {
   public readonly errors?: unknown
   public readonly data?: unknown
 
-  constructor(code: ErrorCode, message: string, options?: { httpCode?: number; errors?: unknown, data?: unknown }) {
+  constructor(code: ErrorCode, message: string, options?: { httpCode?: number; errors?: unknown; data?: unknown }) {
     super(message)
     this.code = code
     this.httpCode = options?.httpCode
@@ -20,31 +85,7 @@ export class AppError extends Error {
   /** Derive HTTP status from code when httpCode is not explicitly set. */
   toHttpStatus(): number {
     if (this.httpCode) return this.httpCode
-
-    // General (2000–2099)
-    if (this.code >= 2000 && this.code <= 2006) return 400
-    if (this.code === 2007) return 500
-    if (this.code === 2008) return 503
-
-    // HTTP Client (2100–2199) → derive from code
-    if (this.code >= 2100 && this.code <= 2199) return this.code - 2100 + 400
-
-    // Auth (2200–2299)
-    if (this.code >= 2200 && this.code <= 2202) return 401
-
-    // Database (2300–2399)
-    if (this.code === 2300) return 404
-    if (this.code === 2301) return 409
-    if (this.code === 2302) return 500
-
-    // External Service (2400–2499)
-    if (this.code >= 2400 && this.code <= 2402) return 502
-
-    // Resilience (2500–2599)
-    if (this.code === 2500) return 503
-    if (this.code === 2501) return 503
-
-    return 500
+    return ERROR_TO_HTTP_STATUS[this.code] ?? 500
   }
 
   getHttpResponse(): RestResponse {
