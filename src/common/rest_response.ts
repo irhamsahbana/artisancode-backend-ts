@@ -1,4 +1,4 @@
-import { RestResponse } from './packages/types'
+import { RestResponse, ValidationError } from './packages/types'
 
 const toSnakeCase = (obj: unknown): unknown => {
   if (Array.isArray(obj)) {
@@ -33,7 +33,7 @@ export const responseSuccess = (data: unknown, message?: string): RestResponse =
   }
 }
 
-export const responseError = (message?: string, data?: unknown, errorCode?: string): RestResponse => {
+export const responseError = (message?: string, errors?: ValidationError[] | null, errorCode?: string): RestResponse => {
   if (!message) {
     message = 'your request has failed'
   }
@@ -42,7 +42,7 @@ export const responseError = (message?: string, data?: unknown, errorCode?: stri
     success: false,
     message: message,
     error_code: errorCode ?? null,
-    errors: data,
+    errors: errors ?? null,
     data: null,
   }
 }

@@ -1,6 +1,6 @@
 export { AppError } from './app-error'
 export { ErrorCode, HttpErrorCode } from './error-codes'
-export type { RestResponse } from './rest-response'
+export type { RestResponse, ValidationError } from './rest-response'
 export type { JwtPayload, AppEnv } from './env'
 
 // ── HTTP Client ──────────────────────────────────────────

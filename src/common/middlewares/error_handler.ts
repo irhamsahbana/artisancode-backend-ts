@@ -17,12 +17,12 @@ export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
 
   // For non-production environments, send detailed error for unexpected errors
   if (env.APP_ENV !== 'production') {
-    const errorResponse = responseError(err.message, err.stack)
+    const errorResponse = responseError(err.message, undefined)
     logger.error("Unexpected error occurred:", err)
     return c.json(errorResponse, 500)
   }
 
   // For production, send a generic error message
   logger.error(err)
-  return c.json(responseError('Internal Server Error', 'An unexpected error occurred.'), 500)
+  return c.json(responseError('Internal Server Error', undefined), 500)
 }

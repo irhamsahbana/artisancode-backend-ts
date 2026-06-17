@@ -1,19 +1,14 @@
 import { Context, Next } from 'hono'
 import { ZodError, ZodObject } from 'zod'
 
-import { AppEnv, ErrorCode } from '@/common/packages/types'
+import { AppEnv, ErrorCode, ValidationError } from '@/common/packages/types'
 import { responseError } from '@/common/rest_response'
 
-const formatZodError = (error: ZodError) => {
-  const errors: Record<string, string[]> = {}
-  error.issues.forEach((issue) => {
-    const key = issue.path.join('.')
-    if (!errors[key]) {
-      errors[key] = []
-    }
-    errors[key].push(issue.message)
-  })
-  return errors
+const formatZodError = (error: ZodError): ValidationError[] => {
+  return error.issues.map((issue) => ({
+    field: issue.path.join('.') || 'root',
+    message: issue.message,
+  }))
 }
 
 export const validate = (schema: ZodObject) => {

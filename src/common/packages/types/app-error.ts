@@ -1,6 +1,6 @@
 import { ErrorCode } from './error-codes'
 
-import type { RestResponse } from './rest-response'
+import type { RestResponse, ValidationError } from './rest-response'
 
 const ERROR_TO_HTTP_STATUS: Record<ErrorCode, number> = {
   // ── General ─────────────────────────────────────────
@@ -69,10 +69,10 @@ const ERROR_TO_HTTP_STATUS: Record<ErrorCode, number> = {
 export class AppError extends Error {
   public readonly httpCode?: number
   public readonly code: ErrorCode
-  public readonly errors?: unknown
+  public readonly errors?: ValidationError[] | null
   public readonly data?: unknown
 
-  constructor(code: ErrorCode, message: string, options?: { httpCode?: number; errors?: unknown; data?: unknown }) {
+  constructor(code: ErrorCode, message: string, options?: { httpCode?: number; errors?: ValidationError[] | null; data?: unknown }) {
     super(message)
     this.code = code
     this.httpCode = options?.httpCode
