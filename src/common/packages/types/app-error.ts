@@ -1,14 +1,17 @@
 import type { ErrorCode } from './error-codes'
+import type { RestResponse } from './rest-response'
 
 export class AppError extends Error {
   public readonly httpCode?: number
   public readonly code: ErrorCode
   public readonly errors?: unknown
+  public readonly data?: unknown
 
-  constructor(code: ErrorCode, message: string, options?: { httpCode?: number; errors?: unknown }) {
+  constructor(code: ErrorCode, message: string, options?: { httpCode?: number; errors?: unknown, data?: unknown }) {
     super(message)
     this.code = code
     this.httpCode = options?.httpCode
+    this.data = options?.data
     this.errors = options?.errors
     this.name = 'AppError'
     Error.captureStackTrace(this, this.constructor)
@@ -42,5 +45,14 @@ export class AppError extends Error {
     if (this.code === 2501) return 503
 
     return 500
+  }
+
+  getHttpResponse(): RestResponse {
+    return {
+      errors: this.errors,
+      success: false,
+      message: this.message,
+      data: this.data,
+    }
   }
 }

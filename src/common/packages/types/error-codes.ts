@@ -19,6 +19,9 @@ export const ErrorCode = {
   HTTP_TIMEOUT: 2104,
   HTTP_INTERNAL_ERROR: 2105,
   NETWORK_ERROR: 2106,
+  HTTP_TOO_MANY_REQUESTS: 2107,
+  HTTP_BAD_GATEWAY: 2108,
+  HTTP_SERVICE_UNAVAILABLE: 2109,
 
   // ── Auth (2200–2299) ────────────────────────────────────
   AUTH_INVALID_CREDENTIALS: 2200,
@@ -60,3 +63,17 @@ export const ErrorCode = {
 } as const
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode]
+
+// ── HTTP status → ErrorCode (2100–2199) ─────────────────
+export const HttpErrorCode = {
+  HTTP_BAD_REQUEST: ErrorCode.HTTP_BAD_REQUEST,
+  HTTP_UNAUTHORIZED: ErrorCode.HTTP_UNAUTHORIZED,
+  HTTP_FORBIDDEN: ErrorCode.HTTP_FORBIDDEN,
+  HTTP_NOT_FOUND: ErrorCode.HTTP_NOT_FOUND,
+  HTTP_TIMEOUT: ErrorCode.HTTP_TIMEOUT,
+  HTTP_TOO_MANY_REQUESTS: ErrorCode.HTTP_TOO_MANY_REQUESTS,
+  HTTP_BAD_GATEWAY: ErrorCode.HTTP_BAD_GATEWAY,
+  HTTP_SERVICE_UNAVAILABLE: ErrorCode.HTTP_SERVICE_UNAVAILABLE,
+} as const
+
+export type HttpErrorCode = (typeof HttpErrorCode)[keyof typeof HttpErrorCode]
