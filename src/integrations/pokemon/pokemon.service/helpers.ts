@@ -33,17 +33,19 @@ export interface PokeApiListResponse {
   results: { name: string; url: string }[]
 }
 
-// Lazily-initialized resilience policy
-let resiliency: ResiliencePolicy | null = null
+// Lazily-initialized resilience policy (cache Promise to avoid race condition)
+let resiliencyPromise: Promise<ResiliencePolicy> | null = null
 
-export async function getResiliency(): Promise<ResiliencePolicy> {
-  if (!resiliency) {
-    const retryPolicy = await createRetryPolicy({ maxAttempts: 3 })
-    const circuitBreakerPolicy = await createCircuitBreakerPolicy({ threshold: 5 })
-    const timeoutPolicy = await createTimeoutPolicy({ duration: 10_000 })
-    resiliency = await wrapPolicies(retryPolicy, circuitBreakerPolicy, timeoutPolicy)
+export function getResiliency(): Promise<ResiliencePolicy> {
+  if (!resiliencyPromise) {
+    resiliencyPromise = (async () => {
+      const retryPolicy = await createRetryPolicy({ maxAttempts: 3 })
+      const circuitBreakerPolicy = await createCircuitBreakerPolicy({ threshold: 5 })
+      const timeoutPolicy = await createTimeoutPolicy({ duration: 10_000 })
+      return wrapPolicies(retryPolicy, circuitBreakerPolicy, timeoutPolicy)
+    })()
   }
-  return resiliency
+  return resiliencyPromise
 }
 
 export async function withErrorHandling<T>(fn: () => Promise<T>): Promise<T> {

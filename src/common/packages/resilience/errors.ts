@@ -7,13 +7,6 @@ export class CircuitBreakerError extends AppError {
   }
 }
 
-export class ResilienceExhaustedError extends AppError {
-  constructor(message = 'All retry attempts exhausted') {
-    super(ErrorCode.RESILIENCE_EXHAUSTED, message, { httpCode: 503 })
-    this.name = 'ResilienceExhaustedError'
-  }
-}
-
 export class TimeoutError extends AppError {
   constructor(message = 'Request timed out') {
     super(ErrorCode.HTTP_TIMEOUT, message, { httpCode: 408 })
