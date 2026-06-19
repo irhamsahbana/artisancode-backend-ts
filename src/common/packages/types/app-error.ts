@@ -2,6 +2,21 @@ import { ErrorCode } from './error-codes'
 
 import type { RestResponse, ValidationError } from './rest-response'
 
+const HTTP_STATUS_TO_REASON: Record<number, string> = {
+  400: 'BAD_REQUEST',
+  401: 'UNAUTHORIZED',
+  403: 'FORBIDDEN',
+  404: 'NOT_FOUND',
+  408: 'REQUEST_TIMEOUT',
+  409: 'CONFLICT',
+  429: 'TOO_MANY_REQUESTS',
+  500: 'INTERNAL_ERROR',
+  501: 'NOT_IMPLEMENTED',
+  502: 'BAD_GATEWAY',
+  503: 'SERVICE_UNAVAILABLE',
+  504: 'GATEWAY_TIMEOUT',
+}
+
 const ERROR_TO_HTTP_STATUS: Record<ErrorCode, number> = {
   // ── General ─────────────────────────────────────────
   [ErrorCode.VALIDATION_ERROR]: 400,
@@ -89,10 +104,12 @@ export class AppError extends Error {
   }
 
   getHttpResponse(): RestResponse {
+    const httpStatus = this.toHttpStatus()
     return {
       success: false,
       message: this.message,
-      error_code: this.code,
+      code: this.code,
+      reason: HTTP_STATUS_TO_REASON[httpStatus] ?? 'INTERNAL_ERROR',
       errors: this.errors,
       data: null,
     }
@@ -102,6 +119,7 @@ export class AppError extends Error {
     return {
       code: this.code,
       message: this.message,
+      reason: HTTP_STATUS_TO_REASON[this.toHttpStatus()] ?? 'INTERNAL_ERROR',
       errors: this.errors,
       data: this.data,
     }

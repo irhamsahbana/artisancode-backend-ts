@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { validate, validateQuery } from '../validation.middleware'
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
+  email: z.email('Invalid email format'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
@@ -40,7 +40,7 @@ describe('Validation Middleware', () => {
       expect(res.status).toBe(400)
       const body = await res.json()
       expect(body.success).toBe(false)
-      expect(body.error_code).toBe('VALIDATION_ERROR')
+      expect(body.code).toBe('VALIDATION_ERROR')
       expect(body.message).toBe('Validation failed')
       expect(Array.isArray(body.errors)).toBe(true)
       expect(body.errors.length).toBe(2)

@@ -52,7 +52,8 @@ describe('AppError', () => {
 
     expect(response.success).toBe(false)
     expect(response.message).toBe('Validation failed')
-    expect(response.error_code).toBe('VALIDATION_ERROR')
+    expect(response.code).toBe('VALIDATION_ERROR')
+    expect(response.reason).toBe('BAD_REQUEST')
     expect(response.errors).toEqual(errors)
     expect(response.data).toBeNull()
   })
@@ -64,6 +65,7 @@ describe('AppError', () => {
 
     expect(response.code).toBe('NOT_FOUND')
     expect(response.message).toBe('Not found')
+    expect(response.reason).toBe('NOT_FOUND')
     expect(response.data).toEqual({ id: 1 })
   })
 

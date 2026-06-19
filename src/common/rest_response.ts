@@ -33,7 +33,7 @@ export const responseSuccess = (data: unknown, message?: string): RestResponse =
   }
 }
 
-export const responseError = (message?: string, errors?: ValidationError[] | null, errorCode?: string): RestResponse => {
+export const responseError = (message?: string, errors?: ValidationError[] | null, code?: string): RestResponse => {
   if (!message) {
     message = 'your request has failed'
   }
@@ -41,7 +41,7 @@ export const responseError = (message?: string, errors?: ValidationError[] | nul
   return {
     success: false,
     message: message,
-    error_code: errorCode ?? null,
+    code: code ?? null,
     errors: errors ?? null,
     data: null,
   }

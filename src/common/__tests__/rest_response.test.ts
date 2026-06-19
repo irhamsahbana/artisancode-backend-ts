@@ -47,7 +47,7 @@ describe('responseError', () => {
 
     expect(result.success).toBe(false)
     expect(result.message).toBe('Validation failed')
-    expect(result.error_code).toBe('VALIDATION_ERROR')
+    expect(result.code).toBe('VALIDATION_ERROR')
     expect(result.errors).toEqual(errors)
     expect(result.data).toBeNull()
   })

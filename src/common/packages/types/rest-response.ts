@@ -6,7 +6,8 @@ export interface ValidationError {
 export interface RestResponse {
   success: boolean
   message: string
-  error_code?: string | null
+  code?: string | null
+  reason?: string | null
   errors?: ValidationError[] | null
   data?: unknown | null
 }
